@@ -18,7 +18,6 @@ The secrets are matched based on an extensible configuration file (regex.toml). 
 
 ### Usage
 ```bash
-cd src/n0s1
 python3 -m pip install n0s1
 n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<YOUR_JIRA_API_TOKEN>"
 ```
