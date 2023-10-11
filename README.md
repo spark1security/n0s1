@@ -31,3 +31,9 @@ python3 -m pip install -r ../../requirements.txt
 python3 n0s1.py jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<YOUR_JIRA_API_TOKEN>"
 deactivate
 ```
+
+## Community
+
+n0s1 is a [Spark 1](https://spark1.us) open source project.  
+Learn about our open source work and portfolio [here](https://spark1.us/n0s1).  
+Contact us about any matter by opening a GitHub Discussion [here](https://github.com/spark1security/n0s1/issues)
