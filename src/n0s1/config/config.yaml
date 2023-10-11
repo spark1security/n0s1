@@ -1,0 +1,18 @@
+maintainer: "Spark 1"
+
+general_params:
+  regex_file: "config/regex.toml"
+  report_file: "n0s1_report.json"
+  post_comment: true
+  skip_comment: false
+
+comment_params:
+  bot_name: "n0s1 bot"
+  secret_manager: "a secret manager tool"
+  contact_help: "contact@spark1.us"
+  message_template: "Hello! I'm {bot_name}, and I'm here to assist you in preventing data leaks.\nI apologize for being nosy, but it appears that there may have been potentially sensitive data posted here in the past.\n\n.\nHere are the details:\nPlatform:[{platform}] Field:[ticket {field}] ID:[{regex_config_id}] Description:[{regex_config_description}] Regex: {regex}\n############## Sanitized Secret Leak ##############\n {leak}\n############## Sanitized Secret Leak ##############\n.\n\nIf you can verify that this is indeed an actual data leak, please take the necessary steps to rotate the credentials and remove any previously shared sensitive information.\nFor future reference, consider using {secret_manager} whenever you need to share credentials or any other sensitive data securely.\nIf you require further assistance, please don't hesitate to reach out to us at {contact_help}\n\n{label}"
+  label: "n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1"
+
+jira_params:
+  server: "http://localhost:2990/jira"
+  email: ""

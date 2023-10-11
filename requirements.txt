@@ -1,0 +1,4 @@
+requests
+toml
+jira
+pyyaml
