@@ -17,10 +17,17 @@ The secrets are matched based on an extensible configuration file (regex.toml). 
 * [Linear](https://linear.app/)
 
 ### Usage
+CLI:
 ```bash
 python3 -m pip install n0s1
 n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<YOUR_JIRA_API_TOKEN>"
 ```
+
+Docker:
+```bash
+docker run spark1security/n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<YOUR_JIRA_API_TOKEN>"
+```
+
 From source:
 ```bash
 cd src/n0s1
