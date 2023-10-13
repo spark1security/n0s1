@@ -3,7 +3,7 @@ maintainer: "Spark 1"
 general_params:
   regex_file: "config/regex.toml"
   report_file: "n0s1_report.json"
-  post_comment: true
+  post_comment: false
   skip_comment: false
 
 comment_params:

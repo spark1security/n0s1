@@ -1,9 +1,7 @@
 # n0s1 - Secret Scanner
-n0s1 (pronounced as nosy, /ˈnōzē/) is an open source secret scanner for Project Management and Issue Tracker tools.
+n0s1 ([pronunciation](https://en.wiktionary.org/wiki/nosy#Pronunciation)) is an open-source secret scanner designed for Project Management and Issue Tracker tools such as Jira and Linear.app. It scans all tickets/items/issues within the chosen platform in search of any leaked secrets in the titles, bodies, and comments.
 
-The scanner will traverse all items within the target platform (e.g. Jira or Linear) and find leaked secrets in the ticket's title, body and comments.
-
-The secrets are matched based on an extensible configuration file (regex.toml). The scanner looks for sensitive data such as:
+These secrets are identified by comparing them against an adaptable configuration file named [regex.toml](https://github.com/spark1security/n0s1/blob/main/src/n0s1/config/regex.toml). The scanner specifically looks for sensitive information, which includes:
 * Github Personal Access Tokens
 * GitLab Personal Access Tokens
 * AWS Access Tokens
@@ -30,7 +28,8 @@ docker run spark1security/n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.at
 
 From source:
 ```bash
-cd src/n0s1
+git clone https://github.com/spark1security/n0s1.git
+cd n0s1/src/n0s1
 python3 -m venv n0s1_python
 source n0s1_python/bin/activate
 python3 -m pip install -r ../../requirements.txt

@@ -30,7 +30,10 @@ def init_argparse() -> argparse.ArgumentParser:
         description="""Secret scanner for Project Management platforms such as Jira, Linear and Servicenow.
         """,
     )
-    parser.add_argument(
+
+    # Create parent subparser. Note `add_help=False` and creation via `argparse.`
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument(
         "--regex-file",
         dest="regex_file",
         nargs="?",
@@ -38,7 +41,7 @@ def init_argparse() -> argparse.ArgumentParser:
         type=str,
         help="Custom .toml with a list of regexes to be matched."
     )
-    parser.add_argument(
+    parent_parser.add_argument(
         "--config-file",
         dest="config_file",
         nargs="?",
@@ -46,7 +49,7 @@ def init_argparse() -> argparse.ArgumentParser:
         type=str,
         help="Configuration file (YAML format) to be used."
     )
-    parser.add_argument(
+    parent_parser.add_argument(
         "--report-file",
         dest="report_file",
         nargs="?",
@@ -54,13 +57,13 @@ def init_argparse() -> argparse.ArgumentParser:
         type=str,
         help="Output report file for the leaked secrets."
     )
-    parser.add_argument(
+    parent_parser.add_argument(
         "--post-comment",
         dest="post_comment",
         action="store_true",
         help="By default, scans only flag leaked secrets; this adds a warning comment to every ticket with a potential secret leak",
     )
-    parser.add_argument(
+    parent_parser.add_argument(
         "--skip-comment",
         dest="skip_comment",
         action="store_true",
@@ -71,7 +74,7 @@ def init_argparse() -> argparse.ArgumentParser:
     )
 
     linear_scan_parser = subparsers.add_parser(
-        "linear_scan", help="Scan Linear tickets",
+        "linear_scan", help="Scan Linear tickets", parents=[parent_parser]
     )
     linear_scan_parser.add_argument(
         "--api-key",
@@ -82,7 +85,7 @@ def init_argparse() -> argparse.ArgumentParser:
     )
 
     jira_scan_parser = subparsers.add_parser(
-        "jira_scan", help="Scan Jira tickets",
+        "jira_scan", help="Scan Jira tickets", parents=[parent_parser]
     )
     jira_scan_parser.add_argument(
         "--server",
@@ -259,6 +262,10 @@ def main():
     regex_config = None
     cfg = {}
 
+    if not args.command:
+        parser.print_help()
+        return
+
     if os.path.exists(args.regex_file):
         with open(args.regex_file, "r") as f:
             regex_config = toml.load(f)
@@ -301,7 +308,7 @@ def main():
         controler_config = {"server": SERVER, "email": EMAIL, "token": TOKEN}
     else:
         parser.print_help()
-        sys.exit(0)
+        return
 
     if not controller.set_config(controler_config):
         sys.exit(-1)
