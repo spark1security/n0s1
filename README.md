@@ -14,19 +14,19 @@ These secrets are identified by comparing them against an adaptable configuratio
 * [Jira](https://www.atlassian.com/software/jira)
 * [Linear](https://linear.app/)
 
-### Usage
-CLI:
+### Quick Start
+[CLI:](https://pypi.org/project/n0s1/)
 ```bash
 python3 -m pip install n0s1
 n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<YOUR_JIRA_API_TOKEN>"
 ```
 
-Docker:
+[Docker:](https://hub.docker.com/r/spark1security/n0s1)
 ```bash
 docker run spark1security/n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<YOUR_JIRA_API_TOKEN>"
 ```
 
-From source:
+[From source:](https://github.com/spark1security/n0s1#quick-start)
 ```bash
 git clone https://github.com/spark1security/n0s1.git
 cd n0s1/src/n0s1
@@ -36,6 +36,28 @@ python3 -m pip install -r ../../requirements.txt
 python3 n0s1.py jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<YOUR_JIRA_API_TOKEN>"
 deactivate
 ```
+
+[GitHub Actions:](https://github.com/spark1security/n0s1-action#scan-jira)
+```yaml
+jobs:
+  jira_secret_scanning:
+    steps:
+      - uses: spark1security/n0s1-action@main
+        env:
+          JIRA_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        with:
+          scan-target: 'jira_scan'
+          user-email: 'service_account@<YOUR_COMPANY>.atlassian.net'
+          platform-url: 'https://<YOUR_COMPANY>.atlassian.net'
+```
+
+## Want more? Check out Spark 1
+
+If you liked n0s1, you will love Spark 1 which builds on top of n0s1 to provide even more enhanced capabilities for a complete security management offering.
+
+Don't forget to check out the <https://spark1.us> website for more information about our products and services.
+
+If you'd like to contact Spark 1 or request a demo, please use the [free consultation form](https://spark1.us/contact-us-1).
 
 ## Community
 
