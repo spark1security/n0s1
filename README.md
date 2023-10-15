@@ -37,7 +37,7 @@ python3 n0s1.py jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --
 deactivate
 ```
 
-[GitHub Actions:](https://github.com/spark1security/n0s1-action#scan-jira)
+[GitHub Actions:](https://github.com/marketplace/actions/spark-1-n0s1)
 ```yaml
 jobs:
   jira_secret_scanning:
