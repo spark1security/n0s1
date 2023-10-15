@@ -70,7 +70,7 @@ class JiraControler():
     def post_comment(self, issue, comment):
         if not self._client:
             return False
-        comment = comment.replace("#", "O")
+        comment = comment.replace("#", "0")
         comment_status = self._client.add_comment(issue, body=comment)
         status = comment_status.id
         if status and len(status) > 0 and int(status) > 0:

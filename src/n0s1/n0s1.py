@@ -69,6 +69,36 @@ def init_argparse() -> argparse.ArgumentParser:
         action="store_true",
         help="By default, scans check the ticket title, description and comments; this flag disables ticket comment scanning",
     )
+    parent_parser.add_argument(
+        "--show-matched-secret-on-logs",
+        dest="show_matched_secret_on_logs",
+        action="store_true",
+        help="By default, only a sanitized version of the leak is shwon on logs. This flag makes the actual leaked secret to be displayed on logs. Be extra careful when enabling this flag because you might make the leak worst by sending sensitive info to logs.",
+    )
+    parent_parser.add_argument(
+        "--secret-manager",
+        dest="secret_manager",
+        nargs="?",
+        default="a secret manager tool",
+        type=str,
+        help="Secret manager tool name to be suggested when leaks are found."
+    )
+    parent_parser.add_argument(
+        "--contact-help",
+        dest="contact_help",
+        nargs="?",
+        default="contact@spark1.us",
+        type=str,
+        help="Contact information for assistance when leaks are detected."
+    )
+    parent_parser.add_argument(
+        "--label",
+        dest="label",
+        nargs="?",
+        default="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1",
+        type=str,
+        help="Unique identifier to be added to the comments so that the n0s1 bot can recognize if the leak has been previously flagged."
+    )
     subparsers = parser.add_subparsers(
         help="Subcommands", dest="command", metavar="COMMAND"
     )
@@ -170,10 +200,17 @@ def report_leaked_secret(scan_text_result, controller):
     url = scan_text_result.get("ticket_data", {}).get("url", "")
     issue_id = scan_text_result.get("ticket_data", {}).get("issue_id", "")
     post_comment = scan_text_result.get("scan_arguments", {}).get("post_comment", False)
-    logging.info(f"\n\nMATCH! id: {regex_id}, description: [{regex_description}]\nRegex: {regex}. Platform: {platform}. Field: ticket {field}")
-    logging.info(f"\n############### Secret ###############\n{snippet_text}\n############### Secret ###############")
-    logging.info(f"\n########## Secret sanitized ##########\n{sanitized_secret}\n########## Secret sanitized ##########")
-    logging.info(url)
+    show_matched_secret_on_logs = scan_text_result.get("scan_arguments", {}).get("show_matched_secret_on_logs", False)
+
+    finding_info = "Platform:[{platform}] Field:[ticket {field}] ID:[{regex_config_id}] Description:[{regex_config_description}] Regex: {regex}\n############## Sanitized Secret Leak ##############\n {leak}\n############## Sanitized Secret Leak ##############"
+    finding_info = finding_info.format(regex_config_id=regex_id, regex_config_description=regex_description,
+                                       regex=regex, platform=platform, field=field, leak=sanitized_secret)
+
+    logging.info("\nPotential secret leak regex match!")
+    logging.info(finding_info)
+    if show_matched_secret_on_logs:
+        logging.info(f"\n##################### Secret  #####################\n{snippet_text}\n##################### Secret  #####################")
+    logging.info(f"\nLeak source: {url}")
     logging.info("\n\n")
     finding_id = url + "_" + sanitized_secret
     finding_id = _sha1_hash(finding_id)
@@ -185,12 +222,15 @@ def report_leaked_secret(scan_text_result, controller):
     if post_comment:
         comment_template = cfg.get("comment_params", {}).get("message_template", "")
         bot_name = cfg.get("comment_params", {}).get("bot_name", "bot")
-        secret_manager = cfg.get("comment_params", {}).get("secret_manager", "")
-        contact_help = cfg.get("comment_params", {}).get("contact_help", "")
-        label = cfg.get("comment_params", {}).get("label", "")
-        comment = comment_template.format(bot_name=bot_name, regex_config_id=regex_id, regex_config_description=regex_description,
-                                          regex=regex, platform=platform, field=field, leak=sanitized_secret,
-                                          secret_manager=secret_manager, contact_help=contact_help, label=label)
+        secret_manager = scan_text_result.get("scan_arguments", {}).get("secret_manager", "")
+        contact_help = scan_text_result.get("scan_arguments", {}).get("contact_help", "")
+        label = scan_text_result.get("scan_arguments", {}).get("label", "")
+        format_variables = ["finding_info", "bot_name", "secret_manager", "contact_help", "label"]
+        for variable in format_variables:
+            if comment_template.find(variable) == -1:
+                comment_template += f"\n{variable}: {{{variable}}}"
+        comment = comment_template.format(finding_info=finding_info, bot_name=bot_name, secret_manager=secret_manager,
+                                          contact_help=contact_help, label=label)
         return controller.post_comment(issue_id, comment)
     return True
 
@@ -210,9 +250,11 @@ def scan_text(regex_config, text):
     return match, scan_text_result
 
 
-def scan(regex_config, controller, scan_comment, post_comment):
+def scan(regex_config, controller, scan_arguments):
     if not regex_config or not controller:
         return
+    scan_comment = scan_arguments.get("scan_comment", False)
+    post_comment = scan_arguments.get("post_comment", False)
     for title, description, comments, url, issue_id in controller.get_data(scan_comment):
         ticket_data = {"title": title, "description": description, "comments": comments, "url": url, "issue_id": issue_id}
         label = cfg.get("comment_params", {}).get("label", "")
@@ -224,7 +266,7 @@ def scan(regex_config, controller, scan_comment, post_comment):
                     # posting a new comment again
                     post_comment_for_this_issue = False
                     break
-        scan_arguments = {"scan_comment": scan_comment, "post_comment": post_comment_for_this_issue}
+        scan_arguments["post_comment"] = post_comment_for_this_issue
 
         secret_found, scan_text_result = scan_text(regex_config, title)
         scan_text_result["ticket_data"] = ticket_data
@@ -313,14 +355,40 @@ def main():
     if not controller.set_config(controler_config):
         sys.exit(-1)
 
-    post_comment = False
     if args.post_comment:
         post_comment = args.post_comment
     else:
         post_comment = cfg.get("general_params", {}).get("post_comment", False)
-    scan_comment = not args.skip_comment
 
-    scan(regex_config, controller, scan_comment, post_comment)
+    if args.skip_comment:
+        skip_comment = args.skip_comment
+    else:
+        skip_comment = cfg.get("general_params", {}).get("skip_comment", False)
+    scan_comment = not skip_comment
+
+    if args.secret_manager:
+        secret_manager = args.secret_manager
+    else:
+        secret_manager = cfg.get("comment_params", {}).get("secret_manager", False)
+
+    if args.contact_help:
+        contact_help = args.contact_help
+    else:
+        contact_help = cfg.get("comment_params", {}).get("contact_help", False)
+
+    if args.label:
+        label = args.label
+    else:
+        label = cfg.get("comment_params", {}).get("label", False)
+
+    if args.show_matched_secret_on_logs:
+        show_matched_secret_on_logs = args.show_matched_secret_on_logs
+    else:
+        show_matched_secret_on_logs = cfg.get("general_params", {}).get("show_matched_secret_on_logs", False)
+
+    scan_arguments = {"scan_comment": scan_comment, "post_comment": post_comment, "secret_manager": secret_manager,
+                      "contact_help": contact_help, "label": label, "show_matched_secret_on_logs": show_matched_secret_on_logs}
+    scan(regex_config, controller, scan_arguments)
 
     logging.info("Done!")
 
