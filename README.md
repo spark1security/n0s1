@@ -51,6 +51,20 @@ jobs:
           platform-url: 'https://<YOUR_COMPANY>.atlassian.net'
 ```
 
+GitLab CI - Add the following job to your .gitlab-ci.yml file:
+```yaml
+jira-scan:
+  stage: test
+  image:
+    name: spark1security/n0s1
+    entrypoint: [""]
+  script:
+    - n0s1 jira_scan --email "service_account@<YOUR_COMPANY>.atlassian.net" --api-key $JIRA_TOKEN --server "https://<YOUR_COMPANY>.atlassian.net"
+    - apt-get update
+    - apt-get -y install jq
+    - cat n0s1_report.json | jq
+```
+
 ## Want more? Check out Spark 1
 
 If you liked n0s1, you will love Spark 1 which builds on top of n0s1 to provide even more enhanced capabilities for a complete security management offering.
