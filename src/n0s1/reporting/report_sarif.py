@@ -76,10 +76,10 @@ class SarifReport:
                 secret = d.get("secret", "")
                 platform = d.get("details", {}).get("platform", "PM software")
                 field = d.get("details", {}).get("ticket_field", "ticket")
-                ruleId = d.get("details", {}). get("matched_regex_config", {}).get("id", "")
                 level = "note"
                 match = d.get("details", {}).get("matched_regex_config", {})
                 match_id = match.get("id", "")
+                ruleId = match_id
                 match_description = match.get("description", "")
                 ruleIndex = self.get_rule_index(ruleId)
 

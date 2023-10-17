@@ -54,15 +54,19 @@ jobs:
 GitLab CI - Add the following job to your .gitlab-ci.yml file:
 ```yaml
 jira-scan:
-  stage: test
+  stage: dast
   image:
     name: spark1security/n0s1
     entrypoint: [""]
   script:
-    - n0s1 jira_scan --email "service_account@<YOUR_COMPANY>.atlassian.net" --api-key $JIRA_TOKEN --server "https://<YOUR_COMPANY>.atlassian.net"
+    - n0s1 jira_scan --email "service_account@<YOUR_COMPANY>.atlassian.net" --api-key $JIRA_TOKEN --server "https://<YOUR_COMPANY>.atlassian.net" --report-file gl-dast-report.json --report-format gitlab
     - apt-get update
     - apt-get -y install jq
-    - cat n0s1_report.json | jq
+    - cat gl-dast-report.json | jq
+  artifacts:
+    reports:
+      dast:
+        - gl-dast-report.json
 ```
 
 ## Want more? Check out Spark 1

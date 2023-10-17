@@ -20,6 +20,11 @@ try:
 except:
     import n0s1.reporting.report_sarif as report_sarif
 
+try:
+    import reporting.report_gitlab as report_gitlab
+except:
+    import n0s1.reporting.report_gitlab as report_gitlab
+
 
 global report_json, report_file, cfg
 
@@ -184,6 +189,10 @@ def _save_report(scan_text_result):
         if report_format.lower().find("sarif".lower()) != -1:
             github_report = report_sarif.n0s1_report_to_sarif_report(report_json)
             github_report.write_report(report_file)
+            return True
+        elif report_format.lower().find("gitlab".lower()) != -1:
+            gitlab_report = report_gitlab.n0s1_report_to_gitlab_report(report_json)
+            gitlab_report.write_report(report_file)
             return True
         else:
             with open(report_file, "w") as f:
