@@ -95,9 +95,11 @@ class SarifReport:
                         }
                     )
 
-                message = f"Potential Secret Leak on platform:[{platform}] field:[{field}]. Verify {url} and rotate credentials in the case the leak is confirmed."
-                message += f"\n\nid: {match_id}, description: [{match_description}]\nPlatform: {platform}. Field: ticket {field}"
-                message += f"\n############### Secret sanitized ###############\n{secret}\n############### Secret sanitized ###############"
+                message = f"Potential Secret Leak on [{platform}]({url})."
+                message += f"\nDetails:\nSensitive data type: [{match_id}] - Description: [{match_description}]\nPlatform: [{platform}] - Field: [ticket {field}]\nSource: {url}"
+                message += f"\n000000000000000 Sensitive data found (redacted) 000000000000000\n{secret}\n000000000000000 Sensitive data found (redacted) 000000000000000"
+                message += f"\nPlease verify the [{platform} ticket]({url}) and conduct a thorough search for any sensitive data. If a data leak is confirmed, proceed to rotate the data and eliminate any sensitive information from the ticket."
+                message = message.replace("<REDACTED>", "xxxxxxxxxxxx")
 
                 self.results.append(
                     {
@@ -108,7 +110,7 @@ class SarifReport:
                         "locations": [
                             {
                                 "physicalLocation": {
-                                    "artifactLocation": {"uri": "README.md", "uriBaseId": "ROOTPATH"},
+                                    "artifactLocation": {"uri": "None", "uriBaseId": "ROOTPATH"},
                                     "region": {
                                         "startLine": 1,
                                         "startColumn": 1,
