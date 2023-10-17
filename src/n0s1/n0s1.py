@@ -3,6 +3,7 @@ import hashlib
 import logging
 import json
 import os
+import pathlib
 import re
 import sys
 import toml
@@ -13,6 +14,16 @@ try:
     import controllers.platform_controller as platform_controller
 except:
     import n0s1.controllers.platform_controller as platform_controller
+
+try:
+    import reporting.report_sarif as report_sarif
+except:
+    import n0s1.reporting.report_sarif as report_sarif
+
+try:
+    import reporting.report_gitlab as report_gitlab
+except:
+    import n0s1.reporting.report_gitlab as report_gitlab
 
 
 global report_json, report_file, cfg
@@ -56,6 +67,14 @@ def init_argparse() -> argparse.ArgumentParser:
         default="n0s1_report.json",
         type=str,
         help="Output report file for the leaked secrets."
+    )
+    parent_parser.add_argument(
+        "--report-format",
+        dest="report_format",
+        nargs="?",
+        default="n0s1",
+        type=str,
+        help="Output report format. Supported formats: n0s1, SARIF, gitlab."
     )
     parent_parser.add_argument(
         "--post-comment",
@@ -161,13 +180,24 @@ def _sha1_hash(to_hash):
         raise "Unable to generate SHA-1 hash for input string"
 
 
-def _save_report():
+def _save_report(scan_text_result):
     global report_json, report_file
 
+    report_format = scan_text_result.get("scan_arguments", {}).get("report_format", "n0s1")
+
     try:
-        with open(report_file, "w") as f:
-            json.dump(report_json, f)
+        if report_format.lower().find("sarif".lower()) != -1:
+            github_report = report_sarif.n0s1_report_to_sarif_report(report_json)
+            github_report.write_report(report_file)
             return True
+        elif report_format.lower().find("gitlab".lower()) != -1:
+            gitlab_report = report_gitlab.n0s1_report_to_gitlab_report(report_json)
+            gitlab_report.write_report(report_file)
+            return True
+        else:
+            with open(report_file, "w") as f:
+                json.dump(report_json, f)
+                return True
     except Exception as e:
         logging.error(e)
 
@@ -218,7 +248,7 @@ def report_leaked_secret(scan_text_result, controller):
                    "details": {"matched_regex_config": scan_text_result["matched_regex_config"], "platform": platform, "ticket_field": field}}
     if finding_id not in report_json["findings"]:
         report_json["findings"][finding_id] = new_finding
-        _save_report()
+        _save_report(scan_text_result)
     if post_comment:
         comment_template = cfg.get("comment_params", {}).get("message_template", "")
         bot_name = cfg.get("comment_params", {}).get("bot_name", "bot")
@@ -322,7 +352,12 @@ def main():
 
     datetime_now_obj = datetime.now(timezone.utc)
     date_utc = datetime_now_obj.strftime("%Y-%m-%d %H:%M:%S")
-    report_json = {"tool": "n0s1",
+    try:
+        init_file = pathlib.Path("__init__.py")
+        n0s1_version = re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', init_file.read_text(), re.M).group(1)
+    except:
+        n0s1_version = "0.0.1"
+    report_json = {"tool": {"name": "n0s1", "version": n0s1_version, "author": "Spark 1 Security"},
                    "scan_date": {"timestamp": datetime_now_obj.timestamp(),"date_utc": date_utc},
                    "regex_config": regex_config, "findings": {}}
     report_file = args.report_file
@@ -386,8 +421,14 @@ def main():
     else:
         show_matched_secret_on_logs = cfg.get("general_params", {}).get("show_matched_secret_on_logs", False)
 
+    if args.report_format:
+        report_format = args.report_format
+    else:
+        report_format = cfg.get("general_params", {}).get("report_format", False)
+
     scan_arguments = {"scan_comment": scan_comment, "post_comment": post_comment, "secret_manager": secret_manager,
-                      "contact_help": contact_help, "label": label, "show_matched_secret_on_logs": show_matched_secret_on_logs}
+                      "contact_help": contact_help, "label": label, "report_format": report_format,
+                      "show_matched_secret_on_logs": show_matched_secret_on_logs}
     scan(regex_config, controller, scan_arguments)
 
     logging.info("Done!")
