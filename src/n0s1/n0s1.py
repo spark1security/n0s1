@@ -26,7 +26,7 @@ except:
     import n0s1.reporting.report_gitlab as report_gitlab
 
 
-global report_json, report_file, cfg
+global report_json, report_file, cfg, DEBUG
 
 
 def init_argparse() -> argparse.ArgumentParser:
@@ -93,6 +93,12 @@ def init_argparse() -> argparse.ArgumentParser:
         dest="show_matched_secret_on_logs",
         action="store_true",
         help="By default, only a sanitized version of the leak is shwon on logs. This flag makes the actual leaked secret to be displayed on logs. Be extra careful when enabling this flag because you might make the leak worst by sending sensitive info to logs.",
+    )
+    parent_parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help="Debug mode. Warning it may further expose leaked secrets.",
     )
     parent_parser.add_argument(
         "--secret-manager",
@@ -266,6 +272,7 @@ def report_leaked_secret(scan_text_result, controller):
 
 
 def scan_text(regex_config, text):
+    global DEBUG
     match = False
     scan_text_result = {}
     try:
@@ -275,7 +282,9 @@ def scan_text(regex_config, text):
         if matched_regex_config:
             match = True
     except Exception as e:
-        logging.warning(e)
+        if DEBUG:
+            logging.warning(e)
+        pass
 
     return match, scan_text_result
 
@@ -325,7 +334,7 @@ def scan(regex_config, controller, scan_arguments):
 
 
 def main():
-    global report_json, report_file, cfg
+    global report_json, report_file, cfg, DEBUG
 
     logging.basicConfig(level=logging.INFO)
     parser = init_argparse()
@@ -366,6 +375,9 @@ def main():
     controller_factory = platform_controller.factory
     controller = controller_factory.get_platform(command)
 
+    TOKEN = None
+    SERVER = None
+    EMAIL = None
     if command == "linear_scan":
         TOKEN = os.getenv("LINEAR_TOKEN")
         if args.api_key and len(args.api_key) > 0:
@@ -386,6 +398,17 @@ def main():
     else:
         parser.print_help()
         return
+
+    message = f"n0s1 secret scanner version [{n0s1_version}] - Scan date: {date_utc}"
+    logging.info(message)
+    DEBUG = args.debug
+    if DEBUG:
+        message = f"Args: {args}"
+        logging.info(message)
+        message = f"Controller settings: {SERVER} {EMAIL}"
+        if args.show_matched_secret_on_logs:
+            message += f" {TOKEN}"
+        logging.info(message)
 
     if not controller.set_config(controler_config):
         sys.exit(-1)
@@ -427,7 +450,7 @@ def main():
         report_format = cfg.get("general_params", {}).get("report_format", False)
 
     scan_arguments = {"scan_comment": scan_comment, "post_comment": post_comment, "secret_manager": secret_manager,
-                      "contact_help": contact_help, "label": label, "report_format": report_format,
+                      "contact_help": contact_help, "label": label, "report_format": report_format, "debug": DEBUG,
                       "show_matched_secret_on_logs": show_matched_secret_on_logs}
     scan(regex_config, controller, scan_arguments)
 
