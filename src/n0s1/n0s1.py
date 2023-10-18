@@ -98,7 +98,7 @@ def init_argparse() -> argparse.ArgumentParser:
         "--debug",
         dest="debug",
         action="store_true",
-        help="Debug mode. Warning it may further expose leaked secrets.",
+        help="Debug mode. Warning it may further expose sensitive data.",
     )
     parent_parser.add_argument(
         "--secret-manager",
