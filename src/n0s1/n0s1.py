@@ -320,6 +320,8 @@ def scan(regex_config, controller, scan_arguments):
     scan_comment = scan_arguments.get("scan_comment", False)
     post_comment = scan_arguments.get("post_comment", False)
     for title, description, comments, url, issue_id in controller.get_data(scan_comment):
+        if DEBUG:
+            logging.info(f"Scanning [{issue_id}]: {url}")
         ticket_data = {"title": title, "description": description, "comments": comments, "url": url, "issue_id": issue_id}
         label = cfg.get("comment_params", {}).get("label", "")
         post_comment_for_this_issue = post_comment

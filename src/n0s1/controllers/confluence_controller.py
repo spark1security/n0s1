@@ -26,41 +26,56 @@ class ConfluenceControler():
     def get_name(self):
         return "Confluence"
 
-    def get_current_user(self):
+    def _get_request(self, url):
         from requests.auth import HTTPBasicAuth
         import requests
-
-        url = f"{self._url}/wiki/rest/api/user/current"
         response = None
-        if self._user:
-            auth = HTTPBasicAuth(self._user, self._password)
-            headers = {
-                "Content-Type": "application/json"
-            }
-            response = requests.request(
-                "GET",
-                url,
-                headers=headers,
-                auth=auth
-            )
-        else:
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self._password}"
-            }
-            response = requests.request(
-                "GET",
-                url,
-                headers=headers
-            )
+        try:
+            if self._user:
+                auth = HTTPBasicAuth(self._user, self._password)
+                headers = {
+                    "Content-Type": "application/json"
+                }
+                response = requests.request(
+                    "GET",
+                    url,
+                    headers=headers,
+                    auth=auth
+                )
+            else:
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self._password}"
+                }
+                response = requests.request(
+                    "GET",
+                    url,
+                    headers=headers
+                )
+        except Exception as e:
+            logging.info(e)
+        return response
+
+    def get_current_user(self):
+        user = None
+        url = f"{self._url}/rest/api/user/current"
+        response = self._get_request(url)
         if response and response.status_code == 200:
-            return response.json()
+            user = response.json()
+        if user:
+            type = user.get("type", "")
+            if len(type) > 0:
+                return user
+        else:
+            url = f"{self._url}/wiki/rest/api/user/current"
+            response = self._get_request(url)
+            if response and response.status_code == 200:
+                user = response.json()
+            if user:
+                type = user.get("type", "")
+                if len(type) > 0:
+                    return user
         return None
-
-
-
-
-        return "Confluence"
 
     def is_connected(self):
         if self._client:
