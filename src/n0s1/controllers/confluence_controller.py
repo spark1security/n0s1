@@ -136,12 +136,11 @@ class ConfluenceControler():
 
                         for p in pages:
                             comments = []
-                            url = self._url + "/wiki" + p.get("_links", {}).get("webui", "")
                             title = p.get("title", "")
                             page_id = p.get("id", "")
                             body = self._client.get_page_by_id(page_id, expand="body.storage")
                             description = body.get("body", {}).get("storage", {}).get("value", "")
-
+                            url = body.get("_links", {}).get("base") + p.get("_links", {}).get("webui", "")
                             if include_coments:
                                 comments_start = 0
                                 comments_limit = 25
