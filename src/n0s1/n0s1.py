@@ -38,7 +38,7 @@ def init_argparse() -> argparse.ArgumentParser:
     install_path = os.path.dirname(os.path.abspath(__file__))
     parser = argparse.ArgumentParser(
         prog="n0s1",
-        description="""Secret scanner for Project Management platforms such as Jira, Linear and Servicenow.
+        description="""Secret scanner for Project Management platforms such as Jira, Confluence and Linear.
         """,
     )
 
@@ -162,6 +162,31 @@ def init_argparse() -> argparse.ArgumentParser:
         nargs="?",
         type=str,
         help="Jira API key."
+    )
+
+    confluence_scan_parser = subparsers.add_parser(
+        "confluence_scan", help="Scan Confluence pages", parents=[parent_parser]
+    )
+    confluence_scan_parser.add_argument(
+        "--server",
+        dest="server",
+        nargs="?",
+        type=str,
+        help="Confluence base URL (e.g. https://yourcompany.atlassian.net)."
+    )
+    confluence_scan_parser.add_argument(
+        "--email",
+        dest="email",
+        nargs="?",
+        type=str,
+        help="Confluence user email."
+    )
+    confluence_scan_parser.add_argument(
+        "--api-key",
+        dest="api_key",
+        nargs="?",
+        type=str,
+        help="Confluence API key."
     )
     return parser
 
@@ -395,6 +420,25 @@ def main():
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
         controler_config = {"server": SERVER, "email": EMAIL, "token": TOKEN}
+
+    elif command == "confluence_scan":
+        SERVER = os.getenv("CONFLUENCE_SERVER")
+        if not SERVER:
+            SERVER = os.getenv("JIRA_SERVER")
+        EMAIL = os.getenv("CONFLUENCE_EMAIL")
+        if not EMAIL:
+            EMAIL = os.getenv("JIRA_EMAIL")
+        TOKEN = os.getenv("CONFLUENCE_TOKEN")
+        if not TOKEN:
+            TOKEN = os.getenv("JIRA_TOKEN")
+        if args.server and len(args.server) > 0:
+            SERVER = args.server
+        if args.email and len(args.email) > 0:
+            EMAIL = args.email
+        if args.api_key and len(args.api_key) > 0:
+            TOKEN = args.api_key
+        controler_config = {"server": SERVER, "email": EMAIL, "token": TOKEN}
+
     else:
         parser.print_help()
         return

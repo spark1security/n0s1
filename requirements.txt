@@ -2,3 +2,4 @@ requests
 toml
 jira
 pyyaml
+atlassian-python-api
