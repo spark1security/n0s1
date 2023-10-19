@@ -63,8 +63,8 @@ class ConfluenceControler():
         if response and response.status_code == 200:
             user = response.json()
         if user:
-            type = user.get("type", "")
-            if len(type) > 0:
+            user_type = user.get("type", "")
+            if len(user_type) > 0:
                 return user
         else:
             url = f"{self._url}/wiki/rest/api/user/current"
@@ -72,15 +72,13 @@ class ConfluenceControler():
             if response and response.status_code == 200:
                 user = response.json()
             if user:
-                type = user.get("type", "")
-                if len(type) > 0:
+                user_type = user.get("type", "")
+                if len(user_type) > 0:
                     return user
         return None
 
     def is_connected(self):
         if self._client:
-            # Implement GET https://spark1us.atlassian.net/wiki/rest/api/user/current
-            # to get the current logged-in user
             user = self.get_current_user()
             if user:
                 logging.info(f"Logged to {self.get_name()} as {user}")

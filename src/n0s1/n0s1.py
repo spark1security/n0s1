@@ -320,8 +320,7 @@ def scan(regex_config, controller, scan_arguments):
     scan_comment = scan_arguments.get("scan_comment", False)
     post_comment = scan_arguments.get("post_comment", False)
     for title, description, comments, url, issue_id in controller.get_data(scan_comment):
-        if DEBUG:
-            logging.info(f"Scanning [{issue_id}]: {url}")
+        logging.info(f"Scanning [{issue_id}]: {url}")
         ticket_data = {"title": title, "description": description, "comments": comments, "url": url, "issue_id": issue_id}
         label = cfg.get("comment_params", {}).get("label", "")
         post_comment_for_this_issue = post_comment
@@ -389,7 +388,8 @@ def main():
     datetime_now_obj = datetime.now(timezone.utc)
     date_utc = datetime_now_obj.strftime("%Y-%m-%d %H:%M:%S")
     try:
-        init_file = pathlib.Path("__init__.py")
+        here = pathlib.Path(__file__).parent.resolve()
+        init_file = pathlib.Path(here / "__init__.py")
         n0s1_version = re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', init_file.read_text(), re.M).group(1)
     except:
         n0s1_version = "0.0.1"
