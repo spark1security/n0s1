@@ -498,6 +498,10 @@ def main():
     scan_arguments = {"scan_comment": scan_comment, "post_comment": post_comment, "secret_manager": secret_manager,
                       "contact_help": contact_help, "label": label, "report_format": report_format, "debug": DEBUG,
                       "show_matched_secret_on_logs": show_matched_secret_on_logs}
+
+    # Create an empty report
+    scan_text_result = {"scan_arguments": scan_arguments}
+    _save_report(scan_text_result)
     scan(regex_config, controller, scan_arguments)
 
     logging.info("Done!")
