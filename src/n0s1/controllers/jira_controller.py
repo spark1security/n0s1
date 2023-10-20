@@ -56,6 +56,7 @@ class JiraControler():
             return None, None, None, None, None
         for key in self._client.projects():
             ql = f"project = {key}"
+            logging.info(f"Scanning Jira project: [{key}]...")
             for issue in self._client.search_issues(ql):
                 url = issue.self.split('/rest/api')[0] + "/browse/" + issue.key;
                 title = issue.fields.summary

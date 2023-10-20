@@ -235,10 +235,26 @@ def _save_report(scan_text_result):
     return False
 
 
+def _safe_re_search(regex_str, text):
+    global DEBUG
+    m = None
+    try:
+        m = re.search(regex_str, text)
+    except:
+        try:
+            regex_str = regex_str.replace("(?i)", "")
+            m = re.search(regex_str, text, re.IGNORECASE)
+        except Exception as e:
+            if DEBUG:
+                logging.info(e)
+            pass
+    return m
+
+
 def match_regex(regex_config, text):
     for c in regex_config["rules"]:
         regex_str = c["regex"]
-        m = re.search(regex_str, text)
+        m = _safe_re_search(regex_str, text)
         if m:
             begin = m.regs[0][0]
             end = m.regs[0][1]
@@ -315,12 +331,14 @@ def scan_text(regex_config, text):
 
 
 def scan(regex_config, controller, scan_arguments):
+    global DEBUG
     if not regex_config or not controller:
         return
     scan_comment = scan_arguments.get("scan_comment", False)
     post_comment = scan_arguments.get("post_comment", False)
     for title, description, comments, url, issue_id in controller.get_data(scan_comment):
-        logging.info(f"Scanning [{issue_id}]: {url}")
+        if DEBUG:
+            logging.info(f"Scanning [{issue_id}]: {url}")
         ticket_data = {"title": title, "description": description, "comments": comments, "url": url, "issue_id": issue_id}
         label = cfg.get("comment_params", {}).get("label", "")
         post_comment_for_this_issue = post_comment

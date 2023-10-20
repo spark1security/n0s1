@@ -125,6 +125,7 @@ class ConfluenceControler():
 
             for s in spaces:
                 key = s.get("key", "")
+                logging.info(f"Scanning Confluence space: [{key}]...")
                 if len(key) > 0:
                     pages_start = 0
                     pages_limit = 50
