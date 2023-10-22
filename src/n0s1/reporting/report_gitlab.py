@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 class GitlabDASTReport:
     def __init__(self, n0s1_data=None):
         datetime_now_obj = datetime.now(timezone.utc)
-        date_now = datetime_now_obj.strftime("%Y-%m-%d %H:%M:%S")
+        date_now = datetime_now_obj.strftime("%Y-%m-%dT%H:%M:%S")
         start_date = n0s1_data.get("scan_date", {}).get("date_utc", "")
         tool_name = n0s1_data.get("tool", {}).get("name", "")
         tool_version = n0s1_data.get("tool", {}).get("version", "")
@@ -83,13 +83,14 @@ class GitlabDASTReport:
                 match_id = match.get("id", "")
                 match_description = match.get("description", "")
 
-                finding_message = f"Potential Secret Leak on {platform} {field}"
+                secret = secret.replace("<REDACTED>", "xxxxxxxxxxxx")
+
+                finding_message = f"Potential Secret Leak on {platform} {field}."
                 solution = f"\nPlease verify the {platform} ticket and conduct a thorough search for any sensitive data. If a data leak is confirmed, proceed to rotate the data and eliminate any sensitive information from the ticket. Ticket URL: {url}"
 
                 message = finding_message
-                message += f"\nDetails:\nSensitive data type: [{match_id}] - Description: [{match_description}]\nPlatform: [{platform}] - Field: [ticket {field}]\nSource: {url}"
-                message += f"\n000000000000000 Sensitive data found (redacted) 000000000000000\n{secret}\n000000000000000 Sensitive data found (redacted) 000000000000000"
-                finding_description = message.replace("<REDACTED>", "xxxxxxxxxxxx")
+                message += f"\nSensitive data type: [{match_id}] - Sensitive data description: [{match_description}] - Platform: [{platform}] - Field: [ticket {field}] - Source: {url}"
+                finding_description = message
 
                 severity = "Info"
                 identifiers_name = match_description
@@ -97,12 +98,18 @@ class GitlabDASTReport:
 
                 self.vulns.append(
                     {
+                        "id": finding_instance_id,
                         "description": finding_description,
                         "details": {
                             "discovered_at": {
-                                "name": "Discovered at",
+                                "name": "Discovered at:",
                                 "type": "text",
-                                "value": "__REMOVED__"
+                                "value": f"{field} field on {platform}"
+                            },
+                            "sanitized_secret": {
+                                "name": "Sensitive data found (redacted):",
+                                "type": "text",
+                                "value": f"[{secret}]"
                             },
                             "urls": {
                                 "items": [{"href": url, "type": "url"}],
@@ -112,7 +119,7 @@ class GitlabDASTReport:
                         },
                         "evidence": {
                             "summary": (
-                                f"Evidence of potential leaked secret: {secret}"
+                                f"Potential leaked secret (sanitized): [{secret}]"
                             ),
                             "request": {
                                 "headers": [],
@@ -127,13 +134,16 @@ class GitlabDASTReport:
                         },
                         "identifiers": [
                             {
-                                "type": "n0s1",
+                                "type": "regex",
                                 "name": identifiers_name,
-                                "url": "https://spark1.us/n0s1",
+                                "url": "https://github.com/spark1security/n0s1/blob/main/src/n0s1/config/regex.toml",
                                 "value": identifiers_value
                             }
                         ],
-                        "links": [{"name": "source", "url": url}],
+                        "links": [
+                            {"name": f"{platform} {field}", "url": url},
+                            {"name": "Documentation - n0s1 Secret Scanner", "url": "https://spark1.us/n0s1"},
+                        ],
                         "location": {
                             "hostname": url,
                             "method": "",

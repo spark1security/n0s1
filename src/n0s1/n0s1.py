@@ -404,7 +404,7 @@ def main():
         logging.warning(f"Config file [{args.config_file}] not found!")
 
     datetime_now_obj = datetime.now(timezone.utc)
-    date_utc = datetime_now_obj.strftime("%Y-%m-%d %H:%M:%S")
+    date_utc = datetime_now_obj.strftime("%Y-%m-%dT%H:%M:%S")
     try:
         here = pathlib.Path(__file__).parent.resolve()
         init_file = pathlib.Path(here / "__init__.py")
