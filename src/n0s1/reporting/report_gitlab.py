@@ -4,22 +4,54 @@ import json
 import logging
 import os
 import sys
+from datetime import datetime, timezone
 
 
 class GitlabDASTReport:
     def __init__(self, n0s1_data=None):
+        datetime_now_obj = datetime.now(timezone.utc)
+        date_now = datetime_now_obj.strftime("%Y-%m-%dT%H:%M:%S")
+        start_date = n0s1_data.get("scan_date", {}).get("date_utc", "")
         tool_name = n0s1_data.get("tool", {}).get("name", "")
         tool_version = n0s1_data.get("tool", {}).get("version", "")
         prvd = n0s1_data.get("tool", {}).get("author", "")
+        scan_target = n0s1_data.get("tool", {}).get("scan_arguments", {}).get("scan_target", "")
+        label = n0s1_data.get("tool", {}).get("scan_arguments", {}).get("label", "")
+        contact_help = n0s1_data.get("tool", {}).get("scan_arguments", {}).get("contact_help", "")
+        report_format = n0s1_data.get("tool", {}).get("scan_arguments", {}).get("report_format", "")
         self.vulns: list[dict] = []
         self.report = {
-            "version": "14.1.2",
+            "version": "15.0.6",
             "vulnerabilities": self.vulns,
+            "remediations": [],
             "scan": {
-                "start_time": "2000-01-01T00:00:00",
-                "end_time": "2000-01-01T00:30:00",
-                "status": "success",
-                "type": "dast",
+                "analyzer": {
+                    "id": tool_name,
+                    "name": f"{tool_name} secret scanner by {prvd} - version: [{tool_version}]",
+                    "vendor": {"name": prvd},
+                    "version": tool_version
+                },
+                "end_time": date_now,
+                "messages": [],
+                "options": [
+                    {
+                        "name": "scan_target",
+                        "value": scan_target
+                    },
+                    {
+                        "name": "label",
+                        "value": label
+                    },
+                    {
+                        "name": "contact_help",
+                        "value": contact_help
+                    },
+                    {
+                        "name": "report_format",
+                        "value": report_format
+                    }
+                ],
+                "scanned_resources": [],
                 "scanner": {
                     "id": tool_name,
                     "name": f"{tool_name} secret scanner by {prvd} - version: [{tool_version}]",
@@ -29,6 +61,9 @@ class GitlabDASTReport:
                         "name": prvd,
                     },
                 },
+                "start_time": start_date,
+                "status": "success",
+                "type": "dast",
             },
         }
         if n0s1_data:
@@ -48,13 +83,14 @@ class GitlabDASTReport:
                 match_id = match.get("id", "")
                 match_description = match.get("description", "")
 
-                finding_message = f"Potential Secret Leak on {platform} {field}"
+                secret = secret.replace("<REDACTED>", "xxxxxxxxxxxx")
+
+                finding_message = f"Potential Secret Leak on {platform} {field}."
                 solution = f"\nPlease verify the {platform} ticket and conduct a thorough search for any sensitive data. If a data leak is confirmed, proceed to rotate the data and eliminate any sensitive information from the ticket. Ticket URL: {url}"
 
                 message = finding_message
-                message += f"\nDetails:\nSensitive data type: [{match_id}] - Description: [{match_description}]\nPlatform: [{platform}] - Field: [ticket {field}]\nSource: {url}"
-                message += f"\n000000000000000 Sensitive data found (redacted) 000000000000000\n{secret}\n000000000000000 Sensitive data found (redacted) 000000000000000"
-                finding_description = message.replace("<REDACTED>", "xxxxxxxxxxxx")
+                message += f"\nSensitive data type: [{match_id}] - Sensitive data description: [{match_description}] - Platform: [{platform}] - Field: [ticket {field}] - Source: {url}"
+                finding_description = message
 
                 severity = "Info"
                 identifiers_name = match_description
@@ -63,54 +99,60 @@ class GitlabDASTReport:
                 self.vulns.append(
                     {
                         "id": finding_instance_id,
-                        "category": "dast",
-                        "name": finding_message,
-                        "cve": "",
                         "description": finding_description,
-                        "solution": solution,
-                        "evidence": {
-                            "source": {
-                                "id": "assert:Intel",
-                                "name": "n0s1 regex match"
+                        "details": {
+                            "discovered_at": {
+                                "name": "Discovered at:",
+                                "type": "text",
+                                "value": f"{field} field on {platform}"
                             },
+                            "sanitized_secret": {
+                                "name": "Sensitive data found (redacted):",
+                                "type": "text",
+                                "value": f"[{secret}]"
+                            },
+                            "urls": {
+                                "items": [{"href": url, "type": "url"}],
+                                "name": "URLs",
+                                "type": "list"
+                            }
+                        },
+                        "evidence": {
                             "summary": (
-                                f"Evidence is supplied in form of n0s1 regex "
-                                "match in the response output below."
+                                f"Potential leaked secret (sanitized): [{secret}]"
                             ),
                             "request": {
                                 "headers": [],
-                                "method": "Procedure",
-                                "body": "",
+                                "method": "GET",
                                 "url": url
                             },
                             "response": {
                                 "headers": [],
                                 "reason_phrase": "OK",
                                 "status_code": 200,
-                                "body": secret,
                             },
-                        },
-                        "severity": severity,
-                        "confidence": "low",
-                        "scanner": {
-                            "id": "n0s1",
-                            "name": "n0s1",
                         },
                         "identifiers": [
                             {
-                                "type": "n0s1",
+                                "type": "regex",
                                 "name": identifiers_name,
-                                "url": "https://spark1.us/n0s1",
+                                "url": "https://github.com/spark1security/n0s1/blob/main/src/n0s1/config/regex.toml",
                                 "value": identifiers_value
                             }
                         ],
-                        "links": [url],
+                        "links": [
+                            {"name": f"{platform} {field}", "url": url},
+                            {"name": "Documentation - n0s1 Secret Scanner", "url": "https://spark1.us/n0s1"},
+                        ],
                         "location": {
                             "hostname": url,
                             "method": "",
                             "param": "",
                             "path": "",
-                        }
+                        },
+                        "name": finding_message,
+                        "severity": severity,
+                        "solution": solution
                     }
                 )
             except KeyError:
