@@ -55,7 +55,7 @@ jobs:
 GitLab CI - Add the following job to your .gitlab-ci.yml file:
 ```yaml
 jira-scan:
-  stage: dast
+  stage: test
   image:
     name: spark1security/n0s1
     entrypoint: [""]

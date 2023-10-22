@@ -412,7 +412,7 @@ def main():
     except:
         n0s1_version = "0.0.1"
     report_json = {"tool": {"name": "n0s1", "version": n0s1_version, "author": "Spark 1 Security"},
-                   "scan_date": {"timestamp": datetime_now_obj.timestamp(),"date_utc": date_utc},
+                   "scan_date": {"timestamp": datetime_now_obj.timestamp(), "date_utc": date_utc},
                    "regex_config": regex_config, "findings": {}}
     report_file = args.report_file
 
@@ -515,7 +515,8 @@ def main():
 
     scan_arguments = {"scan_comment": scan_comment, "post_comment": post_comment, "secret_manager": secret_manager,
                       "contact_help": contact_help, "label": label, "report_format": report_format, "debug": DEBUG,
-                      "show_matched_secret_on_logs": show_matched_secret_on_logs}
+                      "show_matched_secret_on_logs": show_matched_secret_on_logs, "scan_target": command}
+    report_json["tool"]["scan_arguments"] = scan_arguments
 
     # Create an empty report
     scan_text_result = {"scan_arguments": scan_arguments}
