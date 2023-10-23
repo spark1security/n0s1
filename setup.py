@@ -25,7 +25,7 @@ def get_version():
 setup(
     name="n0s1",
     version=get_version(),
-    description="n0s1 is a secret scanner for Project Management and Issue Tracker tools such as Jira and Linear.",
+    description="Secret Scanner for Jira, Confluence and Linear. Prevent credential leaks with n0s1.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://spark1.us/n0s1",
@@ -71,7 +71,7 @@ setup(
                   },
 
     project_urls={"Bug Reports": "https://github.com/spark1security/n0s1/issues",
-                  "Funding": "https://www.spark1.us",
+                  "Funding": "https://gofund.me/c6a0520c",
                   "Source": "https://github.com/spark1security/n0s1",
                   },
 )
