@@ -48,7 +48,7 @@ class LinearGraphQLClient(http_client.HttpClient):
         uri: str = None,
     ) -> None:
         if not uri:
-            uri = "https://api.linear.app/graphql"
+            uri = "https://api.linear.app"
         super().__init__(headers, logging, uri)
         self._user = None
 

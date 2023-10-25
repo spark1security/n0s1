@@ -16,7 +16,9 @@ class HttpClient:
         self.headers = headers
         self.logging = logging
 
-    def _delete_request(self, url: str, params: dict = None, headers: dict = None, data=None) -> Response:
+    def _delete_request(self, url: str = None, params: dict = None, headers: dict = None, data=None) -> Response:
+        if url is None or len(url) <= 0:
+            url = self.uri
         if headers:
             response = requests.delete(
                 url,
@@ -37,7 +39,9 @@ class HttpClient:
         self.logging.debug(response.text)
         return response
 
-    def _get_request(self, url: str, params: dict = None, headers: dict = None, data=None, timeout=None) -> Response:
+    def _get_request(self, url: str = None, params: dict = None, headers: dict = None, data=None, timeout=None) -> Response:
+        if url is None or len(url) <= 0:
+            url = self.uri
         if headers:
             response = requests.get(
                 url,
@@ -61,8 +65,10 @@ class HttpClient:
         return response
 
     def _post_request(
-        self, url: str, params: dict = None, headers: dict = None, data=None, json: dict = None
+        self, url: str = None, params: dict = None, headers: dict = None, data=None, json: dict = None
     ) -> Response:
+        if url is None or len(url) <= 0:
+            url = self.uri
         if headers:
             response = requests.post(
                 url,
@@ -82,7 +88,9 @@ class HttpClient:
         self.logging.debug(response.text)
         return response
 
-    def _put_request(self, url: str, params: dict = None, headers: dict = None, data=None) -> Response:
+    def _put_request(self, url: str = None, params: dict = None, headers: dict = None, data=None) -> Response:
+        if url is None or len(url) <= 0:
+            url = self.uri
         if headers:
             response = requests.put(
                 url,
