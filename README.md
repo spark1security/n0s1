@@ -1,3 +1,16 @@
+<div align="center">
+<img src="docs/imgs/logo.png" width="200">
+
+
+[![License: Apache-2.0][license-img]][license]
+[![GitHub Downloads][github-downloads-img]][release]
+![Docker Pulls][docker-pulls]
+
+[🏠 Homepage][homepage]
+[📖 Documentation][docs]
+</div>
+
+
 # n0s1 - Secret Scanner
 n0s1 ([pronunciation](https://en.wiktionary.org/wiki/nosy#Pronunciation)) is a secret scanner for Jira, Confluence and Linear.app. It scans all tickets/items/issues within the chosen platform in search of any leaked secrets in the titles, bodies, and comments. It is open-source and it can be easily extended to support scanning many others Project Management and Issue Tracker platforms.
 
@@ -14,8 +27,6 @@ These secrets are identified by comparing them against an adaptable configuratio
 * [Jira](https://www.atlassian.com/software/jira)
 * [Confluence](https://www.atlassian.com/software/confluence)
 * [Linear](https://linear.app/)
-
-[📖 Documentation](https://spark1.us/n0s1)
 
 ### Quick Start
 [CLI:](https://pypi.org/project/n0s1/)
@@ -85,3 +96,16 @@ If you'd like to contact Spark 1 or request a demo, please use the [free consult
 n0s1 is a [Spark 1](https://spark1.us) open source project.  
 Learn about our open source work and portfolio [here](https://spark1.us/n0s1).  
 Contact us about any matter by opening a GitHub Discussion [here](https://github.com/spark1security/n0s1/issues)
+
+
+
+[docker-pulls]: https://img.shields.io/docker/pulls/spark1security/n0s1?logo=docker&label=docker%20pulls%20%2F%20n0s1
+[release]: https://github.com/spark1security/n0s1/releases
+[github-downloads-img]: https://img.shields.io/github/downloads/spark1security/n0s1/total?logo=github
+[license]: https://github.com/spark1security/n0s1/blob/main/LICENSE
+[license-img]: https://img.shields.io/badge/license-GPLv3-blue
+[homepage]: https://spark1.us/n0s1
+[docs]: https://docs.google.com/document/d/1p8L2dOdCwcIphMprtnewCoKOy9VeQFcC9ZIsLUWs_xE/edit?usp=sharing
+
+
+
