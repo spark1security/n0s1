@@ -1,7 +1,7 @@
 <div align="center">
 <img src="docs/imgs/logo.png" width="200">
 
-
+[![GitHub Release][release-img]][release]
 [![License: Apache-2.0][license-img]][license]
 [![GitHub Downloads][github-downloads-img]][release]
 ![Docker Pulls][docker-pulls]
@@ -101,6 +101,7 @@ Contact us about any matter by opening a GitHub Discussion [here](https://github
 
 [docker-pulls]: https://img.shields.io/docker/pulls/spark1security/n0s1?logo=docker&label=docker%20pulls%20%2F%20n0s1
 [release]: https://github.com/spark1security/n0s1/releases
+[release-img]: https://img.shields.io/github/v/release/spark1security/n0s1.svg?logo=github
 [github-downloads-img]: https://img.shields.io/github/downloads/spark1security/n0s1/total?logo=github
 [license]: https://github.com/spark1security/n0s1/blob/main/LICENSE
 [license-img]: https://img.shields.io/badge/license-GPLv3-blue
