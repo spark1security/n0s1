@@ -211,10 +211,8 @@ def _sha1_hash(to_hash):
         raise "Unable to generate SHA-1 hash for input string"
 
 
-def _save_report(scan_text_result):
+def _save_report(report_format=""):
     global report_json, report_file
-
-    report_format = scan_text_result.get("scan_arguments", {}).get("report_format", "n0s1")
 
     try:
         if report_format.lower().find("sarif".lower()) != -1:
@@ -295,7 +293,6 @@ def report_leaked_secret(scan_text_result, controller):
                    "details": {"matched_regex_config": scan_text_result["matched_regex_config"], "platform": platform, "ticket_field": field}}
     if finding_id not in report_json["findings"]:
         report_json["findings"][finding_id] = new_finding
-        _save_report(scan_text_result)
     if post_comment:
         comment_template = cfg.get("comment_params", {}).get("message_template", "")
         bot_name = cfg.get("comment_params", {}).get("bot_name", "bot")
@@ -511,17 +508,15 @@ def main():
     if args.report_format:
         report_format = args.report_format
     else:
-        report_format = cfg.get("general_params", {}).get("report_format", False)
+        report_format = cfg.get("general_params", {}).get("report_format", "n0s1")
 
     scan_arguments = {"scan_comment": scan_comment, "post_comment": post_comment, "secret_manager": secret_manager,
                       "contact_help": contact_help, "label": label, "report_format": report_format, "debug": DEBUG,
                       "show_matched_secret_on_logs": show_matched_secret_on_logs, "scan_target": command}
     report_json["tool"]["scan_arguments"] = scan_arguments
 
-    # Create an empty report
-    scan_text_result = {"scan_arguments": scan_arguments}
-    _save_report(scan_text_result)
     scan(regex_config, controller, scan_arguments)
+    _save_report(report_format)
 
     logging.info("Done!")
 
