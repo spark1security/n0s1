@@ -1,9 +1,8 @@
 <div align="center">
-<img src="docs/imgs/logo.png" width="200">
+<img src="https://raw.githubusercontent.com/spark1security/n0s1/main/docs/imgs/logo.png" width="200">
 
 [![GitHub Release][release-img]][release]
 [![License: Apache-2.0][license-img]][license]
-[![GitHub Downloads][github-downloads-img]][release]
 ![Docker Pulls][docker-pulls]
 
 [🏠 Homepage][homepage]
