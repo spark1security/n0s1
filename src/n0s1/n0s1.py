@@ -25,7 +25,6 @@ try:
 except:
     import n0s1.reporting.report_gitlab as report_gitlab
 
-
 global report_json, report_file, cfg, DEBUG
 
 
@@ -193,9 +192,9 @@ def init_argparse() -> argparse.ArgumentParser:
 
 def _sanitize_text(text, begin, end):
     text_len = len(text)
-    s_begin = max(begin-20, 0)
-    s_end = min(end+20, text_len)
-    sanitized_text = text[s_begin:begin] + "<REDACTED>" + text[end:s_end]
+    s_begin = max(begin - 20, 0)
+    s_end = min(end + 20, text_len)
+    sanitized_text = f"{text[s_begin:begin]}<REDACTED>{text[end:s_end]}"
     snippet_text = text[s_begin:s_end]
     return sanitized_text, snippet_text
 
@@ -207,8 +206,8 @@ def _sha1_hash(to_hash):
         byte_m = bytes(string_m, encoding='utf')
         message_digest.update(byte_m)
         return message_digest.hexdigest()
-    except TypeError:
-        raise "Unable to generate SHA-1 hash for input string"
+    except TypeError as e:
+        raise "Unable to generate SHA-1 hash for input string" from e
 
 
 def _save_report(report_format=""):
@@ -238,22 +237,20 @@ def _safe_re_search(regex_str, text):
     m = None
     try:
         m = re.search(regex_str, text)
-    except:
+    except Exception:
         try:
             regex_str = regex_str.replace("(?i)", "")
             m = re.search(regex_str, text, re.IGNORECASE)
         except Exception as e:
             if DEBUG:
                 logging.info(e)
-            pass
     return m
 
 
 def match_regex(regex_config, text):
     for c in regex_config["rules"]:
         regex_str = c["regex"]
-        m = _safe_re_search(regex_str, text)
-        if m:
+        if m := _safe_re_search(regex_str, text):
             begin = m.regs[0][0]
             end = m.regs[0][1]
             matched_text = text[begin:end]
@@ -284,13 +281,15 @@ def report_leaked_secret(scan_text_result, controller):
     logging.info("\nPotential secret leak regex match!")
     logging.info(finding_info)
     if show_matched_secret_on_logs:
-        logging.info(f"\n##################### Secret  #####################\n{snippet_text}\n##################### Secret  #####################")
+        logging.info(
+            f"\n##################### Secret  #####################\n{snippet_text}\n##################### Secret  #####################")
     logging.info(f"\nLeak source: {url}")
     logging.info("\n\n")
-    finding_id = url + "_" + sanitized_secret
+    finding_id = f"{url}_{sanitized_secret}"
     finding_id = _sha1_hash(finding_id)
     new_finding = {"id": finding_id, "url": url, "secret": sanitized_secret,
-                   "details": {"matched_regex_config": scan_text_result["matched_regex_config"], "platform": platform, "ticket_field": field}}
+                   "details": {"matched_regex_config": scan_text_result["matched_regex_config"], "platform": platform,
+                               "ticket_field": field}}
     if finding_id not in report_json["findings"]:
         report_json["findings"][finding_id] = new_finding
     if post_comment:
@@ -322,8 +321,6 @@ def scan_text(regex_config, text):
     except Exception as e:
         if DEBUG:
             logging.warning(e)
-        pass
-
     return match, scan_text_result
 
 
@@ -336,7 +333,8 @@ def scan(regex_config, controller, scan_arguments):
     for title, description, comments, url, issue_id in controller.get_data(scan_comment):
         if DEBUG:
             logging.info(f"Scanning [{issue_id}]: {url}")
-        ticket_data = {"title": title, "description": description, "comments": comments, "url": url, "issue_id": issue_id}
+        ticket_data = {"title": title, "description": description, "comments": comments, "url": url,
+                       "issue_id": issue_id}
         label = cfg.get("comment_params", {}).get("label", "")
         post_comment_for_this_issue = post_comment
         if post_comment_for_this_issue:
@@ -406,7 +404,7 @@ def main():
         here = pathlib.Path(__file__).parent.resolve()
         init_file = pathlib.Path(here / "__init__.py")
         n0s1_version = re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', init_file.read_text(), re.M).group(1)
-    except:
+    except Exception:
         n0s1_version = "0.0.1"
     report_json = {"tool": {"name": "n0s1", "version": n0s1_version, "author": "Spark 1 Security"},
                    "scan_date": {"timestamp": datetime_now_obj.timestamp(), "date_utc": date_utc},

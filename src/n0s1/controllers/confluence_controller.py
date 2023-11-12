@@ -57,11 +57,9 @@ class ConfluenceControler():
         return response
 
     def get_current_user(self):
-        user = None
         url = f"{self._url}/rest/api/user/current"
         response = self._get_request(url)
-        if response and response.status_code == 200:
-            user = response.json()
+        user = response.json() if response and response.status_code == 200 else None
         if user:
             user_type = user.get("type", "")
             if len(user_type) > 0:
@@ -79,16 +77,13 @@ class ConfluenceControler():
 
     def is_connected(self):
         if self._client:
-            user = self.get_current_user()
-            if user:
+            if user := self.get_current_user():
                 logging.info(f"Logged to {self.get_name()} as {user}")
             else:
                 logging.error(f"Unable to connect to {self.get_name()} instance. Check your credentials.")
                 return False
 
-            spaces = self._client.get_all_spaces()
-
-            if spaces:
+            if spaces := self._client.get_all_spaces():
                 space_found = False
                 page_found = False
                 for s in spaces.get("results", []):
@@ -148,8 +143,8 @@ class ConfluenceControler():
                                 comments_finished = False
                                 while not comments_finished:
                                     comments_response = self._client.get_page_comments(page_id, expand="body.storage",
-                                                                                     start=comments_start,
-                                                                                     limit=comments_limit)
+                                                                                       start=comments_start,
+                                                                                       limit=comments_limit)
                                     comments_start = comments_limit
                                     comments_limit += comments_start
                                     comments_result = comments_response.get("results", [])
@@ -174,9 +169,6 @@ class ConfluenceControler():
             return False
         comment = comment.replace("#", "0")
         comment = html.escape(comment, quote=True)
-        comment_status = self._client.add_comment(issue, comment)
-        if comment_status:
+        if comment_status := self._client.add_comment(issue, comment):
             status = comment_status.get("id", "")
-        if int(status) > 0:
-            return True
-        return False
+        return int(status) > 0

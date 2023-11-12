@@ -27,11 +27,10 @@ class LinearControler():
 
     def is_connected(self):
         if self._client:
-            user = self._client.get_curret_user()
-            if user:
+            if user := self._client.get_curret_user():
                 logging.info(f"Logged to Linear as {user}")
             else:
-                logging.error(f"Unable to connect to Linear instance. Check your credentials.")
+                logging.error("Unable to connect to Linear instance. Check your credentials.")
                 return False
 
             query = {"query": "{ issues { nodes { id } } }", "variables": {}}
@@ -42,9 +41,9 @@ class LinearControler():
                 if len(issues) > 0:
                     return True
                 else:
-                    logging.error(f"Unable to list Linear issues. Check your permissions.")
+                    logging.error("Unable to list Linear issues. Check your permissions.")
             else:
-                logging.error(f"Unable to connect to Linear instance. Check your credentials.")
+                logging.error("Unable to connect to Linear instance. Check your credentials.")
         return False
 
     def get_data(self, include_coments=False):

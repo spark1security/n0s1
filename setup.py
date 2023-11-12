@@ -19,7 +19,9 @@ with open(here / "requirements.txt") as fp:
 
 def get_version():
     file = here / "src/n0s1/__init__.py"
-    return re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', file.read_text(), re.M).group(1)
+    return re.search(
+        r'^__version__ = [\'"]([^\'"]*)[\'"]', file.read_text(), re.M
+    )[1]
 
 
 setup(

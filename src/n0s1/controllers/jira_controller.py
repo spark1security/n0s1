@@ -21,16 +21,13 @@ class JiraControler():
 
     def is_connected(self):
         if self._client:
-            user = self._client.myself()
-            if user:
+            if user := self._client.myself():
                 logging.info(f"Logged to {self.get_name()} as {user}")
             else:
                 logging.error(f"Unable to connect to {self.get_name()} instance. Check your credentials.")
                 return False
 
-            projects = self._client.projects()
-
-            if projects:
+            if projects := self._client.projects():
                 project_found = False
                 issue_found = False
                 for key in projects:
@@ -64,8 +61,7 @@ class JiraControler():
                 comments = []
                 if include_coments:
                     issue_comments = self._client.comments(issue.id)
-                    for c in issue_comments:
-                        comments.append(c.body)
+                    comments.extend(c.body for c in issue_comments)
                 yield title, description, comments, url, issue.key
 
     def post_comment(self, issue, comment):
@@ -74,6 +70,4 @@ class JiraControler():
         comment = comment.replace("#", "0")
         comment_status = self._client.add_comment(issue, body=comment)
         status = comment_status.id
-        if status and len(status) > 0 and int(status) > 0:
-            return True
-        return False
+        return bool(status and len(status) > 0 and int(status) > 0)
