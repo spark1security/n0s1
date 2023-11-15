@@ -42,14 +42,15 @@ setup(
                  "Topic :: System :: Monitoring",
                  "Topic :: Utilities",
                  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-                 "Programming Language :: Python :: 3.7",
                  "Programming Language :: Python :: 3.8",
                  "Programming Language :: Python :: 3.9",
+                 "Programming Language :: Python :: 3.10",
+                 "Programming Language :: Python :: 3.11",
                  ],  # Classifiers help users find your project by categorizing it https://pypi.org/classifiers/
     keywords="security, cybersecurity, scanner, secret scanner, secret leak, data leak, Jira, Linear, security scanner",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
-    python_requires=">=3.7, <4",
+    python_requires=">=3.8, <4",
 
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html

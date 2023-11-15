@@ -1,0 +1,2587 @@
+source: https://raw.githubusercontent.com/gitleaks/gitleaks/master/config/gitleaks.toml
+conversion: https://www.convertsimple.com/convert-toml-to-yaml
+title: gitleaks config
+allowlist:
+  description: global allow lists
+  paths:
+    - gitleaks.toml
+    - >-
+      (.*?)(jpg|gif|doc|docx|zip|xls|pdf|bin|svg|socket|vsidx|v2|suo|wsuo|.dll|pdb|exe)$
+    - (go.mod|go.sum)$
+    - gradle.lockfile
+    - node_modules
+    - package-lock.json
+    - yarn.lock
+    - pnpm-lock.yaml
+    - Database.refactorlog
+    - vendor
+rules:
+  - id: adafruit-api-key
+    description: Adafruit API Key
+    regex: >-
+      (?i)(?:adafruit)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9_-]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - adafruit
+  - id: adobe-client-id
+    description: Adobe Client ID (OAuth Web)
+    regex: >-
+      (?i)(?:adobe)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-f0-9]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - adobe
+  - id: adobe-client-secret
+    description: Adobe Client Secret
+    regex: '(?i)\b((p8e-)(?i)[a-z0-9]{32})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - p8e-
+  - id: age secret key
+    description: Age secret key
+    regex: 'AGE-SECRET-KEY-1[QPZRY9X8GF2TVDW0S3JN54KHCE6MUA7L]{58}'
+    keywords:
+      - age-secret-key-1
+  - id: airtable-api-key
+    description: Airtable API Key
+    regex: >-
+      (?i)(?:airtable)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{17})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - airtable
+  - id: algolia-api-key
+    description: Algolia API Key
+    regex: >-
+      (?i)(?:algolia)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - algolia
+  - id: alibaba-access-key-id
+    description: Alibaba AccessKey ID
+    regex: '(?i)\b((LTAI)(?i)[a-z0-9]{20})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - ltai
+  - id: alibaba-secret-key
+    description: Alibaba Secret Key
+    regex: >-
+      (?i)(?:alibaba)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{30})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - alibaba
+  - id: asana-client-id
+    description: Asana Client ID
+    regex: >-
+      (?i)(?:asana)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([0-9]{16})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - asana
+  - id: asana-client-secret
+    description: Asana Client Secret
+    regex: >-
+      (?i)(?:asana)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - asana
+  - id: atlassian-api-token
+    description: Atlassian API token
+    regex: >-
+      (?i)(?:atlassian|confluence|jira)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{24})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - atlassian
+      - confluence
+      - jira
+  - id: authress-service-client-access-key
+    description: Authress Service Client Access Key
+    regex: >-
+      (?i)\b((?:sc|ext|scauth|authress)_[a-z0-9]{5,30}\.[a-z0-9]{4,6}\.acc[_-][a-z0-9-]{10,32}\.[a-z0-9+/_=-]{30,120})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - sc_
+      - ext_
+      - scauth_
+      - authress_
+  - id: aws-access-token
+    description: AWS
+    regex: '(?:A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'
+    keywords:
+      - akia
+      - agpa
+      - aida
+      - aroa
+      - aipa
+      - anpa
+      - anva
+      - asia
+  - id: beamer-api-token
+    description: Beamer API token
+    regex: >-
+      (?i)(?:beamer)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(b_[a-z0-9=_\-]{44})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - beamer
+  - id: bitbucket-client-id
+    description: Bitbucket Client ID
+    regex: >-
+      (?i)(?:bitbucket)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - bitbucket
+  - id: bitbucket-client-secret
+    description: Bitbucket Client Secret
+    regex: >-
+      (?i)(?:bitbucket)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9=_\-]{64})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - bitbucket
+  - id: bittrex-access-key
+    description: Bittrex Access Key
+    regex: >-
+      (?i)(?:bittrex)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - bittrex
+  - id: bittrex-secret-key
+    description: Bittrex Secret Key
+    regex: >-
+      (?i)(?:bittrex)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - bittrex
+  - id: clojars-api-token
+    description: Clojars API token
+    regex: '(?i)(CLOJARS_)[a-z0-9]{60}'
+    keywords:
+      - clojars
+  - id: codecov-access-token
+    description: Codecov Access Token
+    regex: >-
+      (?i)(?:codecov)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - codecov
+  - id: coinbase-access-token
+    description: Coinbase Access Token
+    regex: >-
+      (?i)(?:coinbase)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9_-]{64})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - coinbase
+  - id: confluent-access-token
+    description: Confluent Access Token
+    regex: >-
+      (?i)(?:confluent)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{16})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - confluent
+  - id: confluent-secret-key
+    description: Confluent Secret Key
+    regex: >-
+      (?i)(?:confluent)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{64})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - confluent
+  - id: contentful-delivery-api-token
+    description: Contentful delivery API token
+    regex: >-
+      (?i)(?:contentful)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9=_\-]{43})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - contentful
+  - id: databricks-api-token
+    description: Databricks API token
+    regex: '(?i)\b(dapi[a-h0-9]{32})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - dapi
+  - id: datadog-access-token
+    description: Datadog Access Token
+    regex: >-
+      (?i)(?:datadog)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{40})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - datadog
+  - id: defined-networking-api-token
+    description: Defined Networking API token
+    regex: >-
+      (?i)(?:dnkey)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(dnkey-[a-z0-9=_\-]{26}-[a-z0-9=_\-]{52})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - dnkey
+  - id: digitalocean-access-token
+    description: DigitalOcean OAuth Access Token
+    regex: '(?i)\b(doo_v1_[a-f0-9]{64})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - doo_v1_
+  - id: digitalocean-pat
+    description: DigitalOcean Personal Access Token
+    regex: '(?i)\b(dop_v1_[a-f0-9]{64})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - dop_v1_
+  - id: digitalocean-refresh-token
+    description: DigitalOcean OAuth Refresh Token
+    regex: '(?i)\b(dor_v1_[a-f0-9]{64})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - dor_v1_
+  - id: discord-api-token
+    description: Discord API key
+    regex: >-
+      (?i)(?:discord)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-f0-9]{64})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - discord
+  - id: discord-client-id
+    description: Discord client ID
+    regex: >-
+      (?i)(?:discord)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([0-9]{18})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - discord
+  - id: discord-client-secret
+    description: Discord client secret
+    regex: >-
+      (?i)(?:discord)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9=_\-]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - discord
+  - id: doppler-api-token
+    description: Doppler API token
+    regex: '(dp\.pt\.)(?i)[a-z0-9]{43}'
+    keywords:
+      - doppler
+  - id: droneci-access-token
+    description: Droneci Access Token
+    regex: >-
+      (?i)(?:droneci)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - droneci
+  - id: dropbox-api-token
+    description: Dropbox API secret
+    regex: >-
+      (?i)(?:dropbox)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{15})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - dropbox
+  - id: dropbox-long-lived-api-token
+    description: Dropbox long lived API token
+    regex: >-
+      (?i)(?:dropbox)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{11}(AAAAAAAAAA)[a-z0-9\-_=]{43})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - dropbox
+  - id: dropbox-short-lived-api-token
+    description: Dropbox short lived API token
+    regex: >-
+      (?i)(?:dropbox)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(sl\.[a-z0-9\-=_]{135})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - dropbox
+  - id: duffel-api-token
+    description: Duffel API token
+    regex: 'duffel_(test|live)_(?i)[a-z0-9_\-=]{43}'
+    keywords:
+      - duffel
+  - id: dynatrace-api-token
+    description: Dynatrace API token
+    regex: 'dt0c01\.(?i)[a-z0-9]{24}\.[a-z0-9]{64}'
+    keywords:
+      - dynatrace
+  - id: easypost-api-token
+    description: EasyPost API token
+    regex: '\bEZAK(?i)[a-z0-9]{54}'
+    keywords:
+      - ezak
+  - id: easypost-test-api-token
+    description: EasyPost test API token
+    regex: '\bEZTK(?i)[a-z0-9]{54}'
+    keywords:
+      - eztk
+  - id: etsy-access-token
+    description: Etsy Access Token
+    regex: >-
+      (?i)(?:etsy)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{24})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - etsy
+  - id: facebook
+    description: Facebook Access Token
+    regex: >-
+      (?i)(?:facebook)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-f0-9]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - facebook
+  - id: fastly-api-token
+    description: Fastly API key
+    regex: >-
+      (?i)(?:fastly)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9=_\-]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - fastly
+  - id: finicity-api-token
+    description: Finicity API token
+    regex: >-
+      (?i)(?:finicity)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-f0-9]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - finicity
+  - id: finicity-client-secret
+    description: Finicity Client Secret
+    regex: >-
+      (?i)(?:finicity)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{20})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - finicity
+  - id: finnhub-access-token
+    description: Finnhub Access Token
+    regex: >-
+      (?i)(?:finnhub)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{20})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - finnhub
+  - id: flickr-access-token
+    description: Flickr Access Token
+    regex: >-
+      (?i)(?:flickr)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - flickr
+  - id: flutterwave-encryption-key
+    description: Flutterwave Encryption Key
+    regex: 'FLWSECK_TEST-(?i)[a-h0-9]{12}'
+    keywords:
+      - flwseck_test
+  - id: flutterwave-public-key
+    description: Finicity Public Key
+    regex: 'FLWPUBK_TEST-(?i)[a-h0-9]{32}-X'
+    keywords:
+      - flwpubk_test
+  - id: flutterwave-secret-key
+    description: Flutterwave Secret Key
+    regex: 'FLWSECK_TEST-(?i)[a-h0-9]{32}-X'
+    keywords:
+      - flwseck_test
+  - id: frameio-api-token
+    description: Frame.io API token
+    regex: 'fio-u-(?i)[a-z0-9\-_=]{64}'
+    keywords:
+      - fio-u-
+  - id: freshbooks-access-token
+    description: Freshbooks Access Token
+    regex: >-
+      (?i)(?:freshbooks)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{64})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - freshbooks
+  - id: gcp-api-key
+    description: GCP API key
+    regex: '(?i)\b(AIza[0-9A-Za-z\\-_]{35})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - aiza
+  - id: generic-api-key
+    description: Generic API Key
+    regex: >-
+      (?i)(?:key|api|token|secret|client|passwd|password|auth|access)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([0-9a-z\-_.=]{10,150})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    entropy: 3.5
+    keywords:
+      - key
+      - api
+      - token
+      - secret
+      - client
+      - passwd
+      - password
+      - auth
+      - access
+    allowlist:
+      stopwords:
+        - client
+        - endpoint
+        - vpn
+        - _ec2_
+        - aws_
+        - authorize
+        - author
+        - define
+        - config
+        - credential
+        - setting
+        - sample
+        - xxxxxx
+        - '000000'
+        - buffer
+        - delete
+        - aaaaaa
+        - fewfwef
+        - getenv
+        - env_
+        - system
+        - example
+        - ecdsa
+        - sha256
+        - sha1
+        - sha2
+        - md5
+        - alert
+        - wizard
+        - target
+        - onboard
+        - welcome
+        - page
+        - exploit
+        - experiment
+        - expire
+        - rabbitmq
+        - scraper
+        - widget
+        - music
+        - dns_
+        - dns-
+        - yahoo
+        - want
+        - json
+        - action
+        - script
+        - fix_
+        - fix-
+        - develop
+        - compas
+        - stripe
+        - service
+        - master
+        - metric
+        - tech
+        - gitignore
+        - rich
+        - open
+        - stack
+        - irc_
+        - irc-
+        - sublime
+        - kohana
+        - has_
+        - has-
+        - fabric
+        - wordpres
+        - role
+        - osx_
+        - osx-
+        - boost
+        - addres
+        - queue
+        - working
+        - sandbox
+        - internet
+        - print
+        - vision
+        - tracking
+        - being
+        - generator
+        - traffic
+        - world
+        - pull
+        - rust
+        - watcher
+        - small
+        - auth
+        - full
+        - hash
+        - more
+        - install
+        - auto
+        - complete
+        - learn
+        - paper
+        - installer
+        - research
+        - acces
+        - last
+        - binding
+        - spine
+        - into
+        - chat
+        - algorithm
+        - resource
+        - uploader
+        - video
+        - maker
+        - next
+        - proc
+        - lock
+        - robot
+        - snake
+        - patch
+        - matrix
+        - drill
+        - terminal
+        - term
+        - stuff
+        - genetic
+        - generic
+        - identity
+        - audit
+        - pattern
+        - audio
+        - web_
+        - web-
+        - crud
+        - problem
+        - statu
+        - cms-
+        - cms_
+        - arch
+        - coffee
+        - workflow
+        - changelog
+        - another
+        - uiview
+        - content
+        - kitchen
+        - gnu_
+        - gnu-
+        - gnu.
+        - conf
+        - couchdb
+        - client
+        - opencv
+        - rendering
+        - update
+        - concept
+        - varnish
+        - gui_
+        - gui-
+        - gui.
+        - version
+        - shared
+        - extra
+        - product
+        - still
+        - not_
+        - not-
+        - not.
+        - drop
+        - ring
+        - png_
+        - png-
+        - png.
+        - actively
+        - import
+        - output
+        - backup
+        - start
+        - embedded
+        - registry
+        - pool
+        - semantic
+        - instagram
+        - bash
+        - system
+        - ninja
+        - drupal
+        - jquery
+        - polyfill
+        - physic
+        - league
+        - guide
+        - pack
+        - synopsi
+        - sketch
+        - injection
+        - svg_
+        - svg-
+        - svg.
+        - friendly
+        - wave
+        - convert
+        - manage
+        - camera
+        - link
+        - slide
+        - timer
+        - wrapper
+        - gallery
+        - url_
+        - url-
+        - url.
+        - todomvc
+        - requirej
+        - party
+        - http
+        - payment
+        - async
+        - library
+        - home
+        - coco
+        - gaia
+        - display
+        - universal
+        - func
+        - metadata
+        - hipchat
+        - under
+        - room
+        - config
+        - personal
+        - realtime
+        - resume
+        - database
+        - testing
+        - tiny
+        - basic
+        - forum
+        - meetup
+        - yet_
+        - yet-
+        - yet.
+        - cento
+        - dead
+        - fluentd
+        - editor
+        - utilitie
+        - run_
+        - run-
+        - run.
+        - box_
+        - box-
+        - box.
+        - bot_
+        - bot-
+        - bot.
+        - making
+        - sample
+        - group
+        - monitor
+        - ajax
+        - parallel
+        - cassandra
+        - ultimate
+        - site
+        - get_
+        - get-
+        - get.
+        - gen_
+        - gen-
+        - gen.
+        - gem_
+        - gem-
+        - gem.
+        - extended
+        - image
+        - knife
+        - asset
+        - nested
+        - zero
+        - plugin
+        - bracket
+        - mule
+        - mozilla
+        - number
+        - act_
+        - act-
+        - act.
+        - map_
+        - map-
+        - map.
+        - micro
+        - debug
+        - openshift
+        - chart
+        - expres
+        - backend
+        - task
+        - source
+        - translate
+        - jbos
+        - composer
+        - sqlite
+        - profile
+        - mustache
+        - mqtt
+        - yeoman
+        - have
+        - builder
+        - smart
+        - like
+        - oauth
+        - school
+        - guideline
+        - captcha
+        - filter
+        - bitcoin
+        - bridge
+        - color
+        - toolbox
+        - discovery
+        - new_
+        - new-
+        - new.
+        - dashboard
+        - when
+        - setting
+        - level
+        - post
+        - standard
+        - port
+        - platform
+        - yui_
+        - yui-
+        - yui.
+        - grunt
+        - animation
+        - haskell
+        - icon
+        - latex
+        - cheat
+        - lua_
+        - lua-
+        - lua.
+        - gulp
+        - case
+        - author
+        - without
+        - simulator
+        - wifi
+        - directory
+        - lisp
+        - list
+        - flat
+        - adventure
+        - story
+        - storm
+        - gpu_
+        - gpu-
+        - gpu.
+        - store
+        - caching
+        - attention
+        - solr
+        - logger
+        - demo
+        - shortener
+        - hadoop
+        - finder
+        - phone
+        - pipeline
+        - range
+        - textmate
+        - showcase
+        - app_
+        - app-
+        - app.
+        - idiomatic
+        - edit
+        - our_
+        - our-
+        - our.
+        - out_
+        - out-
+        - out.
+        - sentiment
+        - linked
+        - why_
+        - why-
+        - why.
+        - local
+        - cube
+        - gmail
+        - job_
+        - job-
+        - job.
+        - rpc_
+        - rpc-
+        - rpc.
+        - contest
+        - tcp_
+        - tcp-
+        - tcp.
+        - usage
+        - buildout
+        - weather
+        - transfer
+        - automated
+        - sphinx
+        - issue
+        - sas_
+        - sas-
+        - sas.
+        - parallax
+        - jasmine
+        - addon
+        - machine
+        - solution
+        - dsl_
+        - dsl-
+        - dsl.
+        - episode
+        - menu
+        - theme
+        - best
+        - adapter
+        - debugger
+        - chrome
+        - tutorial
+        - life
+        - step
+        - people
+        - joomla
+        - paypal
+        - developer
+        - solver
+        - team
+        - current
+        - love
+        - visual
+        - date
+        - data
+        - canva
+        - container
+        - future
+        - xml_
+        - xml-
+        - xml.
+        - twig
+        - nagio
+        - spatial
+        - original
+        - sync
+        - archived
+        - refinery
+        - science
+        - mapping
+        - gitlab
+        - play
+        - ext_
+        - ext-
+        - ext.
+        - session
+        - impact
+        - set_
+        - set-
+        - set.
+        - see_
+        - see-
+        - see.
+        - migration
+        - commit
+        - community
+        - shopify
+        - what'
+        - cucumber
+        - statamic
+        - mysql
+        - location
+        - tower
+        - line
+        - code
+        - amqp
+        - hello
+        - send
+        - index
+        - high
+        - notebook
+        - alloy
+        - python
+        - field
+        - document
+        - soap
+        - edition
+        - email
+        - php_
+        - php-
+        - php.
+        - command
+        - transport
+        - official
+        - upload
+        - study
+        - secure
+        - angularj
+        - akka
+        - scalable
+        - package
+        - request
+        - con_
+        - con-
+        - con.
+        - flexible
+        - security
+        - comment
+        - module
+        - flask
+        - graph
+        - flash
+        - apache
+        - change
+        - window
+        - space
+        - lambda
+        - sheet
+        - bookmark
+        - carousel
+        - friend
+        - objective
+        - jekyll
+        - bootstrap
+        - first
+        - article
+        - gwt_
+        - gwt-
+        - gwt.
+        - classic
+        - media
+        - websocket
+        - touch
+        - desktop
+        - real
+        - read
+        - recorder
+        - moved
+        - storage
+        - validator
+        - add-on
+        - pusher
+        - scs_
+        - scs-
+        - scs.
+        - inline
+        - asp_
+        - asp-
+        - asp.
+        - timeline
+        - base
+        - encoding
+        - ffmpeg
+        - kindle
+        - tinymce
+        - pretty
+        - jpa_
+        - jpa-
+        - jpa.
+        - used
+        - user
+        - required
+        - webhook
+        - download
+        - resque
+        - espresso
+        - cloud
+        - mongo
+        - benchmark
+        - pure
+        - cakephp
+        - modx
+        - mode
+        - reactive
+        - fuel
+        - written
+        - flickr
+        - mail
+        - brunch
+        - meteor
+        - dynamic
+        - neo_
+        - neo-
+        - neo.
+        - new_
+        - new-
+        - new.
+        - net_
+        - net-
+        - net.
+        - typo
+        - type
+        - keyboard
+        - erlang
+        - adobe
+        - logging
+        - ckeditor
+        - message
+        - iso_
+        - iso-
+        - iso.
+        - hook
+        - ldap
+        - folder
+        - reference
+        - railscast
+        - www_
+        - www-
+        - www.
+        - tracker
+        - azure
+        - fork
+        - form
+        - digital
+        - exporter
+        - skin
+        - string
+        - template
+        - designer
+        - gollum
+        - fluent
+        - entity
+        - language
+        - alfred
+        - summary
+        - wiki
+        - kernel
+        - calendar
+        - plupload
+        - symfony
+        - foundry
+        - remote
+        - talk
+        - search
+        - dev_
+        - dev-
+        - dev.
+        - del_
+        - del-
+        - del.
+        - token
+        - idea
+        - sencha
+        - selector
+        - interface
+        - create
+        - fun_
+        - fun-
+        - fun.
+        - groovy
+        - query
+        - grail
+        - red_
+        - red-
+        - red.
+        - laravel
+        - monkey
+        - slack
+        - supported
+        - instant
+        - value
+        - center
+        - latest
+        - work
+        - but_
+        - but-
+        - but.
+        - bug_
+        - bug-
+        - bug.
+        - virtual
+        - tweet
+        - statsd
+        - studio
+        - path
+        - real-time
+        - frontend
+        - notifier
+        - coding
+        - tool
+        - firmware
+        - flow
+        - random
+        - mediawiki
+        - bosh
+        - been
+        - beer
+        - lightbox
+        - theory
+        - origin
+        - redmine
+        - hub_
+        - hub-
+        - hub.
+        - require
+        - pro_
+        - pro-
+        - pro.
+        - ant_
+        - ant-
+        - ant.
+        - any_
+        - any-
+        - any.
+        - recipe
+        - closure
+        - mapper
+        - event
+        - todo
+        - model
+        - redi
+        - provider
+        - rvm_
+        - rvm-
+        - rvm.
+        - program
+        - memcached
+        - rail
+        - silex
+        - foreman
+        - activity
+        - license
+        - strategy
+        - batch
+        - streaming
+        - fast
+        - use_
+        - use-
+        - use.
+        - usb_
+        - usb-
+        - usb.
+        - impres
+        - academy
+        - slider
+        - please
+        - layer
+        - cros
+        - now_
+        - now-
+        - now.
+        - miner
+        - extension
+        - own_
+        - own-
+        - own.
+        - app_
+        - app-
+        - app.
+        - debian
+        - symphony
+        - example
+        - feature
+        - serie
+        - tree
+        - project
+        - runner
+        - entry
+        - leetcode
+        - layout
+        - webrtc
+        - logic
+        - login
+        - worker
+        - toolkit
+        - mocha
+        - support
+        - back
+        - inside
+        - device
+        - jenkin
+        - contact
+        - fake
+        - awesome
+        - ocaml
+        - bit_
+        - bit-
+        - bit.
+        - drive
+        - screen
+        - prototype
+        - gist
+        - binary
+        - nosql
+        - rest
+        - overview
+        - dart
+        - dark
+        - emac
+        - mongoid
+        - solarized
+        - homepage
+        - emulator
+        - commander
+        - django
+        - yandex
+        - gradle
+        - xcode
+        - writer
+        - crm_
+        - crm-
+        - crm.
+        - jade
+        - startup
+        - error
+        - using
+        - format
+        - name
+        - spring
+        - parser
+        - scratch
+        - magic
+        - try_
+        - try-
+        - try.
+        - rack
+        - directive
+        - challenge
+        - slim
+        - counter
+        - element
+        - chosen
+        - doc_
+        - doc-
+        - doc.
+        - meta
+        - should
+        - button
+        - packet
+        - stream
+        - hardware
+        - android
+        - infinite
+        - password
+        - software
+        - ghost
+        - xamarin
+        - spec
+        - chef
+        - interview
+        - hubot
+        - mvc_
+        - mvc-
+        - mvc.
+        - exercise
+        - leaflet
+        - launcher
+        - air_
+        - air-
+        - air.
+        - photo
+        - board
+        - boxen
+        - way_
+        - way-
+        - way.
+        - computing
+        - welcome
+        - notepad
+        - portfolio
+        - cat_
+        - cat-
+        - cat.
+        - can_
+        - can-
+        - can.
+        - magento
+        - yaml
+        - domain
+        - card
+        - yii_
+        - yii-
+        - yii.
+        - checker
+        - browser
+        - upgrade
+        - only
+        - progres
+        - aura
+        - ruby_
+        - ruby-
+        - ruby.
+        - polymer
+        - util
+        - lite
+        - hackathon
+        - rule
+        - log_
+        - log-
+        - log.
+        - opengl
+        - stanford
+        - skeleton
+        - history
+        - inspector
+        - help
+        - soon
+        - selenium
+        - lab_
+        - lab-
+        - lab.
+        - scheme
+        - schema
+        - look
+        - ready
+        - leveldb
+        - docker
+        - game
+        - minimal
+        - logstash
+        - messaging
+        - within
+        - heroku
+        - mongodb
+        - kata
+        - suite
+        - picker
+        - win_
+        - win-
+        - win.
+        - wip_
+        - wip-
+        - wip.
+        - panel
+        - started
+        - starter
+        - front-end
+        - detector
+        - deploy
+        - editing
+        - based
+        - admin
+        - capture
+        - spree
+        - page
+        - bundle
+        - goal
+        - rpg_
+        - rpg-
+        - rpg.
+        - setup
+        - side
+        - mean
+        - reader
+        - cookbook
+        - mini
+        - modern
+        - seed
+        - dom_
+        - dom-
+        - dom.
+        - doc_
+        - doc-
+        - doc.
+        - dot_
+        - dot-
+        - dot.
+        - syntax
+        - sugar
+        - loader
+        - website
+        - make
+        - kit_
+        - kit-
+        - kit.
+        - protocol
+        - human
+        - daemon
+        - golang
+        - manager
+        - countdown
+        - connector
+        - swagger
+        - map_
+        - map-
+        - map.
+        - mac_
+        - mac-
+        - mac.
+        - man_
+        - man-
+        - man.
+        - orm_
+        - orm-
+        - orm.
+        - org_
+        - org-
+        - org.
+        - little
+        - zsh_
+        - zsh-
+        - zsh.
+        - shop
+        - show
+        - workshop
+        - money
+        - grid
+        - server
+        - octopres
+        - svn_
+        - svn-
+        - svn.
+        - ember
+        - embed
+        - general
+        - file
+        - important
+        - dropbox
+        - portable
+        - public
+        - docpad
+        - fish
+        - sbt_
+        - sbt-
+        - sbt.
+        - done
+        - para
+        - network
+        - common
+        - readme
+        - popup
+        - simple
+        - purpose
+        - mirror
+        - single
+        - cordova
+        - exchange
+        - object
+        - design
+        - gateway
+        - account
+        - lamp
+        - intellij
+        - math
+        - mit_
+        - mit-
+        - mit.
+        - control
+        - enhanced
+        - emitter
+        - multi
+        - add_
+        - add-
+        - add.
+        - about
+        - socket
+        - preview
+        - vagrant
+        - cli_
+        - cli-
+        - cli.
+        - powerful
+        - top_
+        - top-
+        - top.
+        - radio
+        - watch
+        - fluid
+        - amazon
+        - report
+        - couchbase
+        - automatic
+        - detection
+        - sprite
+        - pyramid
+        - portal
+        - advanced
+        - plu_
+        - plu-
+        - plu.
+        - runtime
+        - git_
+        - git-
+        - git.
+        - uri_
+        - uri-
+        - uri.
+        - haml
+        - node
+        - sql_
+        - sql-
+        - sql.
+        - cool
+        - core
+        - obsolete
+        - handler
+        - iphone
+        - extractor
+        - array
+        - copy
+        - nlp_
+        - nlp-
+        - nlp.
+        - reveal
+        - pop_
+        - pop-
+        - pop.
+        - engine
+        - parse
+        - check
+        - html
+        - nest
+        - all_
+        - all-
+        - all.
+        - chinese
+        - buildpack
+        - what
+        - tag_
+        - tag-
+        - tag.
+        - proxy
+        - style
+        - cookie
+        - feed
+        - restful
+        - compiler
+        - creating
+        - prelude
+        - context
+        - java
+        - rspec
+        - mock
+        - backbone
+        - light
+        - spotify
+        - flex
+        - related
+        - shell
+        - which
+        - clas
+        - webapp
+        - swift
+        - ansible
+        - unity
+        - console
+        - tumblr
+        - export
+        - campfire
+        - conway'
+        - made
+        - riak
+        - hero
+        - here
+        - unix
+        - unit
+        - glas
+        - smtp
+        - how_
+        - how-
+        - how.
+        - hot_
+        - hot-
+        - hot.
+        - debug
+        - release
+        - diff
+        - player
+        - easy
+        - right
+        - old_
+        - old-
+        - old.
+        - animate
+        - time
+        - push
+        - explorer
+        - course
+        - training
+        - nette
+        - router
+        - draft
+        - structure
+        - note
+        - salt
+        - where
+        - spark
+        - trello
+        - power
+        - method
+        - social
+        - via_
+        - via-
+        - via.
+        - vim_
+        - vim-
+        - vim.
+        - select
+        - webkit
+        - github
+        - ftp_
+        - ftp-
+        - ftp.
+        - creator
+        - mongoose
+        - led_
+        - led-
+        - led.
+        - movie
+        - currently
+        - pdf_
+        - pdf-
+        - pdf.
+        - load
+        - markdown
+        - phalcon
+        - input
+        - custom
+        - atom
+        - oracle
+        - phonegap
+        - ubuntu
+        - great
+        - rdf_
+        - rdf-
+        - rdf.
+        - popcorn
+        - firefox
+        - zip_
+        - zip-
+        - zip.
+        - cuda
+        - dotfile
+        - static
+        - openwrt
+        - viewer
+        - powered
+        - graphic
+        - les_
+        - les-
+        - les.
+        - doe_
+        - doe-
+        - doe.
+        - maven
+        - word
+        - eclipse
+        - lab_
+        - lab-
+        - lab.
+        - hacking
+        - steam
+        - analytic
+        - option
+        - abstract
+        - archive
+        - reality
+        - switcher
+        - club
+        - write
+        - kafka
+        - arduino
+        - angular
+        - online
+        - title
+        - don't
+        - contao
+        - notice
+        - analyzer
+        - learning
+        - zend
+        - external
+        - staging
+        - busines
+        - tdd_
+        - tdd-
+        - tdd.
+        - scanner
+        - building
+        - snippet
+        - modular
+        - bower
+        - stm_
+        - stm-
+        - stm.
+        - lib_
+        - lib-
+        - lib.
+        - alpha
+        - mobile
+        - clean
+        - linux
+        - nginx
+        - manifest
+        - some
+        - raspberry
+        - gnome
+        - ide_
+        - ide-
+        - ide.
+        - block
+        - statistic
+        - info
+        - drag
+        - youtube
+        - koan
+        - facebook
+        - paperclip
+        - art_
+        - art-
+        - art.
+        - quality
+        - tab_
+        - tab-
+        - tab.
+        - need
+        - dojo
+        - shield
+        - computer
+        - stat
+        - state
+        - twitter
+        - utility
+        - converter
+        - hosting
+        - devise
+        - liferay
+        - updated
+        - force
+        - tip_
+        - tip-
+        - tip.
+        - behavior
+        - active
+        - call
+        - answer
+        - deck
+        - better
+        - principle
+        - ches
+        - bar_
+        - bar-
+        - bar.
+        - reddit
+        - three
+        - haxe
+        - just
+        - plug-in
+        - agile
+        - manual
+        - tetri
+        - super
+        - beta
+        - parsing
+        - doctrine
+        - minecraft
+        - useful
+        - perl
+        - sharing
+        - agent
+        - switch
+        - view
+        - dash
+        - channel
+        - repo
+        - pebble
+        - profiler
+        - warning
+        - cluster
+        - running
+        - markup
+        - evented
+        - mod_
+        - mod-
+        - mod.
+        - share
+        - csv_
+        - csv-
+        - csv.
+        - response
+        - good
+        - house
+        - connect
+        - built
+        - build
+        - find
+        - ipython
+        - webgl
+        - big_
+        - big-
+        - big.
+        - google
+        - scala
+        - sdl_
+        - sdl-
+        - sdl.
+        - sdk_
+        - sdk-
+        - sdk.
+        - native
+        - day_
+        - day-
+        - day.
+        - puppet
+        - text
+        - routing
+        - helper
+        - linkedin
+        - crawler
+        - host
+        - guard
+        - merchant
+        - poker
+        - over
+        - writing
+        - free
+        - classe
+        - component
+        - craft
+        - nodej
+        - phoenix
+        - longer
+        - quick
+        - lazy
+        - memory
+        - clone
+        - hacker
+        - middleman
+        - factory
+        - motion
+        - multiple
+        - tornado
+        - hack
+        - ssh_
+        - ssh-
+        - ssh.
+        - review
+        - vimrc
+        - driver
+        - driven
+        - blog
+        - particle
+        - table
+        - intro
+        - importer
+        - thrift
+        - xmpp
+        - framework
+        - refresh
+        - react
+        - font
+        - librarie
+        - variou
+        - formatter
+        - analysi
+        - karma
+        - scroll
+        - tut_
+        - tut-
+        - tut.
+        - apple
+        - tag_
+        - tag-
+        - tag.
+        - tab_
+        - tab-
+        - tab.
+        - category
+        - ionic
+        - cache
+        - homebrew
+        - reverse
+        - english
+        - getting
+        - shipping
+        - clojure
+        - boot
+        - book
+        - branch
+        - combination
+        - combo
+  - id: github-app-token
+    description: GitHub App Token
+    regex: '(ghu|ghs)_[0-9a-zA-Z]{36}'
+    keywords:
+      - ghu_
+      - ghs_
+  - id: github-fine-grained-pat
+    description: GitHub Fine-Grained Personal Access Token
+    regex: 'github_pat_[0-9a-zA-Z_]{82}'
+    keywords:
+      - github_pat_
+  - id: github-oauth
+    description: GitHub OAuth Access Token
+    regex: 'gho_[0-9a-zA-Z]{36}'
+    keywords:
+      - gho_
+  - id: github-pat
+    description: GitHub Personal Access Token
+    regex: 'ghp_[0-9a-zA-Z]{36}'
+    keywords:
+      - ghp_
+  - id: github-refresh-token
+    description: GitHub Refresh Token
+    regex: 'ghr_[0-9a-zA-Z]{36}'
+    keywords:
+      - ghr_
+  - id: gitlab-pat
+    description: GitLab Personal Access Token
+    regex: 'glpat-[0-9a-zA-Z\-\_]{20}'
+    keywords:
+      - glpat-
+  - id: gitlab-ptt
+    description: GitLab Pipeline Trigger Token
+    regex: 'glptt-[0-9a-f]{40}'
+    keywords:
+      - glptt-
+  - id: gitlab-rrt
+    description: GitLab Runner Registration Token
+    regex: 'GR1348941[0-9a-zA-Z\-\_]{20}'
+    keywords:
+      - gr1348941
+  - id: gitter-access-token
+    description: Gitter Access Token
+    regex: >-
+      (?i)(?:gitter)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9_-]{40})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - gitter
+  - id: gocardless-api-token
+    description: GoCardless API token
+    regex: >-
+      (?i)(?:gocardless)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(live_(?i)[a-z0-9\-_=]{40})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - live_
+      - gocardless
+  - id: grafana-api-key
+    description: Grafana api key (or Grafana cloud api key)
+    regex: '(?i)\b(eyJrIjoi[A-Za-z0-9]{70,400}={0,2})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - eyjrijoi
+  - id: grafana-cloud-api-token
+    description: Grafana cloud api token
+    regex: '(?i)\b(glc_[A-Za-z0-9+/]{32,400}={0,2})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - glc_
+  - id: grafana-service-account-token
+    description: Grafana service account token
+    regex: '(?i)\b(glsa_[A-Za-z0-9]{32}_[A-Fa-f0-9]{8})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - glsa_
+  - id: hashicorp-tf-api-token
+    description: HashiCorp Terraform user/org API token
+    regex: '(?i)[a-z0-9]{14}\.atlasv1\.[a-z0-9\-_=]{60,70}'
+    keywords:
+      - atlasv1
+  - id: hashicorp-tf-password
+    description: HashiCorp Terraform password field
+    regex: >-
+      (?i)(?:administrator_login_password|password)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}("[a-z0-9=_\-]{8,20}")(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - administrator_login_password
+      - password
+  - id: heroku-api-key
+    description: Heroku API Key
+    regex: >-
+      (?i)(?:heroku)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - heroku
+  - id: hubspot-api-key
+    description: HubSpot API Token
+    regex: >-
+      (?i)(?:hubspot)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - hubspot
+  - id: huggingface-access-token
+    description: Hugging Face Access token
+    regex: '(?:^|[\\''"` >=:])(hf_[a-zA-Z]{34})(?:$|[\\''"` <])'
+    entropy: 1
+    keywords:
+      - hf_
+  - id: huggingface-organization-api-token
+    description: Hugging Face Organization API token
+    regex: '(?:^|[\\''"` >=:\(,)])(api_org_[a-zA-Z]{34})(?:$|[\\''"` <\),])'
+    entropy: 2
+    keywords:
+      - api_org_
+  - id: infracost-api-token
+    description: Infracost API Token
+    regex: '(?i)\b(ico-[a-zA-Z0-9]{32})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - ico-
+  - id: intercom-api-key
+    description: Intercom API Token
+    regex: >-
+      (?i)(?:intercom)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9=_\-]{60})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - intercom
+  - id: jfrog-api-key
+    description: JFrog API Key
+    regex: >-
+      (?i)(?:jfrog|artifactory|bintray|xray)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{73})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - jfrog
+      - artifactory
+      - bintray
+      - xray
+  - id: jfrog-identity-token
+    description: JFrog Identity Token
+    regex: >-
+      (?i)(?:jfrog|artifactory|bintray|xray)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{64})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - jfrog
+      - artifactory
+      - bintray
+      - xray
+  - id: jwt
+    description: JSON Web Token
+    regex: >-
+      \b(ey[a-zA-Z0-9]{17,}\.ey[a-zA-Z0-9\/\\_-]{17,}\.(?:[a-zA-Z0-9\/\\_-]{10,}={0,2})?)(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - ey
+  - id: jwt-base64
+    description: Base64-encoded JSON Web Token
+    regex: >-
+      \bZXlK(?:(?P<alg>aGJHY2lPaU)|(?P<apu>aGNIVWlPaU)|(?P<apv>aGNIWWlPaU)|(?P<aud>aGRXUWlPaU)|(?P<b64>aU5qUWlP)|(?P<crit>amNtbDBJanBi)|(?P<cty>amRIa2lPaU)|(?P<epk>bGNHc2lPbn)|(?P<enc>bGJtTWlPaU)|(?P<jku>cWEzVWlPaU)|(?P<jwk>cWQyc2lPb)|(?P<iss>cGMzTWlPaU)|(?P<iv>cGRpSTZJ)|(?P<kid>cmFXUWlP)|(?P<key_ops>clpYbGZiM0J6SWpwY)|(?P<kty>cmRIa2lPaUp)|(?P<nonce>dWIyNWpaU0k2)|(?P<p2c>d01tTWlP)|(?P<p2s>d01uTWlPaU)|(?P<ppt>d2NIUWlPaU)|(?P<sub>emRXSWlPaU)|(?P<svt>emRuUWlP)|(?P<tag>MFlXY2lPaU)|(?P<typ>MGVYQWlPaUp)|(?P<url>MWNtd2l)|(?P<use>MWMyVWlPaUp)|(?P<ver>MlpYSWlPaU)|(?P<version>MlpYSnphVzl1SWpv)|(?P<x>NElqb2)|(?P<x5c>NE5XTWlP)|(?P<x5t>NE5YUWlPaU)|(?P<x5ts256>NE5YUWpVekkxTmlJNkl)|(?P<x5u>NE5YVWlPaU)|(?P<zip>NmFYQWlPaU))[a-zA-Z0-9\/\\_+\-\r\n]{40,}={0,2}
+    keywords:
+      - zxlk
+  - id: kraken-access-token
+    description: Kraken Access Token
+    regex: >-
+      (?i)(?:kraken)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9\/=_\+\-]{80,90})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - kraken
+  - id: kucoin-access-token
+    description: Kucoin Access Token
+    regex: >-
+      (?i)(?:kucoin)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-f0-9]{24})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - kucoin
+  - id: kucoin-secret-key
+    description: Kucoin Secret Key
+    regex: >-
+      (?i)(?:kucoin)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - kucoin
+  - id: launchdarkly-access-token
+    description: Launchdarkly Access Token
+    regex: >-
+      (?i)(?:launchdarkly)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9=_\-]{40})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - launchdarkly
+  - id: linear-api-key
+    description: Linear API Token
+    regex: 'lin_api_(?i)[a-z0-9]{40}'
+    keywords:
+      - lin_api_
+  - id: linear-client-secret
+    description: Linear Client Secret
+    regex: >-
+      (?i)(?:linear)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-f0-9]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - linear
+  - id: linkedin-client-id
+    description: LinkedIn Client ID
+    regex: >-
+      (?i)(?:linkedin|linked-in)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{14})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - linkedin
+      - linked-in
+  - id: linkedin-client-secret
+    description: LinkedIn Client secret
+    regex: >-
+      (?i)(?:linkedin|linked-in)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{16})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - linkedin
+      - linked-in
+  - id: lob-api-key
+    description: Lob API Key
+    regex: >-
+      (?i)(?:lob)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}((live|test)_[a-f0-9]{35})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - test_
+      - live_
+  - id: lob-pub-api-key
+    description: Lob Publishable API Key
+    regex: >-
+      (?i)(?:lob)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}((test|live)_pub_[a-f0-9]{31})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - test_pub
+      - live_pub
+      - _pub
+  - id: mailchimp-api-key
+    description: Mailchimp API key
+    regex: >-
+      (?i)(?:mailchimp)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-f0-9]{32}-us20)(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - mailchimp
+  - id: mailgun-private-api-token
+    description: Mailgun private API token
+    regex: >-
+      (?i)(?:mailgun)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(key-[a-f0-9]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - mailgun
+  - id: mailgun-pub-key
+    description: Mailgun public validation key
+    regex: >-
+      (?i)(?:mailgun)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(pubkey-[a-f0-9]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - mailgun
+  - id: mailgun-signing-key
+    description: Mailgun webhook signing key
+    regex: >-
+      (?i)(?:mailgun)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-h0-9]{32}-[a-h0-9]{8}-[a-h0-9]{8})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - mailgun
+  - id: mapbox-api-token
+    description: MapBox API token
+    regex: >-
+      (?i)(?:mapbox)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(pk\.[a-z0-9]{60}\.[a-z0-9]{22})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - mapbox
+  - id: mattermost-access-token
+    description: Mattermost Access Token
+    regex: >-
+      (?i)(?:mattermost)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{26})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - mattermost
+  - id: messagebird-api-token
+    description: MessageBird API token
+    regex: >-
+      (?i)(?:messagebird|message-bird|message_bird)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{25})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - messagebird
+      - message-bird
+      - message_bird
+  - id: messagebird-client-id
+    description: MessageBird client ID
+    regex: >-
+      (?i)(?:messagebird|message-bird|message_bird)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - messagebird
+      - message-bird
+      - message_bird
+  - id: microsoft-teams-webhook
+    description: Microsoft Teams Webhook
+    regex: >-
+      https:\/\/[a-z0-9]+\.webhook\.office\.com\/webhookb2\/[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12}@[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12}\/IncomingWebhook\/[a-z0-9]{32}\/[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12}
+    keywords:
+      - webhook.office.com
+      - webhookb2
+      - incomingwebhook
+  - id: netlify-access-token
+    description: Netlify Access Token
+    regex: >-
+      (?i)(?:netlify)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9=_\-]{40,46})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - netlify
+  - id: new-relic-browser-api-token
+    description: New Relic ingest browser API token
+    regex: >-
+      (?i)(?:new-relic|newrelic|new_relic)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(NRJS-[a-f0-9]{19})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - nrjs-
+  - id: new-relic-user-api-id
+    description: New Relic user API ID
+    regex: >-
+      (?i)(?:new-relic|newrelic|new_relic)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{64})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - new-relic
+      - newrelic
+      - new_relic
+  - id: new-relic-user-api-key
+    description: New Relic user API Key
+    regex: >-
+      (?i)(?:new-relic|newrelic|new_relic)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(NRAK-[a-z0-9]{27})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - nrak
+  - id: npm-access-token
+    description: npm access token
+    regex: '(?i)\b(npm_[a-z0-9]{36})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - npm_
+  - id: nytimes-access-token
+    description: Nytimes Access Token
+    regex: >-
+      (?i)(?:nytimes|new-york-times,|newyorktimes)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9=_\-]{32})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - nytimes
+      - new-york-times
+      - newyorktimes
+  - id: okta-access-token
+    description: Okta Access Token
+    regex: >-
+      (?i)(?:okta)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9=_\-]{42})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - okta
+  - id: openai-api-key
+    description: OpenAI API Key
+    regex: >-
+      (?i)\b(sk-[a-zA-Z0-9]{20}T3BlbkFJ[a-zA-Z0-9]{20})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - t3blbkfj
+  - id: plaid-api-token
+    description: Plaid API Token
+    regex: >-
+      (?i)(?:plaid)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(access-(?:sandbox|development|production)-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - plaid
+  - id: plaid-client-id
+    description: Plaid Client ID
+    regex: >-
+      (?i)(?:plaid)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{24})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    entropy: 3.5
+    keywords:
+      - plaid
+  - id: plaid-secret-key
+    description: Plaid Secret key
+    regex: >-
+      (?i)(?:plaid)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{30})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    entropy: 3.5
+    keywords:
+      - plaid
+  - id: planetscale-api-token
+    description: PlanetScale API token
+    regex: '(?i)\b(pscale_tkn_(?i)[a-z0-9=\-_\.]{32,64})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - pscale_tkn_
+  - id: planetscale-oauth-token
+    description: PlanetScale OAuth token
+    regex: '(?i)\b(pscale_oauth_(?i)[a-z0-9=\-_\.]{32,64})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - pscale_oauth_
+  - id: planetscale-password
+    description: PlanetScale password
+    regex: '(?i)\b(pscale_pw_(?i)[a-z0-9=\-_\.]{32,64})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - pscale_pw_
+  - id: postman-api-token
+    description: Postman API token
+    regex: '(?i)\b(PMAK-(?i)[a-f0-9]{24}\-[a-f0-9]{34})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - pmak-
+  - id: prefect-api-token
+    description: Prefect API token
+    regex: '(?i)\b(pnu_[a-z0-9]{36})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - pnu_
+  - id: private-key
+    description: Private Key
+    regex: >-
+      (?i)-----BEGIN[ A-Z0-9_-]{0,100}PRIVATE KEY( BLOCK)?-----[\s\S-]*KEY(
+      BLOCK)?----
+    keywords:
+      - '-----begin'
+  - id: pulumi-api-token
+    description: Pulumi API token
+    regex: '(?i)\b(pul-[a-f0-9]{40})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - pul-
+  - id: pypi-upload-token
+    description: PyPI upload token
+    regex: 'pypi-AgEIcHlwaS5vcmc[A-Za-z0-9\-_]{50,1000}'
+    keywords:
+      - pypi-ageichlwas5vcmc
+  - id: rapidapi-access-token
+    description: RapidAPI Access Token
+    regex: >-
+      (?i)(?:rapidapi)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9_-]{50})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - rapidapi
+  - id: readme-api-token
+    description: Readme API token
+    regex: '(?i)\b(rdme_[a-z0-9]{70})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - rdme_
+  - id: rubygems-api-token
+    description: Rubygem API token
+    regex: '(?i)\b(rubygems_[a-f0-9]{48})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - rubygems_
+  - id: scalingo-api-token
+    description: Scalingo API token
+    regex: '\btk-us-[a-zA-Z0-9-_]{48}\b'
+    keywords:
+      - tk-us-
+  - id: sendbird-access-id
+    description: Sendbird Access ID
+    regex: >-
+      (?i)(?:sendbird)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - sendbird
+  - id: sendbird-access-token
+    description: Sendbird Access Token
+    regex: >-
+      (?i)(?:sendbird)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-f0-9]{40})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - sendbird
+  - id: sendgrid-api-token
+    description: SendGrid API token
+    regex: '(?i)\b(SG\.(?i)[a-z0-9=_\-\.]{66})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - sg.
+  - id: sendinblue-api-token
+    description: Sendinblue API token
+    regex: '(?i)\b(xkeysib-[a-f0-9]{64}\-(?i)[a-z0-9]{16})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - xkeysib-
+  - id: sentry-access-token
+    description: Sentry Access Token
+    regex: >-
+      (?i)(?:sentry)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-f0-9]{64})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - sentry
+  - id: shippo-api-token
+    description: Shippo API token
+    regex: '(?i)\b(shippo_(live|test)_[a-f0-9]{40})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - shippo_
+  - id: shopify-access-token
+    description: Shopify access token
+    regex: 'shpat_[a-fA-F0-9]{32}'
+    keywords:
+      - shpat_
+  - id: shopify-custom-access-token
+    description: Shopify custom access token
+    regex: 'shpca_[a-fA-F0-9]{32}'
+    keywords:
+      - shpca_
+  - id: shopify-private-app-access-token
+    description: Shopify private app access token
+    regex: 'shppa_[a-fA-F0-9]{32}'
+    keywords:
+      - shppa_
+  - id: shopify-shared-secret
+    description: Shopify shared secret
+    regex: 'shpss_[a-fA-F0-9]{32}'
+    keywords:
+      - shpss_
+  - id: sidekiq-secret
+    description: Sidekiq Secret
+    regex: >-
+      (?i)(?:BUNDLE_ENTERPRISE__CONTRIBSYS__COM|BUNDLE_GEMS__CONTRIBSYS__COM)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-f0-9]{8}:[a-f0-9]{8})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - bundle_enterprise__contribsys__com
+      - bundle_gems__contribsys__com
+  - id: sidekiq-sensitive-url
+    description: Sidekiq Sensitive URL
+    regex: >-
+      (?i)\b(http(?:s??):\/\/)([a-f0-9]{8}:[a-f0-9]{8})@(?:gems.contribsys.com|enterprise.contribsys.com)(?:[\/|\#|\?|:]|$)
+    secretGroup: 2
+    keywords:
+      - gems.contribsys.com
+      - enterprise.contribsys.com
+  - id: slack-app-token
+    description: Slack App-level token
+    regex: '(?i)(xapp-\d-[A-Z0-9]+-\d+-[a-z0-9]+)'
+    keywords:
+      - xapp
+  - id: slack-bot-token
+    description: Slack Bot token
+    regex: '(xoxb-[0-9]{10,13}\-[0-9]{10,13}[a-zA-Z0-9-]*)'
+    keywords:
+      - xoxb
+  - id: slack-config-access-token
+    description: Slack Configuration access token
+    regex: '(?i)(xoxe.xox[bp]-\d-[A-Z0-9]{163,166})'
+    keywords:
+      - xoxe.xoxb-
+      - xoxe.xoxp-
+  - id: slack-config-refresh-token
+    description: Slack Configuration refresh token
+    regex: '(?i)(xoxe-\d-[A-Z0-9]{146})'
+    keywords:
+      - xoxe-
+  - id: slack-legacy-bot-token
+    description: Slack Legacy bot token
+    regex: '(xoxb-[0-9]{8,14}\-[a-zA-Z0-9]{18,26})'
+    keywords:
+      - xoxb
+  - id: slack-legacy-token
+    description: Slack Legacy token
+    regex: '(xox[os]-\d+-\d+-\d+-[a-fA-F\d]+)'
+    keywords:
+      - xoxo
+      - xoxs
+  - id: slack-legacy-workspace-token
+    description: Slack Legacy Workspace token
+    regex: '(xox[ar]-(?:\d-)?[0-9a-zA-Z]{8,48})'
+    keywords:
+      - xoxa
+      - xoxr
+  - id: slack-user-token
+    description: Slack User
+    regex: '(xox[pe](?:-[0-9]{10,13}){3}-[a-zA-Z0-9-]{28,34})'
+    keywords:
+      - xoxp-
+      - xoxe-
+  - id: slack-webhook-url
+    description: Slack Webhook
+    regex: '(https?:\/\/)?hooks.slack.com\/(services|workflows)\/[A-Za-z0-9+\/]{43,46}'
+    keywords:
+      - hooks.slack.com
+  - id: snyk-api-token
+    description: Snyk API token
+    regex: >-
+      (?i)(?:snyk_token|snyk_key|snyk_api_token|snyk_api_key|snyk_oauth_token)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - snyk_token
+      - snyk_key
+      - snyk_api_token
+      - snyk_api_key
+      - snyk_oauth_token
+  - id: square-access-token
+    description: Square Access Token
+    regex: '(?i)\b(sq0atp-[0-9A-Za-z\-_]{22})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - sq0atp-
+  - id: squarespace-access-token
+    description: Squarespace Access Token
+    regex: >-
+      (?i)(?:squarespace)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - squarespace
+  - id: stripe-access-token
+    description: Stripe Access Token
+    regex: '(?i)\b((sk|pk)_(test|live)_[0-9a-z]{10,32})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - sk_test
+      - pk_test
+      - sk_live
+      - pk_live
+  - id: sumologic-access-id
+    description: SumoLogic Access ID
+    regex: >-
+      (?i:(?:sumo)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3})(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(su[a-zA-Z0-9]{12})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    entropy: 3
+    keywords:
+      - sumo
+    allowlist:
+      regexTarget: line
+      regexes:
+        - sumOf
+  - id: sumologic-access-token
+    description: SumoLogic Access Token
+    regex: >-
+      (?i)(?:sumo)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{64})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    entropy: 3
+    keywords:
+      - sumo
+  - id: telegram-bot-api-token
+    description: Telegram Bot API Token
+    regex: '(?i)(?:^|[^0-9])([0-9]{5,16}:A[a-zA-Z0-9_\-]{34})(?:$|[^a-zA-Z0-9_\-])'
+    keywords:
+      - telegram
+      - api
+      - bot
+      - token
+      - url
+  - id: travisci-access-token
+    description: Travis CI Access Token
+    regex: >-
+      (?i)(?:travis)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{22})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - travis
+  - id: twilio-api-key
+    description: Twilio API Key
+    regex: 'SK[0-9a-fA-F]{32}'
+    keywords:
+      - twilio
+  - id: twitch-api-token
+    description: Twitch API token
+    regex: >-
+      (?i)(?:twitch)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{30})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - twitch
+  - id: twitter-access-secret
+    description: Twitter Access Secret
+    regex: >-
+      (?i)(?:twitter)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{45})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - twitter
+  - id: twitter-access-token
+    description: Twitter Access Token
+    regex: >-
+      (?i)(?:twitter)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([0-9]{15,25}-[a-zA-Z0-9]{20,40})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - twitter
+  - id: twitter-api-key
+    description: Twitter API Key
+    regex: >-
+      (?i)(?:twitter)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{25})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - twitter
+  - id: twitter-api-secret
+    description: Twitter API Secret
+    regex: >-
+      (?i)(?:twitter)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{50})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - twitter
+  - id: twitter-bearer-token
+    description: Twitter Bearer Token
+    regex: >-
+      (?i)(?:twitter)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(A{22}[a-zA-Z0-9%]{80,100})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - twitter
+  - id: typeform-api-token
+    description: Typeform API token
+    regex: >-
+      (?i)(?:typeform)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(tfp_[a-z0-9\-_\.=]{59})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - tfp_
+  - id: vault-batch-token
+    description: Vault Batch Token
+    regex: '(?i)\b(hvb\.[a-z0-9_-]{138,212})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - hvb
+  - id: vault-service-token
+    description: Vault Service Token
+    regex: '(?i)\b(hvs\.[a-z0-9_-]{90,100})(?:[''|\"|\n|\r|\s|\x60|;]|$)'
+    keywords:
+      - hvs
+  - id: yandex-access-token
+    description: Yandex Access Token
+    regex: >-
+      (?i)(?:yandex)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(t1\.[A-Z0-9a-z_-]+[=]{0,2}\.[A-Z0-9a-z_-]{86}[=]{0,2})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - yandex
+  - id: yandex-api-key
+    description: Yandex API Key
+    regex: >-
+      (?i)(?:yandex)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(AQVN[A-Za-z0-9_\-]{35,38})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - yandex
+  - id: yandex-aws-access-token
+    description: Yandex AWS Access Token
+    regex: >-
+      (?i)(?:yandex)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}(YC[a-zA-Z0-9_\-]{38})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - yandex
+  - id: zendesk-secret-key
+    description: Zendesk Secret Key
+    regex: >-
+      (?i)(?:zendesk)(?:[0-9a-z\-_\t
+      .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:{1,3}=|\|\|:|<=|=>|:|\?=)(?:'|\"|\s|=|\x60){0,5}([a-z0-9]{40})(?:['|\"|\n|\r|\s|\x60|;]|$)
+    keywords:
+      - zendesk

@@ -47,9 +47,9 @@ def init_argparse() -> argparse.ArgumentParser:
         "--regex-file",
         dest="regex_file",
         nargs="?",
-        default=f"{install_path}/config/regex.toml",
+        default=f"{install_path}/config/regex.yaml",
         type=str,
-        help="Custom .toml with a list of regexes to be matched."
+        help="Custom .yaml or .toml with a list of regexes to be matched."
     )
     parent_parser.add_argument(
         "--config-file",
@@ -388,7 +388,11 @@ def main():
 
     if os.path.exists(args.regex_file):
         with open(args.regex_file, "r") as f:
-            regex_config = toml.load(f)
+            extension = os.path.splitext(args.regex_file)[1]
+            if extension.lower() == ".yaml".lower():
+                regex_config = yaml.load(f, Loader=yaml.FullLoader)
+            else:
+                regex_config = toml.load(f)
     else:
         logging.warning(f"Regex file [{args.regex_file}] not found!")
 
