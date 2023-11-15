@@ -5,10 +5,10 @@ from types import ModuleType
 
 class HttpClient:
     def __init__(
-        self,
-        headers: dict,
-        logging: ModuleType,
-        uri: str = None,
+            self,
+            headers: dict,
+            logging: ModuleType,
+            uri: str = None,
     ) -> None:
         if uri is None:
             raise Exception("Must specify URI")
@@ -39,7 +39,8 @@ class HttpClient:
         self.logging.debug(response.text)
         return response
 
-    def _get_request(self, url: str = None, params: dict = None, headers: dict = None, data=None, timeout=None) -> Response:
+    def _get_request(self, url: str = None, params: dict = None, headers: dict = None, data=None,
+                     timeout=None) -> Response:
         if url is None or len(url) <= 0:
             url = self.uri
         if headers:
@@ -65,7 +66,7 @@ class HttpClient:
         return response
 
     def _post_request(
-        self, url: str = None, params: dict = None, headers: dict = None, data=None, json: dict = None
+            self, url: str = None, params: dict = None, headers: dict = None, data=None, json: dict = None
     ) -> Response:
         if url is None or len(url) <= 0:
             url = self.uri
@@ -107,4 +108,3 @@ class HttpClient:
             )
         self.logging.debug(response.text)
         return response
-

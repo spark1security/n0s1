@@ -1,4 +1,3 @@
-
 class PlatformHollow:
     def __init__(self):
         self.client = None
@@ -27,8 +26,7 @@ class PlatformFactory:
         self._creators[platform] = creator
 
     def get_platform(self, platform):
-        creator = self._creators.get(platform)
-        if creator:
+        if creator := self._creators.get(platform):
             return creator()
         return PlatformHollow()
 
@@ -40,7 +38,7 @@ try:
     from . import jira_controller as jira_controller
     from . import confluence_controller as confluence_controller
     from . import linear_controller as linear_controller
-except:
+except Exception:
     import n0s1.controllers.jira_controller as jira_controller
     import n0s1.controllers.confluence_controller as confluence_controller
     import n0s1.controllers.linear_controller as linear_controller
