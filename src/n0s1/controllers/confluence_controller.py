@@ -169,6 +169,7 @@ class ConfluenceControler():
             return False
         comment = comment.replace("#", "0")
         comment = html.escape(comment, quote=True)
+        status = -1
         if comment_status := self._client.add_comment(issue, comment):
             status = comment_status.get("id", "")
         return int(status) > 0

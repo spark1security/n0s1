@@ -25,10 +25,11 @@ try:
 except:
     import n0s1.reporting.report_gitlab as report_gitlab
 
-global report_json, report_file, cfg, DEBUG
+global n0s1_version, report_json, report_file, cfg, DEBUG
 
 
 def init_argparse() -> argparse.ArgumentParser:
+    global n0s1_version
     """Adds arguements that can be called from the command line
 
     Returns:
@@ -37,9 +38,17 @@ def init_argparse() -> argparse.ArgumentParser:
     install_path = os.path.dirname(os.path.abspath(__file__))
     parser = argparse.ArgumentParser(
         prog="n0s1",
-        description="""Secret scanner for Project Management platforms such as Jira, Confluence and Linear.
+        description="""Secret scanner for Project Management platforms such as Jira, Confluence, Asana and Linear.
         """,
     )
+
+    try:
+        here = pathlib.Path(__file__).parent.resolve()
+        init_file = pathlib.Path(here / "__init__.py")
+        n0s1_version = re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', init_file.read_text(), re.M).group(1)
+    except Exception:
+        n0s1_version = "0.0.1"
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + n0s1_version)
 
     # Create parent subparser. Note `add_help=False` and creation via `argparse.`
     parent_parser = argparse.ArgumentParser(add_help=False)
@@ -127,8 +136,19 @@ def init_argparse() -> argparse.ArgumentParser:
         help="Subcommands", dest="command", metavar="COMMAND"
     )
 
+    asana_scan_parser = subparsers.add_parser(
+        "asana_scan", help="Scan Asana tasks", parents=[parent_parser]
+    )
+    asana_scan_parser.add_argument(
+        "--api-key",
+        dest="api_key",
+        nargs="?",
+        type=str,
+        help="Asana API key. Ref: https://developers.asana.com/docs/personal-access-token#generating-a-pat"
+    )
+
     linear_scan_parser = subparsers.add_parser(
-        "linear_scan", help="Scan Linear tickets", parents=[parent_parser]
+        "linear_scan", help="Scan Linear issues", parents=[parent_parser]
     )
     linear_scan_parser.add_argument(
         "--api-key",
@@ -373,7 +393,7 @@ def scan(regex_config, controller, scan_arguments):
 
 
 def main():
-    global report_json, report_file, cfg, DEBUG
+    global n0s1_version, report_json, report_file, cfg, DEBUG
 
     logging.basicConfig(level=logging.INFO)
     parser = init_argparse()
@@ -404,12 +424,7 @@ def main():
 
     datetime_now_obj = datetime.now(timezone.utc)
     date_utc = datetime_now_obj.strftime("%Y-%m-%dT%H:%M:%S")
-    try:
-        here = pathlib.Path(__file__).parent.resolve()
-        init_file = pathlib.Path(here / "__init__.py")
-        n0s1_version = re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', init_file.read_text(), re.M).group(1)
-    except Exception:
-        n0s1_version = "0.0.1"
+
     report_json = {"tool": {"name": "n0s1", "version": n0s1_version, "author": "Spark 1 Security"},
                    "scan_date": {"timestamp": datetime_now_obj.timestamp(), "date_utc": date_utc},
                    "regex_config": regex_config, "findings": {}}
@@ -424,6 +439,12 @@ def main():
     EMAIL = None
     if command == "linear_scan":
         TOKEN = os.getenv("LINEAR_TOKEN")
+        if args.api_key and len(args.api_key) > 0:
+            TOKEN = args.api_key
+        controler_config = {"token": TOKEN}
+
+    elif command == "asana_scan":
+        TOKEN = os.getenv("ASANA_TOKEN")
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
         controler_config = {"token": TOKEN}

@@ -136,7 +136,7 @@ class GitlabDASTReport:
                             {
                                 "type": "regex",
                                 "name": identifiers_name,
-                                "url": "https://github.com/spark1security/n0s1/blob/main/src/n0s1/config/regex.toml",
+                                "url": "https://github.com/spark1security/n0s1/blob/main/src/n0s1/config/regex.yaml",
                                 "value": identifiers_value
                             }
                         ],

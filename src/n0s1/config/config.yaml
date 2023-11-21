@@ -1,7 +1,7 @@
 maintainer: "Spark 1"
 
 general_params:
-  regex_file: "config/regex.toml"
+  regex_file: "config/regex.yaml"
   report_file: "n0s1_report.json"
   post_comment: false
   skip_comment: false
@@ -15,6 +15,3 @@ comment_params:
   contact_help: "contact@spark1.us"
   label: "n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1"
 
-jira_params:
-  server: "http://localhost:2990/jira"
-  email: ""
