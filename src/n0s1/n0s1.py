@@ -38,7 +38,7 @@ def init_argparse() -> argparse.ArgumentParser:
     install_path = os.path.dirname(os.path.abspath(__file__))
     parser = argparse.ArgumentParser(
         prog="n0s1",
-        description="""Secret scanner for Project Management platforms such as Jira, Confluence, Asana and Linear.
+        description="""Secret scanner for Project Management platforms such as Jira, Confluence, Asana, Wrike and Linear.
         """,
     )
 
@@ -145,6 +145,17 @@ def init_argparse() -> argparse.ArgumentParser:
         nargs="?",
         type=str,
         help="Asana API key. Ref: https://developers.asana.com/docs/personal-access-token#generating-a-pat"
+    )
+
+    wrike_scan_parser = subparsers.add_parser(
+        "wrike_scan", help="Scan Wrike tasks", parents=[parent_parser]
+    )
+    wrike_scan_parser.add_argument(
+        "--api-key",
+        dest="api_key",
+        nargs="?",
+        type=str,
+        help="Wrike permanent token. Ref: https://help.wrike.com/hc/en-us/articles/210409445-Wrike-API#UUID-a1b0051a-0537-2215-c542-3b04d7205f4b_section-idm232163770698441"
     )
 
     linear_scan_parser = subparsers.add_parser(
@@ -445,6 +456,12 @@ def main():
 
     elif command == "asana_scan":
         TOKEN = os.getenv("ASANA_TOKEN")
+        if args.api_key and len(args.api_key) > 0:
+            TOKEN = args.api_key
+        controler_config = {"token": TOKEN}
+
+    elif command == "wrike_scan":
+        TOKEN = os.getenv("WRIKE_TOKEN")
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
         controler_config = {"token": TOKEN}
