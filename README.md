@@ -11,7 +11,7 @@
 
 
 # n0s1 - Secret Scanner
-n0s1 ([pronunciation](https://en.wiktionary.org/wiki/nosy#Pronunciation)) is a secret scanner for Jira, Confluence, Asana and Linear.app. It scans all tickets/items/issues within the chosen platform in search of any leaked secrets in the titles, bodies, and comments. It is open-source and it can be easily extended to support scanning many others Project Management and Issue Tracker platforms.
+n0s1 ([pronunciation](https://en.wiktionary.org/wiki/nosy#Pronunciation)) is a secret scanner for Jira, Confluence, Asana, Wrike and Linear.app. It scans all tickets/items/issues within the chosen platform in search of any leaked secrets in the titles, bodies, and comments. It is open-source and it can be easily extended to support scanning many others Project Management and Issue Tracker platforms.
 
 These secrets are identified by comparing them against an adaptable configuration file named [regex.yaml](https://github.com/spark1security/n0s1/blob/main/src/n0s1/config/regex.yaml). Alternative TOML format is also supported: [regex.toml](https://github.com/spark1security/n0s1/blob/main/src/n0s1/config/regex.toml). The scanner specifically looks for sensitive information, which includes:
 * Github Personal Access Tokens
@@ -26,6 +26,7 @@ These secrets are identified by comparing them against an adaptable configuratio
 * [Jira](https://www.atlassian.com/software/jira)
 * [Confluence](https://www.atlassian.com/software/confluence)
 * [Asana](https://asana.com)
+* [Wrike](https://www.wrike.com)
 * [Linear](https://linear.app/)
 
 ### Quick Start
