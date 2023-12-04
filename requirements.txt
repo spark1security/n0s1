@@ -3,6 +3,6 @@ toml
 jira
 pyyaml
 atlassian-python-api
-asana
+asana==3.2.2
 WrikePy
 BeautifulSoup4
