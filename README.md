@@ -29,6 +29,13 @@ These secrets are identified by comparing them against an adaptable configuratio
 * [Wrike](https://www.wrike.com)
 * [Linear](https://linear.app/)
 
+### Install
+```bash
+python3 -m ensurepip --upgrade
+python3 -m pip install --upgrade n0s1
+n0s1 --help
+```
+
 ### Quick Start
 [CLI:](https://pypi.org/project/n0s1/)
 ```bash
