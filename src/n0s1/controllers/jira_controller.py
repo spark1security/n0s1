@@ -32,7 +32,7 @@ class JiraControler():
                 issue_found = False
                 for key in projects:
                     project_found = True
-                    ql = f"project = {key}"
+                    ql = f"project = '{key}'"
                     for issue in self._client.search_issues(ql):
                         if issue:
                             issue_found = True
@@ -52,7 +52,7 @@ class JiraControler():
         if not self._client:
             return None, None, None, None, None
         for key in self._client.projects():
-            ql = f"project = {key}"
+            ql = f"project = '{key}'"
             logging.info(f"Scanning Jira project: [{key}]...")
             for issue in self._client.search_issues(ql):
                 url = issue.self.split('/rest/api')[0] + "/browse/" + issue.key;
