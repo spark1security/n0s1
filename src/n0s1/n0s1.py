@@ -132,6 +132,22 @@ def init_argparse() -> argparse.ArgumentParser:
         type=str,
         help="Unique identifier to be added to the comments so that the n0s1 bot can recognize if the leak has been previously flagged."
     )
+    parent_parser.add_argument(
+        "--timeout",
+        dest="timeout",
+        nargs="?",
+        default="",
+        type=str,
+        help="HTTP request timeout in seconds"
+    )
+    parent_parser.add_argument(
+        "--limit",
+        dest="limit",
+        nargs="?",
+        default="",
+        type=str,
+        help="The limit of the number of pages to return per HTTP request"
+    )
     subparsers = parser.add_subparsers(
         help="Subcommands", dest="command", metavar="COMMAND"
     )
@@ -361,7 +377,8 @@ def scan(regex_config, controller, scan_arguments):
         return
     scan_comment = scan_arguments.get("scan_comment", False)
     post_comment = scan_arguments.get("post_comment", False)
-    for title, description, comments, url, issue_id in controller.get_data(scan_comment):
+    limit = scan_arguments.get("limit", None)
+    for title, description, comments, url, issue_id in controller.get_data(scan_comment, limit):
         if DEBUG:
             logging.info(f"Scanning [{issue_id}]: {url}")
         ticket_data = {"title": title, "description": description, "comments": comments, "url": url,
@@ -445,6 +462,21 @@ def main():
     controller_factory = platform_controller.factory
     controller = controller_factory.get_platform(command)
 
+    controler_config = {}
+
+    if args.timeout and len(args.timeout) > 0:
+        timeout = int(args.timeout)
+    else:
+        timeout = cfg.get("general_params", {}).get("timeout", None)
+
+    if args.limit and len(args.limit) > 0:
+        limit = int(args.limit)
+    else:
+        limit = cfg.get("general_params", {}).get("limit", None)
+
+    controler_config["timeout"] = timeout
+    controler_config["limit"] = limit
+
     TOKEN = None
     SERVER = None
     EMAIL = None
@@ -452,19 +484,19 @@ def main():
         TOKEN = os.getenv("LINEAR_TOKEN")
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
-        controler_config = {"token": TOKEN}
+        controler_config["token"] = TOKEN
 
     elif command == "asana_scan":
         TOKEN = os.getenv("ASANA_TOKEN")
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
-        controler_config = {"token": TOKEN}
+        controler_config["token"] = TOKEN
 
     elif command == "wrike_scan":
         TOKEN = os.getenv("WRIKE_TOKEN")
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
-        controler_config = {"token": TOKEN}
+        controler_config["token"] = TOKEN
 
     elif command == "jira_scan":
         SERVER = os.getenv("JIRA_SERVER")
@@ -476,7 +508,9 @@ def main():
             EMAIL = args.email
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
-        controler_config = {"server": SERVER, "email": EMAIL, "token": TOKEN}
+        controler_config["server"] = SERVER
+        controler_config["email"] = EMAIL
+        controler_config["token"] = TOKEN
 
     elif command == "confluence_scan":
         SERVER = os.getenv("CONFLUENCE_SERVER")
@@ -494,8 +528,9 @@ def main():
             EMAIL = args.email
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
-        controler_config = {"server": SERVER, "email": EMAIL, "token": TOKEN}
-
+        controler_config["server"] = SERVER
+        controler_config["email"] = EMAIL
+        controler_config["token"] = TOKEN
     else:
         parser.print_help()
         return
@@ -552,7 +587,8 @@ def main():
 
     scan_arguments = {"scan_comment": scan_comment, "post_comment": post_comment, "secret_manager": secret_manager,
                       "contact_help": contact_help, "label": label, "report_format": report_format, "debug": DEBUG,
-                      "show_matched_secret_on_logs": show_matched_secret_on_logs, "scan_target": command}
+                      "show_matched_secret_on_logs": show_matched_secret_on_logs, "scan_target": command,
+                      "timeout": timeout, "limit": limit}
     report_json["tool"]["scan_arguments"] = scan_arguments
 
     scan(regex_config, controller, scan_arguments)

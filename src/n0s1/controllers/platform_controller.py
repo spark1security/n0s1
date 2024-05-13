@@ -11,7 +11,7 @@ class PlatformHollow:
     def is_connected(self):
         return False
 
-    def get_data(self, include_coments=False):
+    def get_data(self, include_coments=False, limit=None):
         return None, None, None, None, None
 
     def post_comment(self, issue, comment):

@@ -44,7 +44,7 @@ class AsanaControler():
                 logging.error(f"Unable to connect to {self.get_name()} instance. Check your credentials.")
         return False
 
-    def get_data(self, include_coments=False):
+    def get_data(self, include_coments=False, limit=None):
         if not self._client:
             return None, None, None, None, None
 

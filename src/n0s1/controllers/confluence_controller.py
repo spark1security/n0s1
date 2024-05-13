@@ -14,13 +14,20 @@ class ConfluenceControler():
         SERVER = config.get("server", "")
         EMAIL = config.get("email", "")
         TOKEN = config.get("token", "")
+        TIMEOUT = config.get("timeout", -1)
         self._url = SERVER
         self._user = EMAIL
         self._password = TOKEN
         if EMAIL and len(EMAIL) > 0:
-            self._client = Confluence(url=SERVER, username=EMAIL, password=TOKEN)
+            if TIMEOUT and TIMEOUT > 0:
+                self._client = Confluence(url=SERVER, username=EMAIL, password=TOKEN, timeout=TIMEOUT)
+            else:
+                self._client = Confluence(url=SERVER, username=EMAIL, password=TOKEN)
         else:
-            self._client = Confluence(url=SERVER, token=TOKEN)
+            if TIMEOUT and TIMEOUT > 0:
+                self._client = Confluence(url=SERVER, token=TOKEN, timeout=TIMEOUT)
+            else:
+                self._client = Confluence(url=SERVER, token=TOKEN)
         return self.is_connected()
 
     def get_name(self):
@@ -105,17 +112,19 @@ class ConfluenceControler():
                 logging.error(f"Unable to connect to {self.get_name()} instance. Check your credentials.")
         return False
 
-    def get_data(self, include_coments=False):
+    def get_data(self, include_coments=False, limit=None):
         if not self._client:
             return None, None, None, None, None
 
         start = 0
-        limit = 500
+        if not limit or limit < 0:
+            limit = 50
+        space_limit = limit
         finished = False
         while not finished:
-            res = self._client.get_all_spaces(start=start, limit=limit)
-            start = limit
-            limit += start
+            res = self._client.get_all_spaces(start=start, limit=space_limit)
+            start = space_limit
+            space_limit += start
             spaces = res.get("results", [])
 
             for s in spaces:
@@ -123,7 +132,7 @@ class ConfluenceControler():
                 logging.info(f"Scanning Confluence space: [{key}]...")
                 if len(key) > 0:
                     pages_start = 0
-                    pages_limit = 50
+                    pages_limit = limit
                     pages_finished = False
                     while not pages_finished:
                         pages = self._client.get_all_pages_from_space(key, start=pages_start, limit=pages_limit)
@@ -139,7 +148,7 @@ class ConfluenceControler():
                             url = body.get("_links", {}).get("base") + p.get("_links", {}).get("webui", "")
                             if include_coments:
                                 comments_start = 0
-                                comments_limit = 25
+                                comments_limit = limit
                                 comments_finished = False
                                 while not comments_finished:
                                     comments_response = self._client.get_page_comments(page_id, expand="body.storage",
