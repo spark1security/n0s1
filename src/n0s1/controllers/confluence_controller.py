@@ -122,10 +122,15 @@ class ConfluenceControler():
         space_limit = limit
         finished = False
         while not finished:
-            res = self._client.get_all_spaces(start=start, limit=space_limit)
+            try:
+                res = self._client.get_all_spaces(start=start, limit=space_limit)
+                spaces = res.get("results", [])
+            except Exception as e:
+                logging.warning(e)
+                spaces = [{}]
+
             start = space_limit
             space_limit += start
-            spaces = res.get("results", [])
 
             for s in spaces:
                 key = s.get("key", "")
@@ -135,7 +140,12 @@ class ConfluenceControler():
                     pages_limit = limit
                     pages_finished = False
                     while not pages_finished:
-                        pages = self._client.get_all_pages_from_space(key, start=pages_start, limit=pages_limit)
+                        try:
+                            pages = self._client.get_all_pages_from_space(key, start=pages_start, limit=pages_limit)
+                        except Exception as e:
+                            logging.warning(e)
+                            pages = [{}]
+
                         pages_start = pages_limit
                         pages_limit += pages_start
 
@@ -146,17 +156,20 @@ class ConfluenceControler():
                             body = self._client.get_page_by_id(page_id, expand="body.storage")
                             description = body.get("body", {}).get("storage", {}).get("value", "")
                             url = body.get("_links", {}).get("base") + p.get("_links", {}).get("webui", "")
-                            if include_coments:
+                            if len(page_id) > 0 and include_coments:
                                 comments_start = 0
                                 comments_limit = limit
                                 comments_finished = False
                                 while not comments_finished:
-                                    comments_response = self._client.get_page_comments(page_id, expand="body.storage",
-                                                                                       start=comments_start,
-                                                                                       limit=comments_limit)
+                                    try:
+                                        comments_response = self._client.get_page_comments(page_id, expand="body.storage", start=comments_start, limit=comments_limit)
+                                        comments_result = comments_response.get("results", [])
+                                    except Exception as e:
+                                        logging.warning(e)
+                                        comments_result = [{}]
+
                                     comments_start = comments_limit
                                     comments_limit += comments_start
-                                    comments_result = comments_response.get("results", [])
 
                                     for c in comments_result:
                                         comment = c.get("body", {}).get("storage", {}).get("value", "")
