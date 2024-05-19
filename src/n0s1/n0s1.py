@@ -28,6 +28,26 @@ except:
 global n0s1_version, report_json, report_file, cfg, DEBUG
 
 
+def log_message(message, level=logging.INFO):
+    global DEBUG
+    debug_file = "n0s1_debug.log"
+    if level == logging.NOTSET or level == logging.DEBUG:
+        logging.debug(message)
+    if level == logging.INFO:
+        logging.info(message)
+    if level == logging.WARNING:
+        logging.warning(message)
+    if level == logging.ERROR:
+        logging.error(message)
+    if level == logging.CRITICAL:
+        logging.critical(message)
+    if DEBUG:
+        with open(debug_file, "a") as f:
+            if f.tell() == 0:
+                f.write("Debug logging message for n0s1\n")
+            f.write(f"{message}\n")
+
+
 def init_argparse() -> argparse.ArgumentParser:
     global n0s1_version
     """Adds arguements that can be called from the command line
@@ -274,7 +294,7 @@ def _save_report(report_format=""):
                 json.dump(report_json, f)
                 return True
     except Exception as e:
-        logging.error(e)
+        log_message(str(e), level=logging.ERROR)
 
     return False
 
@@ -290,7 +310,7 @@ def _safe_re_search(regex_str, text):
             m = re.search(regex_str, text, re.IGNORECASE)
         except Exception as e:
             if DEBUG:
-                logging.info(e)
+                log_message(str(e))
     return m
 
 
@@ -325,13 +345,13 @@ def report_leaked_secret(scan_text_result, controller):
     finding_info = finding_info.format(regex_config_id=regex_id, regex_config_description=regex_description,
                                        regex=regex, platform=platform, field=field, leak=sanitized_secret)
 
-    logging.info("\nPotential secret leak regex match!")
-    logging.info(finding_info)
+    log_message("\nPotential secret leak regex match!")
+    log_message(finding_info)
     if show_matched_secret_on_logs:
-        logging.info(
+        log_message(
             f"\n##################### Secret  #####################\n{snippet_text}\n##################### Secret  #####################")
-    logging.info(f"\nLeak source: {url}")
-    logging.info("\n\n")
+    log_message(f"\nLeak source: {url}")
+    log_message("\n\n")
     finding_id = f"{url}_{sanitized_secret}"
     finding_id = _sha1_hash(finding_id)
     new_finding = {"id": finding_id, "url": url, "secret": sanitized_secret,
@@ -367,7 +387,7 @@ def scan_text(regex_config, text):
             match = True
     except Exception as e:
         if DEBUG:
-            logging.warning(e)
+            log_message(str(e), level=logging.WARNING)
     return match, scan_text_result
 
 
@@ -380,7 +400,7 @@ def scan(regex_config, controller, scan_arguments):
     limit = scan_arguments.get("limit", None)
     for title, description, comments, url, issue_id in controller.get_data(scan_comment, limit):
         if DEBUG:
-            logging.info(f"Scanning [{issue_id}]: {url}")
+            log_message(f"Scanning [{issue_id}]: {url}")
         ticket_data = {"title": title, "description": description, "comments": comments, "url": url,
                        "issue_id": issue_id}
         label = cfg.get("comment_params", {}).get("label", "")
@@ -420,7 +440,7 @@ def scan(regex_config, controller, scan_arguments):
                 report_leaked_secret(scan_text_result, controller)
 
 
-def main():
+def main(callback=None):
     global n0s1_version, report_json, report_file, cfg, DEBUG
 
     logging.basicConfig(level=logging.INFO)
@@ -442,13 +462,13 @@ def main():
             else:
                 regex_config = toml.load(f)
     else:
-        logging.warning(f"Regex file [{args.regex_file}] not found!")
+        log_message(f"Regex file [{args.regex_file}] not found!", level=logging.WARNING)
 
     if os.path.exists(args.config_file):
         with open(args.config_file, "r") as f:
             cfg = yaml.load(f, Loader=yaml.FullLoader)
     else:
-        logging.warning(f"Config file [{args.config_file}] not found!")
+        log_message(f"Config file [{args.config_file}] not found!", level=logging.WARNING)
 
     datetime_now_obj = datetime.now(timezone.utc)
     date_utc = datetime_now_obj.strftime("%Y-%m-%dT%H:%M:%S")
@@ -461,6 +481,7 @@ def main():
     command = args.command
     controller_factory = platform_controller.factory
     controller = controller_factory.get_platform(command)
+    controller.set_log_message_callback(callback)
 
     controler_config = {}
 
@@ -535,16 +556,17 @@ def main():
         parser.print_help()
         return
 
-    message = f"n0s1 secret scanner version [{n0s1_version}] - Scan date: {date_utc}"
-    logging.info(message)
     DEBUG = args.debug
+
+    message = f"n0s1 secret scanner version [{n0s1_version}] - Scan date: {date_utc}"
+    log_message(message)
     if DEBUG:
         message = f"Args: {args}"
-        logging.info(message)
+        log_message(message)
         message = f"Controller settings: {SERVER} {EMAIL}"
         if args.show_matched_secret_on_logs:
             message += f" {TOKEN}"
-        logging.info(message)
+        log_message(message)
 
     if not controller.set_config(controler_config):
         sys.exit(-1)
@@ -594,8 +616,8 @@ def main():
     scan(regex_config, controller, scan_arguments)
     _save_report(report_format)
 
-    logging.info("Done!")
+    log_message("Done!")
 
 
 if __name__ == "__main__":
-    main()
+    main(log_message)

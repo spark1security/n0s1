@@ -1,8 +1,15 @@
 import html
 import logging
+import time
 
 
-class ConfluenceControler():
+try:
+    from . import hollow_controller as hollow_controller
+except Exception:
+    import n0s1.controllers.hollow_controller as hollow_controller
+
+
+class ConfluenceControler(hollow_controller.HollowController):
     def __init__(self):
         self._client = None
         self._url = None
@@ -60,7 +67,7 @@ class ConfluenceControler():
                     headers=headers
                 )
         except Exception as e:
-            logging.info(e)
+            self.log_message(str(e))
         return response
 
     def get_current_user(self):
@@ -85,9 +92,9 @@ class ConfluenceControler():
     def is_connected(self):
         if self._client:
             if user := self.get_current_user():
-                logging.info(f"Logged to {self.get_name()} as {user}")
+                self.log_message(f"Logged to {self.get_name()} as {user}")
             else:
-                logging.error(f"Unable to connect to {self.get_name()} instance. Check your credentials.")
+                self.log_message(f"Unable to connect to {self.get_name()} instance. Check your credentials.", logging.ERROR)
                 return False
 
             if spaces := self._client.get_all_spaces():
@@ -105,11 +112,11 @@ class ConfluenceControler():
                     if page_found:
                         return True
                     else:
-                        logging.error(f"Unable to list {self.get_name()} pages. Check your permissions.")
+                        self.log_message(f"Unable to list {self.get_name()} pages. Check your permissions.", logging.ERROR)
                 else:
-                    logging.error(f"Unable to list {self.get_name()} spaces. Check your permissions.")
+                    self.log_message(f"Unable to list {self.get_name()} spaces. Check your permissions.", logging.ERROR)
             else:
-                logging.error(f"Unable to connect to {self.get_name()} instance. Check your credentials.")
+                self.log_message(f"Unable to connect to {self.get_name()} instance. Check your credentials.", logging.ERROR)
         return False
 
     def get_data(self, include_coments=False, limit=None):
@@ -126,15 +133,17 @@ class ConfluenceControler():
                 res = self._client.get_all_spaces(start=start, limit=space_limit)
                 spaces = res.get("results", [])
             except Exception as e:
-                logging.warning(e)
+                self.log_message(str(e), logging.WARNING)
                 spaces = [{}]
+                time.sleep(1)
+                continue
 
             start = space_limit
             space_limit += start
 
             for s in spaces:
                 key = s.get("key", "")
-                logging.info(f"Scanning Confluence space: [{key}]...")
+                self.log_message(f"Scanning Confluence space: [{key}]...")
                 if len(key) > 0:
                     pages_start = 0
                     pages_limit = limit
@@ -143,8 +152,10 @@ class ConfluenceControler():
                         try:
                             pages = self._client.get_all_pages_from_space(key, start=pages_start, limit=pages_limit)
                         except Exception as e:
-                            logging.warning(e)
+                            self.log_message(str(e), logging.WARNING)
                             pages = [{}]
+                            time.sleep(1)
+                            continue
 
                         pages_start = pages_limit
                         pages_limit += pages_start
@@ -153,9 +164,16 @@ class ConfluenceControler():
                             comments = []
                             title = p.get("title", "")
                             page_id = p.get("id", "")
-                            body = self._client.get_page_by_id(page_id, expand="body.storage")
+                            try:
+                                body = self._client.get_page_by_id(page_id, expand="body.storage")
+                            except Exception as e:
+                                self.log_message(str(e), logging.WARNING)
+                                body = {}
+                                time.sleep(1)
+                                continue
+
                             description = body.get("body", {}).get("storage", {}).get("value", "")
-                            url = body.get("_links", {}).get("base") + p.get("_links", {}).get("webui", "")
+                            url = body.get("_links", {}).get("base", "") + p.get("_links", {}).get("webui", "")
                             if len(page_id) > 0 and include_coments:
                                 comments_start = 0
                                 comments_limit = limit
@@ -165,8 +183,10 @@ class ConfluenceControler():
                                         comments_response = self._client.get_page_comments(page_id, expand="body.storage", start=comments_start, limit=comments_limit)
                                         comments_result = comments_response.get("results", [])
                                     except Exception as e:
-                                        logging.warning(e)
+                                        self.log_message(str(e), logging.WARNING)
                                         comments_result = [{}]
+                                        time.sleep(1)
+                                        continue
 
                                     comments_start = comments_limit
                                     comments_limit += comments_start
