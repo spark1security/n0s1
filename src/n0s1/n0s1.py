@@ -31,6 +31,7 @@ global n0s1_version, report_json, report_file, cfg, DEBUG
 def log_message(message, level=logging.INFO):
     global DEBUG
     debug_file = "n0s1_debug.log"
+
     if level == logging.NOTSET or level == logging.DEBUG:
         logging.debug(message)
     if level == logging.INFO:
@@ -41,6 +42,7 @@ def log_message(message, level=logging.INFO):
         logging.error(message)
     if level == logging.CRITICAL:
         logging.critical(message)
+
     if DEBUG:
         with open(debug_file, "a") as f:
             if f.tell() == 0:
