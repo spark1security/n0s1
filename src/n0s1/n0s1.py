@@ -1,3 +1,7 @@
+# Disable all warnings from urllib about no ssl verfication
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 import argparse
 import hashlib
 import logging

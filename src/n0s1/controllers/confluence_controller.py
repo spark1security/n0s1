@@ -18,9 +18,9 @@ class ConfluenceControler():
         self._user = EMAIL
         self._password = TOKEN
         if EMAIL and len(EMAIL) > 0:
-            self._client = Confluence(url=SERVER, username=EMAIL, password=TOKEN)
+            self._client = Confluence(url=SERVER, username=EMAIL, password=TOKEN, verify_ssl=False)
         else:
-            self._client = Confluence(url=SERVER, token=TOKEN)
+            self._client = Confluence(url=SERVER, token=TOKEN, verify_ssl=False)
         return self.is_connected()
 
     def get_name(self):
@@ -40,7 +40,8 @@ class ConfluenceControler():
                     "GET",
                     url,
                     headers=headers,
-                    auth=auth
+                    auth=auth,
+                    verify=False
                 )
             else:
                 headers = {
@@ -50,7 +51,10 @@ class ConfluenceControler():
                 response = requests.request(
                     "GET",
                     url,
-                    headers=headers
+                    headers=headers,
+                    verify=False
+
+
                 )
         except Exception as e:
             logging.info(e)
