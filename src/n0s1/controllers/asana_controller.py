@@ -1,8 +1,15 @@
 import logging
 
 
-class AsanaControler():
+try:
+    from . import hollow_controller as hollow_controller
+except Exception:
+    import n0s1.controllers.hollow_controller as hollow_controller
+
+
+class AsanaControler(hollow_controller.HollowController):
     def __init__(self):
+        super().__init__()
         self._client = None
 
     def set_config(self, config):
@@ -17,9 +24,9 @@ class AsanaControler():
     def is_connected(self):
         if self._client:
             if user := self._client.users.get_user("me"):
-                logging.info(f"Logged to {self.get_name()} as {user}")
+                self.log_message(f"Logged to {self.get_name()} as {user}")
             else:
-                logging.error(f"Unable to connect to {self.get_name()} instance. Check your credentials.")
+                self.log_message(f"Unable to connect to {self.get_name()} instance. Check your credentials.", logging.ERROR)
                 return False
 
             if spaces := self._client.workspaces.get_workspaces():
@@ -37,11 +44,11 @@ class AsanaControler():
                     if project_found:
                         return True
                     else:
-                        logging.error(f"Unable to list {self.get_name()} projects. Check your permissions.")
+                        self.log_message(f"Unable to list {self.get_name()} projects. Check your permissions.", logging.ERROR)
                 else:
-                    logging.error(f"Unable to list {self.get_name()} workspaces. Check your permissions.")
+                    self.log_message(f"Unable to list {self.get_name()} workspaces. Check your permissions.", logging.ERROR)
             else:
-                logging.error(f"Unable to connect to {self.get_name()} instance. Check your credentials.")
+                self.log_message(f"Unable to connect to {self.get_name()} instance. Check your credentials.", logging.ERROR)
         return False
 
     def get_data(self, include_coments=False, limit=None):

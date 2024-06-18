@@ -1,13 +1,19 @@
 import logging
 
 try:
+    from . import hollow_controller as hollow_controller
+except Exception:
+    import n0s1.controllers.hollow_controller as hollow_controller
+
+try:
     import clients.linear_graphql_client as linear_graphql_client
 except:
     import n0s1.clients.linear_graphql_client as linear_graphql_client
 
 
-class LinearControler():
+class LinearControler(hollow_controller.HollowController):
     def __init__(self):
+        super().__init__()
         self._client = None
 
     def set_config(self, config):
@@ -28,9 +34,9 @@ class LinearControler():
     def is_connected(self):
         if self._client:
             if user := self._client.get_curret_user():
-                logging.info(f"Logged to Linear as {user}")
+                self.log_message(f"Logged to Linear as {user}")
             else:
-                logging.error("Unable to connect to Linear instance. Check your credentials.")
+                self.log_message("Unable to connect to Linear instance. Check your credentials.", logging.ERROR)
                 return False
 
             query = {"query": "{ issues { nodes { id } } }", "variables": {}}
@@ -41,9 +47,9 @@ class LinearControler():
                 if len(issues) > 0:
                     return True
                 else:
-                    logging.error("Unable to list Linear issues. Check your permissions.")
+                    self.log_message("Unable to list Linear issues. Check your permissions.", logging.ERROR)
             else:
-                logging.error("Unable to connect to Linear instance. Check your credentials.")
+                self.log_message("Unable to connect to Linear instance. Check your credentials.", logging.ERROR)
         return False
 
     def get_data(self, include_coments=False, limit=None):

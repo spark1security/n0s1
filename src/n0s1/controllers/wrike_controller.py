@@ -3,8 +3,14 @@ import logging
 from WrikePy import *
 
 
-class WrikeControler():
+try:
+    from . import hollow_controller as hollow_controller
+except Exception:
+    import n0s1.controllers.hollow_controller as hollow_controller
+
+class WrikeControler(hollow_controller.HollowController):
     def __init__(self):
+        super().__init__()
         self._client = None
 
     def set_config(self, config):
@@ -25,12 +31,12 @@ class WrikeControler():
                 if 200 <= response.status_code < 300:
                     acc_info = json.loads(response.text)
                     logged_in = True
-                    logging.info(f"Logged to {self.get_name()} as {acc_info}")
+                    self.log_message(f"Logged to {self.get_name()} as {acc_info}")
             except Exception as ex:
-                logging.warning(ex)
+                self.log_message(str(ex), logging.WARNING)
                 pass
             if not logged_in:
-                logging.error(f"Unable to connect to {self.get_name()} instance. Check your credentials.")
+                self.log_message(f"Unable to connect to {self.get_name()} instance. Check your credentials.", logging.ERROR)
                 return False
 
             t = Tasks(self._client, parameters={"fields": ["description"]})
@@ -45,10 +51,10 @@ class WrikeControler():
                         list_tasks = True
                         return True
             except Exception as ex:
-                logging.warning(ex)
+                self.log_message(str(ex), logging.WARNING)
                 pass
             if not list_tasks:
-                logging.error(f"Unable to list {self.get_name()} tasks. Check your permissions.")
+                self.log_message(f"Unable to list {self.get_name()} tasks. Check your permissions.", logging.ERROR)
         return False
 
     def get_data(self, include_coments=False, limit=None):
@@ -62,7 +68,7 @@ class WrikeControler():
             if 200 <= response.status_code < 300:
                 tasks = json.loads(response.text)
         except Exception as ex:
-            logging.warning(ex)
+            self.log_message(str(ex), logging.WARNING)
 
         task_list = tasks.get("data", [])
         for t in task_list:
@@ -79,7 +85,7 @@ class WrikeControler():
                         if 200 <= response.status_code < 300:
                             json_data = json.loads(response.text)
                     except Exception as ex:
-                        logging.warning(ex)
+                        self.log_message(str(ex), logging.WARNING)
 
                     c_data = json_data.get("data", [])
                     for c in c_data:
@@ -101,5 +107,5 @@ class WrikeControler():
                     if len(added_comment) > 0:
                         return True
             except Exception as ex:
-                logging.warning(ex)
+                self.log_message(str(ex), logging.WARNING)
         return False

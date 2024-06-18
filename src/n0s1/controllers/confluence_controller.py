@@ -11,6 +11,7 @@ except Exception:
 
 class ConfluenceControler(hollow_controller.HollowController):
     def __init__(self):
+        super().__init__()
         self._client = None
         self._url = None
         self._user = None
