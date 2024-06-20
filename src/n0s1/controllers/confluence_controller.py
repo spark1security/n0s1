@@ -124,42 +124,38 @@ class ConfluenceControler(hollow_controller.HollowController):
         if not self._client:
             return None, None, None, None, None
 
-        start = 0
+        space_start = 0
         if not limit or limit < 0:
             limit = 50
-        space_limit = limit
         finished = False
         while not finished:
             try:
-                res = self._client.get_all_spaces(start=start, limit=space_limit)
+                res = self._client.get_all_spaces(start=space_start, limit=limit)
                 spaces = res.get("results", [])
             except Exception as e:
-                self.log_message(str(e), logging.WARNING)
+                message = str(e) + f" get_all_spaces(start={space_start}, limit={limit})"
+                self.log_message(message, logging.WARNING)
                 spaces = [{}]
                 time.sleep(1)
                 continue
-
-            start = space_limit
-            space_limit += start
+            space_start += limit
 
             for s in spaces:
                 key = s.get("key", "")
                 self.log_message(f"Scanning Confluence space: [{key}]...")
                 if len(key) > 0:
                     pages_start = 0
-                    pages_limit = limit
                     pages_finished = False
                     while not pages_finished:
                         try:
-                            pages = self._client.get_all_pages_from_space(key, start=pages_start, limit=pages_limit)
+                            pages = self._client.get_all_pages_from_space(key, start=pages_start, limit=limit)
                         except Exception as e:
-                            self.log_message(str(e), logging.WARNING)
+                            message = str(e) + f" get_all_pages_from_space({key}, start={pages_start}, limit={limit})"
+                            self.log_message(message, logging.WARNING)
                             pages = [{}]
                             time.sleep(1)
                             continue
-
-                        pages_start = pages_limit
-                        pages_limit += pages_start
+                        pages_start += limit
 
                         for p in pages:
                             comments = []
@@ -168,7 +164,8 @@ class ConfluenceControler(hollow_controller.HollowController):
                             try:
                                 body = self._client.get_page_by_id(page_id, expand="body.storage")
                             except Exception as e:
-                                self.log_message(str(e), logging.WARNING)
+                                message = str(e) + f" get_page_by_id({page_id})"
+                                self.log_message(message, logging.WARNING)
                                 body = {}
                                 time.sleep(1)
                                 continue
@@ -177,20 +174,18 @@ class ConfluenceControler(hollow_controller.HollowController):
                             url = body.get("_links", {}).get("base", "") + p.get("_links", {}).get("webui", "")
                             if len(page_id) > 0 and include_coments:
                                 comments_start = 0
-                                comments_limit = limit
                                 comments_finished = False
                                 while not comments_finished:
                                     try:
-                                        comments_response = self._client.get_page_comments(page_id, expand="body.storage", start=comments_start, limit=comments_limit)
+                                        comments_response = self._client.get_page_comments(page_id, expand="body.storage", start=comments_start, limit=limit)
                                         comments_result = comments_response.get("results", [])
                                     except Exception as e:
-                                        self.log_message(str(e), logging.WARNING)
+                                        message = str(e) + f" get_page_comments({page_id}, expand=\"body.storage\", start={comments_start}, limit={limit})"
+                                        self.log_message(message, logging.WARNING)
                                         comments_result = [{}]
                                         time.sleep(1)
                                         continue
-
-                                    comments_start = comments_limit
-                                    comments_limit += comments_start
+                                    comments_start += limit
 
                                     for c in comments_result:
                                         comment = c.get("body", {}).get("storage", {}).get("value", "")

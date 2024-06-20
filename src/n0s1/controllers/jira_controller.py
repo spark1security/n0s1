@@ -1,4 +1,5 @@
 import logging
+import time
 
 try:
     from . import hollow_controller as hollow_controller
@@ -16,10 +17,17 @@ class JiraControler(hollow_controller.HollowController):
         SERVER = config.get("server", "")
         EMAIL = config.get("email", "")
         TOKEN = config.get("token", "")
+        TIMEOUT = config.get("timeout", -1)
         if EMAIL and len(EMAIL) > 0:
-            self._client = JIRA(SERVER, basic_auth=(EMAIL, TOKEN))
+            if TIMEOUT and TIMEOUT > 0:
+                self._client = JIRA(SERVER, basic_auth=(EMAIL, TOKEN), timeout=TIMEOUT)
+            else:
+                self._client = JIRA(SERVER, basic_auth=(EMAIL, TOKEN))
         else:
-            self._client = JIRA(SERVER, token_auth=TOKEN)
+            if TIMEOUT and TIMEOUT > 0:
+                self._client = JIRA(SERVER, token_auth=TOKEN, timeout=TIMEOUT)
+            else:
+                self._client = JIRA(SERVER, token_auth=TOKEN)
         return self.is_connected()
 
     def get_name(self):
@@ -57,18 +65,48 @@ class JiraControler(hollow_controller.HollowController):
     def get_data(self, include_coments=False, limit=None):
         if not self._client:
             return None, None, None, None, None
-        for key in self._client.projects():
+        start = 0
+        if not limit or limit < 0:
+            limit = 50
+        try:
+            projects = self._client.projects()
+        except Exception as e:
+            message = str(e) + f" client.projects()"
+            self.log_message(message, logging.WARNING)
+            projects = []
+
+        for key in projects:
             ql = f"project = '{key}'"
             self.log_message(f"Scanning Jira project: [{key}]...")
-            for issue in self._client.search_issues(ql):
-                url = issue.self.split('/rest/api')[0] + "/browse/" + issue.key;
-                title = issue.fields.summary
-                description = issue.fields.description
-                comments = []
-                if include_coments:
-                    issue_comments = self._client.comments(issue.id)
-                    comments.extend(c.body for c in issue_comments)
-                yield title, description, comments, url, issue.key
+            issues_finished = False
+            issue_start = start
+            while not issues_finished:
+                try:
+                    issues = self._client.search_issues(ql, startAt=issue_start, maxResults=limit)
+                except Exception as e:
+                    message = str(e) + f" client.search_issues({ql}, startAt={issue_start}, maxResults={limit})"
+                    self.log_message(message, logging.WARNING)
+                    issues = [{}]
+                    time.sleep(1)
+                    continue
+                issue_start += limit
+                issues_finished = len(issues) <= 0
+                for issue in issues:
+                    url = issue.self.split('/rest/api')[0] + "/browse/" + issue.key;
+                    title = issue.fields.summary
+                    description = issue.fields.description
+                    comments = []
+                    if include_coments:
+                        try:
+                            issue_comments = self._client.comments(issue.id)
+                            comments.extend(c.body for c in issue_comments)
+                        except Exception as e:
+                            message = str(e) + f" client.comments({issue.id})"
+                            self.log_message(message, logging.WARNING)
+                            comments = []
+                            time.sleep(1)
+
+                    yield title, description, comments, url, issue.key
 
     def post_comment(self, issue, comment):
         if not self._client:
