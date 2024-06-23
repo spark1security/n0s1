@@ -7,6 +7,8 @@ general_params:
   skip_comment: false
   show_matched_secret_on_logs: false
   report_format: "n0s1"
+  timeout: null
+  limit: null
 
 comment_params:
   bot_name: "n0s1 bot"

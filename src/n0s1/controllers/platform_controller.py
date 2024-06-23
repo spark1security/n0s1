@@ -1,21 +1,7 @@
-class PlatformHollow:
-    def __init__(self):
-        self.client = None
-
-    def set_config(self, config):
-        return self.is_connected()
-
-    def get_name(self):
-        return "Hollow"
-
-    def is_connected(self):
-        return False
-
-    def get_data(self, include_coments=False):
-        return None, None, None, None, None
-
-    def post_comment(self, issue, comment):
-        return self.is_connected()
+try:
+    from . import hollow_controller as hollow_controller
+except Exception:
+    import n0s1.controllers.hollow_controller as hollow_controller
 
 
 class PlatformFactory:
@@ -28,7 +14,7 @@ class PlatformFactory:
     def get_platform(self, platform):
         if creator := self._creators.get(platform):
             return creator()
-        return PlatformHollow()
+        return hollow_controller.HollowController()
 
 
 global factory
