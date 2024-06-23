@@ -18,16 +18,18 @@ class JiraControler(hollow_controller.HollowController):
         EMAIL = config.get("email", "")
         TOKEN = config.get("token", "")
         TIMEOUT = config.get("timeout", -1)
+        VERIFY_SSL = not config.get("insecure", False)
+        options = {"verify": VERIFY_SSL}
         if EMAIL and len(EMAIL) > 0:
             if TIMEOUT and TIMEOUT > 0:
-                self._client = JIRA(SERVER, basic_auth=(EMAIL, TOKEN), timeout=TIMEOUT)
+                self._client = JIRA(SERVER, options=options, basic_auth=(EMAIL, TOKEN), timeout=TIMEOUT)
             else:
-                self._client = JIRA(SERVER, basic_auth=(EMAIL, TOKEN))
+                self._client = JIRA(SERVER, options=options, basic_auth=(EMAIL, TOKEN))
         else:
             if TIMEOUT and TIMEOUT > 0:
-                self._client = JIRA(SERVER, token_auth=TOKEN, timeout=TIMEOUT)
+                self._client = JIRA(SERVER, options=options, token_auth=TOKEN, timeout=TIMEOUT)
             else:
-                self._client = JIRA(SERVER, token_auth=TOKEN)
+                self._client = JIRA(SERVER, options=options, token_auth=TOKEN)
         return self.is_connected()
 
     def get_name(self):

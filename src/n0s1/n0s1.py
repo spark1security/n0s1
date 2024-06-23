@@ -170,6 +170,12 @@ def init_argparse() -> argparse.ArgumentParser:
         type=str,
         help="The limit of the number of pages to return per HTTP request"
     )
+    parent_parser.add_argument(
+        "--insecure",
+        dest="insecure",
+        action="store_true",
+        help="Insecure mode. Ignore SSL certificate verification.",
+    )
     subparsers = parser.add_subparsers(
         help="Subcommands", dest="command", metavar="COMMAND"
     )
@@ -497,8 +503,14 @@ def main(callback=None):
     else:
         limit = cfg.get("general_params", {}).get("limit", None)
 
+    if args.insecure:
+        insecure = bool(args.insecure)
+    else:
+        insecure = cfg.get("general_params", {}).get("insecure", False)
+
     controler_config["timeout"] = timeout
     controler_config["limit"] = limit
+    controler_config["insecure"] = insecure
 
     TOKEN = None
     SERVER = None

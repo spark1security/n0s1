@@ -23,19 +23,20 @@ class ConfluenceControler(hollow_controller.HollowController):
         EMAIL = config.get("email", "")
         TOKEN = config.get("token", "")
         TIMEOUT = config.get("timeout", -1)
+        VERIFY_SSL = not config.get("insecure", False)
         self._url = SERVER
         self._user = EMAIL
         self._password = TOKEN
         if EMAIL and len(EMAIL) > 0:
             if TIMEOUT and TIMEOUT > 0:
-                self._client = Confluence(url=SERVER, username=EMAIL, password=TOKEN, timeout=TIMEOUT)
+                self._client = Confluence(url=SERVER, verify_ssl=VERIFY_SSL, username=EMAIL, password=TOKEN, timeout=TIMEOUT)
             else:
-                self._client = Confluence(url=SERVER, username=EMAIL, password=TOKEN)
+                self._client = Confluence(url=SERVER, verify_ssl=VERIFY_SSL, username=EMAIL, password=TOKEN)
         else:
             if TIMEOUT and TIMEOUT > 0:
-                self._client = Confluence(url=SERVER, token=TOKEN, timeout=TIMEOUT)
+                self._client = Confluence(url=SERVER, verify_ssl=VERIFY_SSL, token=TOKEN, timeout=TIMEOUT)
             else:
-                self._client = Confluence(url=SERVER, token=TOKEN)
+                self._client = Confluence(url=SERVER, verify_ssl=VERIFY_SSL, token=TOKEN)
         return self.is_connected()
 
     def get_name(self):
