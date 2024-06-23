@@ -59,7 +59,7 @@ class WrikeControler(hollow_controller.HollowController):
 
     def get_data(self, include_coments=False, limit=None):
         if not self._client:
-            return None, None, None, None, None
+            return {}
 
         t = Tasks(self._client, parameters={"fields": ["description"]})
         response = t.query__tasks()
@@ -90,7 +90,8 @@ class WrikeControler(hollow_controller.HollowController):
                     c_data = json_data.get("data", [])
                     for c in c_data:
                         comments.append(c.get("text", ""))
-                yield title, description, comments, url, task_id
+                ticket = self.pack_data(title, description, comments, url, task_id)
+                yield ticket
 
     def post_comment(self, task_id, comment):
         if not self._client:

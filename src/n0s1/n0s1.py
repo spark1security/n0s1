@@ -406,11 +406,14 @@ def scan(regex_config, controller, scan_arguments):
     scan_comment = scan_arguments.get("scan_comment", False)
     post_comment = scan_arguments.get("post_comment", False)
     limit = scan_arguments.get("limit", None)
-    for title, description, comments, url, issue_id in controller.get_data(scan_comment, limit):
+
+    for ticket in controller.get_data(scan_comment, limit):
+        issue_id = ticket.get("issue_id")
+        url = ticket.get("url")
         if DEBUG:
             log_message(f"Scanning [{issue_id}]: {url}")
-        ticket_data = {"title": title, "description": description, "comments": comments, "url": url,
-                       "issue_id": issue_id}
+
+        comments = ticket.get("ticket", {}).get("comments", {}).get("data", [])
         label = cfg.get("comment_params", {}).get("label", "")
         post_comment_for_this_issue = post_comment
         if post_comment_for_this_issue:
@@ -422,30 +425,28 @@ def scan(regex_config, controller, scan_arguments):
                     break
         scan_arguments["post_comment"] = post_comment_for_this_issue
 
-        secret_found, scan_text_result = scan_text(regex_config, title)
-        scan_text_result["ticket_data"] = ticket_data
-        scan_text_result["ticket_data"]["field"] = "title"
-        scan_text_result["ticket_data"]["platform"] = controller.get_name()
-        scan_text_result["scan_arguments"] = scan_arguments
-        if secret_found:
-            report_leaked_secret(scan_text_result, controller)
+        for key in ticket.get("ticket", {}):
+            item = ticket.get("ticket", {}).get(key, {})
+            name = item.get("name", "")
+            data = item.get("data", None)
+            data_type = item.get("data_type", None)
+            if data_type and data_type.lower() == "str".lower():
+                if data:
+                    scan_text_and_report_leaks(controller, data, name, regex_config, scan_arguments, ticket)
+            elif data_type:
+                for item_data in data:
+                    if item_data:
+                        scan_text_and_report_leaks(controller, item_data, name, regex_config, scan_arguments, ticket)
 
-        secret_found, scan_text_result = scan_text(regex_config, description)
-        scan_text_result["ticket_data"] = ticket_data
-        scan_text_result["ticket_data"]["field"] = "description"
-        scan_text_result["ticket_data"]["platform"] = controller.get_name()
-        scan_text_result["scan_arguments"] = scan_arguments
-        if secret_found:
-            report_leaked_secret(scan_text_result, controller)
 
-        for comment in comments:
-            secret_found, scan_text_result = scan_text(regex_config, comment)
-            scan_text_result["ticket_data"] = ticket_data
-            scan_text_result["ticket_data"]["field"] = "comment"
-            scan_text_result["ticket_data"]["platform"] = controller.get_name()
-            scan_text_result["scan_arguments"] = scan_arguments
-            if secret_found:
-                report_leaked_secret(scan_text_result, controller)
+def scan_text_and_report_leaks(controller, data, name, regex_config, scan_arguments, ticket):
+    secret_found, scan_text_result = scan_text(regex_config, data)
+    scan_text_result["ticket_data"] = ticket
+    scan_text_result["ticket_data"]["field"] = name
+    scan_text_result["ticket_data"]["platform"] = controller.get_name()
+    scan_text_result["scan_arguments"] = scan_arguments
+    if secret_found:
+        report_leaked_secret(scan_text_result, controller)
 
 
 def main(callback=None):

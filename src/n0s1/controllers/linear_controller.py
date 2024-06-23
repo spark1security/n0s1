@@ -54,7 +54,7 @@ class LinearControler(hollow_controller.HollowController):
 
     def get_data(self, include_coments=False, limit=None):
         if not self._client:
-            return None, None, None, None, None
+            return {}
         for linear_data in self._client.get_issues_and_comments(20):
             for edge in linear_data.get("data", {}).get("issues", {}).get("edges", []):
                 item = edge.get("node", {})
@@ -68,7 +68,8 @@ class LinearControler(hollow_controller.HollowController):
                         comment = node.get("body", "")
                         if len(comment) > 0:
                             comments.append(comment)
-                yield title, description, comments, url, issue_key
+                ticket = self.pack_data(title, description, comments, url, issue_key)
+                yield ticket
 
     def post_comment(self, issue, comment):
         if not self._client:

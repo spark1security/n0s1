@@ -53,7 +53,7 @@ class AsanaControler(hollow_controller.HollowController):
 
     def get_data(self, include_coments=False, limit=None):
         if not self._client:
-            return None, None, None, None, None
+            return {}
 
         if workspaces := self._client.workspaces.get_workspaces():
             for w in workspaces:
@@ -74,7 +74,8 @@ class AsanaControler(hollow_controller.HollowController):
                                             if s.get("type", "").lower() == "comment".lower():
                                                 comment = s.get("text", "")
                                                 comments.append(comment)
-                                yield title, description, comments, url, task_gid
+                                ticket = self.pack_data(title, description, comments, url, task_gid)
+                                yield ticket
 
     def post_comment(self, task_gid, comment):
         if not self._client:

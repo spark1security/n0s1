@@ -123,7 +123,7 @@ class ConfluenceControler(hollow_controller.HollowController):
 
     def get_data(self, include_coments=False, limit=None):
         if not self._client:
-            return None, None, None, None, None
+            return {}
 
         space_start = 0
         if not limit or limit < 0:
@@ -195,7 +195,8 @@ class ConfluenceControler(hollow_controller.HollowController):
                                     if len(comments_result) <= 0:
                                         comments_finished = True
 
-                            yield title, description, comments, url, page_id
+                            ticket = self.pack_data(title, description, comments, url, page_id)
+                            yield ticket
 
                         if len(pages) <= 0:
                             pages_finished = True
