@@ -174,7 +174,7 @@ def init_argparse() -> argparse.ArgumentParser:
         "--insecure",
         dest="insecure",
         action="store_true",
-        help="Insecure mode. Ignore SSL certificate verification.",
+        help="Insecure mode. Ignore SSL certificate verification",
     )
     subparsers = parser.add_subparsers(
         help="Subcommands", dest="command", metavar="COMMAND"

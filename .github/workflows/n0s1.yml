@@ -1,0 +1,21 @@
+name: "n0s1"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 13 * * 1'
+
+jobs:
+  jira_secret_scanning:
+    runs-on: [docker]
+    steps:
+      - uses: spark1security/n0s1-action@main
+        env:
+          JIRA_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        with:
+          scan-target: 'jira_scan'
+          user-email: 'marcelo@spark1.us'
+          platform-url: 'https://spark1us.atlassian.net'
