@@ -1,0 +1,33 @@
+name: "n0s1"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 13 * * 1'
+
+jobs:
+  jira_secret_scanning:
+    permissions: write-all
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: spark1security/n0s1-action@main
+        env:
+          JIRA_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        with:
+          scan-target: 'jira_scan'
+          user-email: 'marcelo@spark1.us'
+          platform-url: 'https://spark1us.atlassian.net'
+          report-format: "sarif"
+          report-file: "jira_secret_report.sarif"
+          timeout: 5
+          limit: 100
+      - name: Display SARIF result
+        run: |
+          cat jira_secret_report.sarif | jq | head -n 20
+          cat jira_secret_report.sarif | jq | tail -n 20
+      - uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "jira_secret_report.sarif"
