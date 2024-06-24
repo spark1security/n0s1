@@ -25,7 +25,11 @@ jobs:
           timeout: 5
           limit: 100
       - name: Display SARIF result
-        run: cat jira_secret_report.sarif
+        run: |
+          cat jira_secret_report.sarif
+          tail jira_secret_report.sarif
+          ls -alh
+          cat jira_secret_report.sarif | jq
       - uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: "jira_secret_report.sarif"
