@@ -12,7 +12,7 @@ jobs:
   jira_secret_scanning:
     runs-on: [ubuntu-latest]
     steps:
-      - uses: spark1security/n0s1-action@main
+      - uses: spark1security/n0s1-action@ms/new-flags
         env:
           JIRA_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
         with:
