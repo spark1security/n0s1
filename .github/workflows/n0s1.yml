@@ -2,7 +2,7 @@ name: "n0s1"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "ms/test" ]
   pull_request:
     branches: [ "main" ]
   schedule:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   jira_secret_scanning:
-    runs-on: [docker]
+    runs-on: [container]
     steps:
       - uses: spark1security/n0s1-action@main
         env:
