@@ -19,7 +19,7 @@ class HollowController:
         return False
 
     def get_data(self, include_coments=False, limit=None):
-        return None, None, None, None, None
+        return {}
 
     def post_comment(self, issue, comment):
         return self.is_connected()
@@ -29,3 +29,27 @@ class HollowController:
             self.log_message_callback(message, level)
         else:
             print(message)
+
+    def pack_data(self, title, description, comments, url, ticket_key):
+        ticket_data = {
+            "ticket": {
+                "title": {
+                    "name": "title",
+                    "data": title,
+                    "data_type": "str"
+                },
+                "description": {
+                    "name": "description",
+                    "data": description,
+                    "data_type": "str"
+                },
+                "comments": {
+                    "name": "comments",
+                    "data": comments,
+                    "data_type": "list"
+                }
+            },
+            "url": url,
+            "issue_id": ticket_key
+        }
+        return ticket_data

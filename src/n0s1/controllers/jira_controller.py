@@ -66,7 +66,7 @@ class JiraControler(hollow_controller.HollowController):
 
     def get_data(self, include_coments=False, limit=None):
         if not self._client:
-            return None, None, None, None, None
+            return {}
         start = 0
         if not limit or limit < 0:
             limit = 50
@@ -108,7 +108,8 @@ class JiraControler(hollow_controller.HollowController):
                             comments = []
                             time.sleep(1)
 
-                    yield title, description, comments, url, issue.key
+                    ticket = self.pack_data(title, description, comments, url, issue.key)
+                    yield ticket
 
     def post_comment(self, issue, comment):
         if not self._client:
