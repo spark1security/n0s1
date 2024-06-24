@@ -10,7 +10,7 @@ on:
 
 jobs:
   jira_secret_scanning:
-    runs-on: [container]
+    runs-on: [ubuntu-latest]
     steps:
       - uses: spark1security/n0s1-action@main
         env:
