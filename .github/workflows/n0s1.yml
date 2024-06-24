@@ -10,6 +10,7 @@ on:
 
 jobs:
   jira_secret_scanning:
+    permissions: write-all
     runs-on: [ubuntu-latest]
     steps:
       - uses: spark1security/n0s1-action@ms/new-flags
@@ -23,7 +24,7 @@ jobs:
           report-file: "jira_secret_report.sarif"
           timeout: 5
           limit: 100
-#      - uses: github/codeql-action/upload-sarif@v2
-#        with:
-#          sarif_file: "jira_secret_report.sarif"
-#          category: jira_secret_report
+      - uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "jira_secret_report.sarif"
+          category: jira_secret_report
