@@ -11,6 +11,11 @@ import yaml
 from datetime import datetime, timezone
 
 try:
+    import controllers.spark1 as spark1
+except:
+    import n0s1.controllers.spark1 as spark1
+
+try:
     import controllers.platform_controller as platform_controller
 except:
     import n0s1.controllers.platform_controller as platform_controller
@@ -276,13 +281,13 @@ def _sanitize_text(text, begin, end):
 
 def _sha1_hash(to_hash):
     try:
-        message_digest = hashlib.sha1()
+        message_digest = hashlib.sha256()
         string_m = str(to_hash)
         byte_m = bytes(string_m, encoding='utf')
         message_digest.update(byte_m)
         return message_digest.hexdigest()
     except TypeError as e:
-        raise "Unable to generate SHA-1 hash for input string" from e
+        raise "Unable to generate SHA-256 hash for input string" from e
 
 
 def _save_report(report_format=""):
@@ -573,7 +578,13 @@ def main(callback=None):
 
     DEBUG = args.debug
 
-    message = f"n0s1 secret scanner version [{n0s1_version}] - Scan date: {date_utc}"
+    N0S1_TOKEN = os.getenv("N0S1_TOKEN")
+    n0s1_pro = spark1.Spark1(token_auth=N0S1_TOKEN)
+    professional_banner = ""
+    if n0s1_pro.is_connected():
+        professional_banner = "Pro "
+
+    message = f"n0s1 secret scanner version [{n0s1_version}] {professional_banner}- Scan date: {date_utc}"
     log_message(message)
     if DEBUG:
         message = f"Args: {args}"
