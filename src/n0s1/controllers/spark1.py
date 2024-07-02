@@ -1,9 +1,22 @@
 import logging
+import socket
 
 try:
     import clients.http_client as http_client
 except Exception:
     import n0s1.clients.http_client as http_client
+
+
+def _get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("10.255.255.255", 1))
+        local_ip = s.getsockname()[0]
+    except:
+        local_ip = "127.0.0.1"
+    finally:
+        s.close()
+    return local_ip
 
 
 class Spark1(http_client.HttpClient):
@@ -13,6 +26,8 @@ class Spark1(http_client.HttpClient):
                  max_retries: int = 3, timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
                  auth: tuple[str, str] = None):
         self.base_url = "https://spark1security.ai"
+        # self.base_url = "http://127.0.0.1:5000"
+        self.local_ip = _get_local_ip()
         if server:
             self.base_url = server
         authorization = basic_auth
@@ -27,10 +42,17 @@ class Spark1(http_client.HttpClient):
             headers["Authorization"] = authorization
         super().__init__(uri=self.base_url, logging=logging, headers=headers)
 
-    def is_connected(self):
-        auth_url = self.base_url + "/auth"
+    def is_connected(self, config=None):
+        if config is None:
+            config = {}
+        data = {
+            "scanner_ip": self.local_ip,
+            "scan_target": config.get("scan_target", ""),
+            "report_format": config.get("report_format", "")
+        }
+        auth_url = self.base_url + "/api/v1/auth"
         try:
-            self._get_request(auth_url)
+            self._post_request(auth_url, json=data)
         except Exception as ex:
             logging.info(str(ex))
             return False
