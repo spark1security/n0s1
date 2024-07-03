@@ -65,6 +65,7 @@ class JiraControler(hollow_controller.HollowController):
         return False
 
     def get_data(self, include_coments=False, limit=None):
+        from jira.exceptions import JIRAError
         if not self._client:
             return {}
         start = 0
@@ -85,6 +86,11 @@ class JiraControler(hollow_controller.HollowController):
             while not issues_finished:
                 try:
                     issues = self._client.search_issues(ql, startAt=issue_start, maxResults=limit)
+                except JIRAError as e:
+                    self.log_message(f"Error while searching issues on Jira project: [{key}]. Skipping...", logging.WARNING)
+                    self.log_message(e)
+                    issues = [{}]
+                    break
                 except Exception as e:
                     message = str(e) + f" client.search_issues({ql}, startAt={issue_start}, maxResults={limit})"
                     self.log_message(message, logging.WARNING)
