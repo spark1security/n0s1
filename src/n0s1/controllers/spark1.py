@@ -25,7 +25,7 @@ class Spark1(http_client.HttpClient):
                  get_server_info: bool = True, async_: bool = False, async_workers: int = 5,
                  max_retries: int = 3, timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
                  auth: tuple[str, str] = None):
-        self.base_url = "https://spark1security.ai"
+        self.base_url = "https://api.spark1.us"
         # self.base_url = "http://127.0.0.1:5000"
         self.local_ip = _get_local_ip()
         if server:
