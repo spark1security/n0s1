@@ -52,9 +52,13 @@ class Spark1(http_client.HttpClient):
         }
         auth_url = self.base_url + "/api/v1/auth"
         try:
-            self._post_request(auth_url, json=data)
+            r = self._post_request(auth_url, json=data)
+            if r.status_code == 200:
+                session_token = r.json().get("token", "")
+                if session_token and len(session_token) > 0:
+                    return True
         except Exception as ex:
             logging.info(str(ex))
             return False
-        return True
+        return False
 

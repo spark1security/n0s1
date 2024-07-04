@@ -578,6 +578,16 @@ def main(callback=None):
 
     DEBUG = args.debug
 
+    message = f"n0s1 secret scanner version [{n0s1_version}] - Scan date: {date_utc}"
+    log_message(message)
+    if DEBUG:
+        message = f"Args: {args}"
+        log_message(message)
+        message = f"Controller settings: {SERVER} {EMAIL}"
+        if args.show_matched_secret_on_logs:
+            message += f" {TOKEN}"
+        log_message(message)
+
     if not controller.set_config(controler_config):
         sys.exit(-1)
 
@@ -625,19 +635,11 @@ def main(callback=None):
 
     N0S1_TOKEN = os.getenv("N0S1_TOKEN")
     n0s1_pro = spark1.Spark1(token_auth=N0S1_TOKEN)
-    professional_banner = ""
+    mode = "community"
     if n0s1_pro.is_connected(scan_arguments):
-        professional_banner = "Pro "
-
-    message = f"n0s1 secret scanner version [{n0s1_version}] {professional_banner}- Scan date: {date_utc}"
+        mode = "professional"
+    message = f"Starting scan in {mode} mode..."
     log_message(message)
-    if DEBUG:
-        message = f"Args: {args}"
-        log_message(message)
-        message = f"Controller settings: {SERVER} {EMAIL}"
-        if args.show_matched_secret_on_logs:
-            message += f" {TOKEN}"
-        log_message(message)
 
     scan(regex_config, controller, scan_arguments)
     _save_report(report_format)
