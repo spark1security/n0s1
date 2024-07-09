@@ -122,6 +122,7 @@ class ConfluenceControler(hollow_controller.HollowController):
         return False
 
     def get_data(self, include_coments=False, limit=None):
+        from atlassian.confluence import ApiPermissionError
         if not self._client:
             return {}
 
@@ -150,6 +151,11 @@ class ConfluenceControler(hollow_controller.HollowController):
                     while not pages_finished:
                         try:
                             pages = self._client.get_all_pages_from_space(key, start=pages_start, limit=limit)
+                        except ApiPermissionError as e:
+                            message = str(e) + f" get_all_pages_from_space({key}, start={pages_start}, limit={limit}). Skipping..."
+                            self.log_message(message, logging.WARNING)
+                            pages = [{}]
+                            break
                         except Exception as e:
                             message = str(e) + f" get_all_pages_from_space({key}, start={pages_start}, limit={limit})"
                             self.log_message(message, logging.WARNING)
