@@ -9,7 +9,7 @@ except Exception:
     import n0s1.controllers.hollow_controller as hollow_controller
 
 
-class ConfluenceControler(hollow_controller.HollowController):
+class ConfluenceController(hollow_controller.HollowController):
     def __init__(self):
         super().__init__()
         self._client = None

@@ -26,21 +26,25 @@ try:
     from . import linear_controller as linear_controller
     from . import asana_controller as asana_controller
     from . import wrike_controller as wrike_controller
+    from . import slack_controller as slack_controller
 except Exception:
     import n0s1.controllers.jira_controller as jira_controller
     import n0s1.controllers.confluence_controller as confluence_controller
     import n0s1.controllers.linear_controller as linear_controller
     import n0s1.controllers.asana_controller as asana_controller
     import n0s1.controllers.wrike_controller as wrike_controller
+    import n0s1.controllers.slack_controller as slack_controller
 
-factory.register_platform("", jira_controller.JiraControler)
-factory.register_platform("jira", jira_controller.JiraControler)
-factory.register_platform("jira_scan", jira_controller.JiraControler)
-factory.register_platform("confluence", confluence_controller.ConfluenceControler)
-factory.register_platform("confluence_scan", confluence_controller.ConfluenceControler)
-factory.register_platform("linear", linear_controller.LinearControler)
-factory.register_platform("linear_scan", linear_controller.LinearControler)
-factory.register_platform("asana", asana_controller.AsanaControler)
-factory.register_platform("asana_scan", asana_controller.AsanaControler)
-factory.register_platform("wrike", wrike_controller.WrikeControler)
-factory.register_platform("wrike_scan", wrike_controller.WrikeControler)
+factory.register_platform("", jira_controller.JiraController)
+factory.register_platform("jira", jira_controller.JiraController)
+factory.register_platform("jira_scan", jira_controller.JiraController)
+factory.register_platform("confluence", confluence_controller.ConfluenceController)
+factory.register_platform("confluence_scan", confluence_controller.ConfluenceController)
+factory.register_platform("linear", linear_controller.LinearController)
+factory.register_platform("linear_scan", linear_controller.LinearController)
+factory.register_platform("asana", asana_controller.AsanaController)
+factory.register_platform("asana_scan", asana_controller.AsanaController)
+factory.register_platform("wrike", wrike_controller.WrikeController)
+factory.register_platform("wrike_scan", wrike_controller.WrikeController)
+factory.register_platform("slack", slack_controller.SlackController)
+factory.register_platform("slack_scan", slack_controller.SlackController)
