@@ -37,8 +37,11 @@ class SlackController(hollow_controller.HollowController):
         range_days = 1
         now = datetime.datetime.now()
 
-        start_day = now - datetime.timedelta(days=range_days)
+        # Slack query by timestamp works like "greater than >" and "less than <" operators as opposed to ">=" and "<=".
+        # If you want to pull messages from 2024-07-14 you have to provide the following query: after:2024-07-13 before:2024-07-15
+        # Notice that the messages from the starting date (after:2024-07-13) and the end date (before:2024-07-15) are not included to the query results
         end_day = now + datetime.timedelta(days=1)
+        start_day = now - datetime.timedelta(days=range_days)
 
         start_day_str = start_day.strftime("%Y-%m-%d")
         end_day_str = end_day.strftime("%Y-%m-%d")
@@ -60,7 +63,7 @@ class SlackController(hollow_controller.HollowController):
                         ticket = self.pack_data(message, item, url, iid)
                         yield ticket
 
-            end_day = start_day
+            end_day = start_day + datetime.timedelta(days=1)
             start_day = start_day - datetime.timedelta(days=range_days)
             start_day_str = start_day.strftime("%Y-%m-%d")
             end_day_str = end_day.strftime("%Y-%m-%d")

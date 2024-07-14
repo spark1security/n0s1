@@ -447,11 +447,11 @@ def scan(regex_config, controller, scan_arguments):
             data = item.get("data", None)
             data_type = item.get("data_type", None)
             if data_type and data_type.lower() == "str".lower():
-                if data and data.find(label) == -1:
+                if data and data.lower().find(label.lower()) == -1:
                     scan_text_and_report_leaks(controller, data, name, regex_config, scan_arguments, ticket)
             elif data_type:
                 for item_data in data:
-                    if item_data and item_data.find(label) == -1:
+                    if item_data and item_data.lower().find(label.lower()) == -1:
                         scan_text_and_report_leaks(controller, item_data, name, regex_config, scan_arguments, ticket)
 
 
