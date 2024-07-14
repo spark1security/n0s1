@@ -193,7 +193,7 @@ def init_argparse() -> argparse.ArgumentParser:
         dest="api_key",
         nargs="?",
         type=str,
-        help="Slack token with search:read access. Ref: https://api.slack.com/tutorials/tracks/getting-a-token"
+        help="Slack token with OAuth scope: search:read, users:read, chat:write. Ref: https://api.slack.com/tutorials/tracks/getting-a-token"
     )
 
     asana_scan_parser = subparsers.add_parser(

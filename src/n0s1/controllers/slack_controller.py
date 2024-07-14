@@ -28,7 +28,7 @@ class SlackController(hollow_controller.HollowController):
         if user := self._client.auth_test():
             self.log_message(f"Logged to Slack as {user}")
         else:
-            self.log_message(f"Unable to connect to Slack instance. Check your credentials.", logging.ERROR)
+            self.log_message(f"Unable to connect to Slack. Check your credentials.", logging.ERROR)
             return False
         return True
 
