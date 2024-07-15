@@ -395,6 +395,9 @@ def report_leaked_secret(scan_text_result, controller):
                 comment_template += f"\n{variable}: {{{variable}}}"
         comment = comment_template.format(finding_info=finding_info, bot_name=bot_name, secret_manager=secret_manager,
                                           contact_help=contact_help, label=label)
+        if controller.get_name().lower() == "Slack".lower():
+            comment = comment + f"\nLeak source: {url}"
+
         return controller.post_comment(issue_id, comment)
     return True
 

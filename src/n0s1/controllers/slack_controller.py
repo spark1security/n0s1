@@ -78,7 +78,8 @@ class SlackController(hollow_controller.HollowController):
                 response = self._client.chat_postMessage(
                     channel=channel_id,
                     text=comment,
-                    thread_ts=thread_ts
+                    thread_ts=thread_ts,
+                    unfurl_links=False
                 )
 
                 self.log_message(f"Message sent successfully")
