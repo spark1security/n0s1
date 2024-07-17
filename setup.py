@@ -27,7 +27,7 @@ def get_version():
 setup(
     name="n0s1",
     version=get_version(),
-    description="Secret Scanner for Jira, Confluence, Asana, Wrike and Linear. Prevent credential leaks with n0s1.",
+    description="Secret Scanner for Slack, Jira, Confluence, Asana, Wrike and Linear. Prevent credential leaks with n0s1.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://spark1.us/n0s1",
@@ -47,7 +47,7 @@ setup(
                  "Programming Language :: Python :: 3.10",
                  "Programming Language :: Python :: 3.11",
                  ],  # Classifiers help users find your project by categorizing it https://pypi.org/classifiers/
-    keywords="security, cybersecurity, scanner, secret scanner, secret leak, data leak, Jira, Confluence, Asana, Wrike, Linear, security scanner",
+    keywords="security, cybersecurity, scanner, secret scanner, secret leak, data leak, Slack, Jira, Confluence, Asana, Wrike, Linear, security scanner",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     python_requires=">=3.8, <4",
