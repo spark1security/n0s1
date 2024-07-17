@@ -8,7 +8,7 @@ try:
 except Exception:
     import n0s1.controllers.hollow_controller as hollow_controller
 
-class WrikeControler(hollow_controller.HollowController):
+class WrikeController(hollow_controller.HollowController):
     def __init__(self):
         super().__init__()
         self._client = None

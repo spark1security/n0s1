@@ -185,6 +185,17 @@ def init_argparse() -> argparse.ArgumentParser:
         help="Subcommands", dest="command", metavar="COMMAND"
     )
 
+    slack_scan_parser = subparsers.add_parser(
+        "slack_scan", help="Scan Slack messages", parents=[parent_parser]
+    )
+    slack_scan_parser.add_argument(
+        "--api-key",
+        dest="api_key",
+        nargs="?",
+        type=str,
+        help="Slack token with OAuth scope: search:read, users:read, chat:write. Ref: https://api.slack.com/tutorials/tracks/getting-a-token"
+    )
+
     asana_scan_parser = subparsers.add_parser(
         "asana_scan", help="Scan Asana tasks", parents=[parent_parser]
     )
@@ -354,7 +365,7 @@ def report_leaked_secret(scan_text_result, controller):
     post_comment = scan_text_result.get("scan_arguments", {}).get("post_comment", False)
     show_matched_secret_on_logs = scan_text_result.get("scan_arguments", {}).get("show_matched_secret_on_logs", False)
 
-    finding_info = "Platform:[{platform}] Field:[ticket {field}] ID:[{regex_config_id}] Description:[{regex_config_description}] Regex: {regex}\n############## Sanitized Secret Leak ##############\n {leak}\n############## Sanitized Secret Leak ##############"
+    finding_info = "Platform:[{platform}] Field:[{field}] ID:[{regex_config_id}] Description:[{regex_config_description}] Regex: {regex}\n############## Sanitized Secret Leak ##############\n {leak}\n############## Sanitized Secret Leak ##############"
     finding_info = finding_info.format(regex_config_id=regex_id, regex_config_description=regex_description,
                                        regex=regex, platform=platform, field=field, leak=sanitized_secret)
 
@@ -384,6 +395,9 @@ def report_leaked_secret(scan_text_result, controller):
                 comment_template += f"\n{variable}: {{{variable}}}"
         comment = comment_template.format(finding_info=finding_info, bot_name=bot_name, secret_manager=secret_manager,
                                           contact_help=contact_help, label=label)
+        if controller.get_name().lower() == "Slack".lower():
+            comment = comment + f"\nLeak source: {url}"
+
         return controller.post_comment(issue_id, comment)
     return True
 
@@ -436,11 +450,11 @@ def scan(regex_config, controller, scan_arguments):
             data = item.get("data", None)
             data_type = item.get("data_type", None)
             if data_type and data_type.lower() == "str".lower():
-                if data:
+                if data and data.lower().find(label.lower()) == -1:
                     scan_text_and_report_leaks(controller, data, name, regex_config, scan_arguments, ticket)
             elif data_type:
                 for item_data in data:
-                    if item_data:
+                    if item_data and item_data.lower().find(label.lower()) == -1:
                         scan_text_and_report_leaks(controller, item_data, name, regex_config, scan_arguments, ticket)
 
 
@@ -497,7 +511,7 @@ def main(callback=None):
     controller = controller_factory.get_platform(command)
     controller.set_log_message_callback(callback)
 
-    controler_config = {}
+    controller_config = {}
 
     if args.timeout and len(args.timeout) > 0:
         timeout = int(args.timeout)
@@ -514,9 +528,9 @@ def main(callback=None):
     else:
         insecure = cfg.get("general_params", {}).get("insecure", False)
 
-    controler_config["timeout"] = timeout
-    controler_config["limit"] = limit
-    controler_config["insecure"] = insecure
+    controller_config["timeout"] = timeout
+    controller_config["limit"] = limit
+    controller_config["insecure"] = insecure
 
     TOKEN = None
     SERVER = None
@@ -525,19 +539,25 @@ def main(callback=None):
         TOKEN = os.getenv("LINEAR_TOKEN")
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
-        controler_config["token"] = TOKEN
+        controller_config["token"] = TOKEN
+
+    elif command == "slack_scan":
+        TOKEN = os.getenv("SLACK_TOKEN")
+        if args.api_key and len(args.api_key) > 0:
+            TOKEN = args.api_key
+        controller_config["token"] = TOKEN
 
     elif command == "asana_scan":
         TOKEN = os.getenv("ASANA_TOKEN")
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
-        controler_config["token"] = TOKEN
+        controller_config["token"] = TOKEN
 
     elif command == "wrike_scan":
         TOKEN = os.getenv("WRIKE_TOKEN")
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
-        controler_config["token"] = TOKEN
+        controller_config["token"] = TOKEN
 
     elif command == "jira_scan":
         SERVER = os.getenv("JIRA_SERVER")
@@ -549,9 +569,9 @@ def main(callback=None):
             EMAIL = args.email
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
-        controler_config["server"] = SERVER
-        controler_config["email"] = EMAIL
-        controler_config["token"] = TOKEN
+        controller_config["server"] = SERVER
+        controller_config["email"] = EMAIL
+        controller_config["token"] = TOKEN
 
     elif command == "confluence_scan":
         SERVER = os.getenv("CONFLUENCE_SERVER")
@@ -569,9 +589,9 @@ def main(callback=None):
             EMAIL = args.email
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
-        controler_config["server"] = SERVER
-        controler_config["email"] = EMAIL
-        controler_config["token"] = TOKEN
+        controller_config["server"] = SERVER
+        controller_config["email"] = EMAIL
+        controller_config["token"] = TOKEN
     else:
         parser.print_help()
         return
@@ -588,7 +608,7 @@ def main(callback=None):
             message += f" {TOKEN}"
         log_message(message)
 
-    if not controller.set_config(controler_config):
+    if not controller.set_config(controller_config):
         sys.exit(-1)
 
     if args.post_comment:

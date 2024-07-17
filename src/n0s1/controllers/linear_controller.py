@@ -11,7 +11,7 @@ except:
     import n0s1.clients.linear_graphql_client as linear_graphql_client
 
 
-class LinearControler(hollow_controller.HollowController):
+class LinearController(hollow_controller.HollowController):
     def __init__(self):
         super().__init__()
         self._client = None

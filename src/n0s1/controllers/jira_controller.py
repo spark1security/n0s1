@@ -7,7 +7,7 @@ except Exception:
     import n0s1.controllers.hollow_controller as hollow_controller
 
 
-class JiraControler(hollow_controller.HollowController):
+class JiraController(hollow_controller.HollowController):
     def __init__(self):
         super().__init__()
         self._client = None
