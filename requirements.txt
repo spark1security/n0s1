@@ -5,6 +5,7 @@ pyyaml
 atlassian-python-api
 asana==3.2.2
 anthillpy
+anthillpy
 zenpy
 anthillpy
 WrikePy

@@ -26,6 +26,7 @@ try:
     from . import linear_controller as linear_controller
     from . import asana_controller as asana_controller
     from . import anthill_controller as anthill_controller
+    from . import anthill_controller as anthill_controller
     from . import zendesk_controller as zendesk_controller
     from . import anthill_controller as anthill_controller
     from . import wrike_controller as wrike_controller
@@ -35,6 +36,7 @@ except Exception:
     import n0s1.controllers.confluence_controller as confluence_controller
     import n0s1.controllers.linear_controller as linear_controller
     import n0s1.controllers.asana_controller as asana_controller
+    import n0s1.controllers.anthill_controller as anthill_controller
     import n0s1.controllers.anthill_controller as anthill_controller
     import n0s1.controllers.zendesk_controller as zendesk_controller
     import n0s1.controllers.anthill_controller as anthill_controller
@@ -50,6 +52,8 @@ factory.register_platform("linear", linear_controller.LinearController)
 factory.register_platform("linear_scan", linear_controller.LinearController)
 factory.register_platform("asana", asana_controller.AsanaController)
 factory.register_platform("asana_scan", asana_controller.AsanaController)
+factory.register_platform("anthill", anthill_controller.AntHillController)
+factory.register_platform("anthill_scan", anthill_controller.AntHillController)
 factory.register_platform("anthill", anthill_controller.AntHillController)
 factory.register_platform("anthill_scan", anthill_controller.AntHillController)
 factory.register_platform("zendesk", zendesk_controller.ZendeskController)
