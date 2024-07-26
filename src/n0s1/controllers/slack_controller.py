@@ -153,7 +153,6 @@ class SlackController(hollow_controller.HollowController):
             yield messages
 
         while len(cursor) > 0:
-            cursor = ""
             time.sleep(0.2)
             if response := self.search_with_rate_limit(query=query, sort="timestamp", cursor=cursor):
                 messages = response.get("messages", {}).get("matches", [])
