@@ -82,6 +82,7 @@ class SarifReport:
                 ruleId = match_id
                 match_description = match.get("description", "")
                 ruleIndex = self.get_rule_index(ruleId)
+                finding_id = d.get("id", "None")
 
                 if ruleId not in self.seen_rules:
                     self.rules.append(
@@ -110,7 +111,7 @@ class SarifReport:
                         "locations": [
                             {
                                 "physicalLocation": {
-                                    "artifactLocation": {"uri": "None", "uriBaseId": "ROOTPATH"},
+                                    "artifactLocation": {"uri": finding_id, "uriBaseId": "ROOTPATH"},
                                     "region": {
                                         "startLine": 1,
                                         "startColumn": 1,
