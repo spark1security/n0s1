@@ -421,6 +421,7 @@ def scan_text(regex_config, text):
 def scan(regex_config, controller, scan_arguments):
     global DEBUG
     if not regex_config or not controller:
+        raise ValueError("No regex configuration provided to the scanner")
         return
     scan_comment = scan_arguments.get("scan_comment", False)
     post_comment = scan_arguments.get("post_comment", False)
@@ -474,6 +475,8 @@ def main(callback=None):
     logging.basicConfig(level=logging.INFO)
     parser = init_argparse()
     args = parser.parse_args()
+
+    DEBUG = args.debug
 
     regex_config = None
     cfg = {}
@@ -595,8 +598,6 @@ def main(callback=None):
     else:
         parser.print_help()
         return
-
-    DEBUG = args.debug
 
     message = f"n0s1 secret scanner version [{n0s1_version}] - Scan date: {date_utc}"
     log_message(message)
