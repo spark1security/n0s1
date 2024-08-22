@@ -10,11 +10,11 @@ except Exception:
 class AsanaController(hollow_controller.HollowController):
     def __init__(self):
         super().__init__()
-        self._client = None
 
-    def set_config(self, config):
+    def set_config(self, config=None):
+        super().set_config(config)
         import asana
-        TOKEN = config.get("token", "")
+        TOKEN = self._config.get("token", "")
         self._client = asana.Client.access_token(TOKEN)
         return self.is_connected()
 
@@ -55,12 +55,15 @@ class AsanaController(hollow_controller.HollowController):
         if not self._client:
             return {}
 
+        self.connect()
         if workspaces := self._client.workspaces.get_workspaces():
             for w in workspaces:
                 workspace_gid = w.get("gid", "")
+                self.connect()
                 if projects := self._client.projects.get_projects_for_workspace(workspace_gid):
                     for p in projects:
                         project_gid = p.get("gid", "")
+                        self.connect()
                         if tasks := self._client.tasks.get_tasks_for_project(project_gid, opt_fields=["name", "gid", "notes", "permalink_url"]):
                             for t in tasks:
                                 comments = []
@@ -69,6 +72,7 @@ class AsanaController(hollow_controller.HollowController):
                                 description = t.get("notes", "")
                                 url = t.get("permalink_url", "")
                                 if include_coments:
+                                    self.connect()
                                     if stories := self._client.stories.get_stories_for_task(task_gid):
                                         for s in stories:
                                             if s.get("type", "").lower() == "comment".lower():
@@ -80,6 +84,7 @@ class AsanaController(hollow_controller.HollowController):
     def post_comment(self, task_gid, comment):
         if not self._client:
             return False
+        self.connect()
         if comment_status := self._client.stories.create_story_for_task(task_gid, {"type": "comment", "text": comment}):
             status = comment_status.get("text", "")
         return len(status) > 0

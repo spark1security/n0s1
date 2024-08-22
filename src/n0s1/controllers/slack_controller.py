@@ -12,12 +12,12 @@ except Exception:
 class SlackController(hollow_controller.HollowController):
     def __init__(self):
         super().__init__()
-        self._client = None
 
-    def set_config(self, config):
+    def set_config(self, config=None):
+        super().set_config(config)
         from slack_sdk import WebClient
         from slack_sdk.errors import SlackApiError
-        TOKEN = config.get("token", "")
+        TOKEN = self._config.get("token", "")
         self._client = WebClient(token=TOKEN)
         return self.is_connected()
 
@@ -75,6 +75,7 @@ class SlackController(hollow_controller.HollowController):
         try:
             channel_id, thread_ts = self.extract_channel_id_and_ts(issue)
             if comment and len(comment) > 0 and len(channel_id) > 0 and len(thread_ts) > 0:
+                self.connect()
                 response = self._client.chat_postMessage(
                     channel=channel_id,
                     text=comment,
@@ -121,6 +122,7 @@ class SlackController(hollow_controller.HollowController):
         from slack_sdk.errors import SlackApiError
         response = None
         try:
+            self.connect()
             response = self._client.search_messages(query=query, sort=sort, cursor=cursor)
         except SlackApiError as ex:
             message = str(ex) + f" client.search_messages()"

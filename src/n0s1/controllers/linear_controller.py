@@ -14,10 +14,10 @@ except:
 class LinearController(hollow_controller.HollowController):
     def __init__(self):
         super().__init__()
-        self._client = None
 
-    def set_config(self, config):
-        TOKEN = config.get("token", "")
+    def set_config(self, config=None):
+        super().set_config(config)
+        TOKEN = self._config.get("token", "")
         headers = {
             "Content-Type": "application/json",
             "Authorization": TOKEN,
@@ -55,7 +55,9 @@ class LinearController(hollow_controller.HollowController):
     def get_data(self, include_coments=False, limit=None):
         if not self._client:
             return {}
+        self.connect()
         for linear_data in self._client.get_issues_and_comments(20):
+            self.connect()
             for edge in linear_data.get("data", {}).get("issues", {}).get("edges", []):
                 item = edge.get("node", {})
                 url = item.get("url", "")

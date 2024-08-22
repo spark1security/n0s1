@@ -10,15 +10,15 @@ except Exception:
 class JiraController(hollow_controller.HollowController):
     def __init__(self):
         super().__init__()
-        self._client = None
 
-    def set_config(self, config):
+    def set_config(self, config=None):
+        super().set_config(config)
         from jira import JIRA
-        SERVER = config.get("server", "")
-        EMAIL = config.get("email", "")
-        TOKEN = config.get("token", "")
-        TIMEOUT = config.get("timeout", -1)
-        VERIFY_SSL = not config.get("insecure", False)
+        SERVER = self._config.get("server", "")
+        EMAIL = self._config.get("email", "")
+        TOKEN = self._config.get("token", "")
+        TIMEOUT = self._config.get("timeout", -1)
+        VERIFY_SSL = not self._config.get("insecure", False)
         options = {"verify": VERIFY_SSL}
         if EMAIL and len(EMAIL) > 0:
             if TIMEOUT and TIMEOUT > 0:
@@ -72,6 +72,7 @@ class JiraController(hollow_controller.HollowController):
         if not limit or limit < 0:
             limit = 50
         try:
+            self.connect()
             projects = self._client.projects()
         except Exception as e:
             message = str(e) + f" client.projects()"
@@ -85,6 +86,7 @@ class JiraController(hollow_controller.HollowController):
             issue_start = start
             while not issues_finished:
                 try:
+                    self.connect()
                     issues = self._client.search_issues(ql, startAt=issue_start, maxResults=limit)
                 except JIRAError as e:
                     self.log_message(f"Error while searching issues on Jira project: [{key}]. Skipping...", logging.WARNING)
@@ -106,6 +108,7 @@ class JiraController(hollow_controller.HollowController):
                     comments = []
                     if include_coments:
                         try:
+                            self.connect()
                             issue_comments = self._client.comments(issue.id)
                             comments.extend(c.body for c in issue_comments)
                         except Exception as e:
@@ -121,6 +124,7 @@ class JiraController(hollow_controller.HollowController):
         if not self._client:
             return False
         comment = comment.replace("#", "0")
+        self.connect()
         comment_status = self._client.add_comment(issue, body=comment)
         status = comment_status.id
         return bool(status and len(status) > 0 and int(status) > 0)
