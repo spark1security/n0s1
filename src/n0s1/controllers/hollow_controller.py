@@ -1,4 +1,6 @@
+import json
 import logging
+import os.path
 
 
 class HollowController:
@@ -7,11 +9,16 @@ class HollowController:
         self._config = None
         self._check_connection_after = 200
         self._requests_counter = 0
+        self._scan_scope = None
         self.log_message_callback = None
 
     def set_config(self, config=None):
         if config:
             self._config = config
+            scope_file = self._config.get("scan_scope", "")
+            if scope_file and len(scope_file) > 0 and os.path.exists(scope_file):
+                with open(scope_file) as f:
+                    self._scan_scope = json.load(f)
         return self._config is not None
 
     def set_log_message_callback(self, log_message_callback):
@@ -37,6 +44,9 @@ class HollowController:
         return False
 
     def get_data(self, include_coments=False, limit=None):
+        return {}
+
+    def get_mapping(self, levels=-1, limit=None):
         return {}
 
     def post_comment(self, issue, comment):
