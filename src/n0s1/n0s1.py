@@ -476,7 +476,7 @@ def main(callback=None):
     parser = init_argparse()
     args = parser.parse_args()
 
-    DEBUG = args.debug
+    DEBUG = False
 
     regex_config = None
     cfg = {}
@@ -484,6 +484,8 @@ def main(callback=None):
     if not args.command:
         parser.print_help()
         return
+
+    DEBUG = args.debug
 
     if os.path.exists(args.regex_file):
         with open(args.regex_file, "r") as f:
