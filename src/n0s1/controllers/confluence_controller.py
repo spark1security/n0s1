@@ -12,18 +12,18 @@ except Exception:
 class ConfluenceController(hollow_controller.HollowController):
     def __init__(self):
         super().__init__()
-        self._client = None
         self._url = None
         self._user = None
         self._password = None
 
-    def set_config(self, config):
+    def set_config(self, config=None):
+        super().set_config(config)
         from atlassian import Confluence
-        SERVER = config.get("server", "")
-        EMAIL = config.get("email", "")
-        TOKEN = config.get("token", "")
-        TIMEOUT = config.get("timeout", -1)
-        VERIFY_SSL = not config.get("insecure", False)
+        SERVER = self._config.get("server", "")
+        EMAIL = self._config.get("email", "")
+        TOKEN = self._config.get("token", "")
+        TIMEOUT = self._config.get("timeout", -1)
+        VERIFY_SSL = not self._config.get("insecure", False)
         self._url = SERVER
         self._user = EMAIL
         self._password = TOKEN
@@ -132,6 +132,7 @@ class ConfluenceController(hollow_controller.HollowController):
         finished = False
         while not finished:
             try:
+                self.connect()
                 res = self._client.get_all_spaces(start=space_start, limit=limit)
                 spaces = res.get("results", [])
             except Exception as e:
@@ -150,6 +151,7 @@ class ConfluenceController(hollow_controller.HollowController):
                     pages_finished = False
                     while not pages_finished:
                         try:
+                            self.connect()
                             pages = self._client.get_all_pages_from_space(key, start=pages_start, limit=limit)
                         except ApiPermissionError as e:
                             message = str(e) + f" get_all_pages_from_space({key}, start={pages_start}, limit={limit}). Skipping..."
@@ -169,6 +171,7 @@ class ConfluenceController(hollow_controller.HollowController):
                             title = p.get("title", "")
                             page_id = p.get("id", "")
                             try:
+                                self.connect()
                                 body = self._client.get_page_by_id(page_id, expand="body.storage")
                             except Exception as e:
                                 message = str(e) + f" get_page_by_id({page_id})"
@@ -184,6 +187,7 @@ class ConfluenceController(hollow_controller.HollowController):
                                 comments_finished = False
                                 while not comments_finished:
                                     try:
+                                        self.connect()
                                         comments_response = self._client.get_page_comments(page_id, expand="body.storage", start=comments_start, limit=limit)
                                         comments_result = comments_response.get("results", [])
                                     except Exception as e:
@@ -216,6 +220,7 @@ class ConfluenceController(hollow_controller.HollowController):
         comment = comment.replace("#", "0")
         comment = html.escape(comment, quote=True)
         status = -1
+        self.connect()
         if comment_status := self._client.add_comment(issue, comment):
             status = comment_status.get("id", "")
         return int(status) > 0

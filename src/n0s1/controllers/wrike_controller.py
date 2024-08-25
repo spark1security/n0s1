@@ -8,13 +8,14 @@ try:
 except Exception:
     import n0s1.controllers.hollow_controller as hollow_controller
 
+
 class WrikeController(hollow_controller.HollowController):
     def __init__(self):
         super().__init__()
-        self._client = None
 
-    def set_config(self, config):
-        TOKEN = config.get("token", "")
+    def set_config(self, config=None):
+        super().set_config(config)
+        TOKEN = self._config.get("token", "")
         base_url = "https://www.wrike.com/api/v4"
         self._client = Wrike(base_url, TOKEN)
         return self.is_connected()
@@ -61,6 +62,7 @@ class WrikeController(hollow_controller.HollowController):
         if not self._client:
             return {}
 
+        self.connect()
         t = Tasks(self._client, parameters={"fields": ["description"]})
         response = t.query__tasks()
         tasks = {}
@@ -78,6 +80,7 @@ class WrikeController(hollow_controller.HollowController):
             comments = []
             if task_id := t.get("id", None):
                 if include_coments:
+                    self.connect()
                     comments_obj = Comments(self._client, [task_id])
                     response = comments_obj.query__tasks_taskId_comments()
                     json_data = {}
@@ -98,6 +101,7 @@ class WrikeController(hollow_controller.HollowController):
             return False
         comment = comment.replace("<REDACTED>", "**********")
         comment = comment.replace("\n", "<br>")
+        self.connect()
         comments_obj = Comments(self._client, [task_id], parameters={"text": comment, "plainText": False})
         if comments_obj:
             response = comments_obj.create__tasks_taskId_comments()
