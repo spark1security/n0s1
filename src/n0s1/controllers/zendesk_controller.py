@@ -32,7 +32,7 @@ class ZendeskController(hollow_controller.HollowController):
     def is_connected(self):
         if self._client:
             if user := self._client.users.me():
-                self.log_message(f"Logged to {self.get_name()} as {user}")
+                self.log_message(f"Logged to {self.get_name()} as {user} - {user.email}")
                 return True
             else:
                 self.log_message(f"Unable to connect to {self.get_name()}. Check your credentials.", logging.ERROR)
