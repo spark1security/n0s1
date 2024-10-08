@@ -218,6 +218,31 @@ def init_argparse() -> argparse.ArgumentParser:
         help="AntHill token."
     )
 
+    zendesk_scan_parser = subparsers.add_parser(
+        "zendesk_scan", help="Scan Zendesk tickets", parents=[parent_parser]
+    )
+    zendesk_scan_parser.add_argument(
+        "--server",
+        dest="server",
+        nargs="?",
+        type=str,
+        help="Zendesk server subdomain."
+    )
+    zendesk_scan_parser.add_argument(
+        "--email",
+        dest="email",
+        nargs="?",
+        type=str,
+        help="Zendesk user email."
+    )
+    zendesk_scan_parser.add_argument(
+        "--api-key",
+        dest="api_key",
+        nargs="?",
+        type=str,
+        help="Zendesk API key. Ref: https://developer.zendesk.com/api-reference/integration-services/connections/api_key_connections"
+    )
+
     wrike_scan_parser = subparsers.add_parser(
         "wrike_scan", help="Scan Wrike tasks", parents=[parent_parser]
     )
@@ -573,6 +598,20 @@ def main(callback=None):
         TOKEN = os.getenv("ANTHILL_TOKEN")
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
+        controller_config["token"] = TOKEN
+
+    elif command == "zendesk_scan":
+        SERVER = os.getenv("ZENDESK_SERVER")
+        EMAIL = os.getenv("ZENDESK_EMAIL")
+        TOKEN = os.getenv("ZENDESK_TOKEN")
+        if args.server and len(args.server) > 0:
+            SERVER = args.server
+        if args.email and len(args.email) > 0:
+            EMAIL = args.email
+        if args.api_key and len(args.api_key) > 0:
+            TOKEN = args.api_key
+        controller_config["server"] = SERVER
+        controller_config["email"] = EMAIL
         controller_config["token"] = TOKEN
 
     elif command == "wrike_scan":
