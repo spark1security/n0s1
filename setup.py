@@ -46,6 +46,7 @@ setup(
                  "Programming Language :: Python :: 3.10",
                  "Programming Language :: Python :: 3.11",
                  "Programming Language :: Python :: 3.12",
+                 "Programming Language :: Python :: 3.13",
                  ],  # Classifiers help users find your project by categorizing it https://pypi.org/classifiers/
     keywords="security, cybersecurity, scanner, secret scanner, secret leak, data leak, Slack, Jira, Confluence, Asana, Wrike, Linear, Zendesk, security scanner, data loss prevention",
     package_dir={"": "src"},
