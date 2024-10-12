@@ -44,6 +44,7 @@ class ZendeskController(hollow_controller.HollowController):
             return {}
 
         try:
+            server = self._config.get("server", "")
             # Fetch all tickets (paginated)
             tickets = self._client.tickets()
             for ticket in tickets:
@@ -52,10 +53,9 @@ class ZendeskController(hollow_controller.HollowController):
                 title = ticket.subject
                 ticket_id = ticket.id
                 description = ticket.description
-                tmp = ticket.url
-                tmp = tmp.replace(f"/{ticket.api.api_prefix}/", "/agent/")
-                tmp = tmp.replace(f"/{ticket_id}.json", f"/{ticket_id}")
-                url = tmp
+                url = ticket.url
+                if len(server):
+                    url = f"https://{server}.zendesk.com/agent/tickets/{ticket_id}"
                 if include_comments:
                     if cs := self._client.tickets.comments(ticket_id):
                         for c in cs:
