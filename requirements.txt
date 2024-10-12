@@ -4,6 +4,7 @@ jira
 pyyaml
 atlassian-python-api
 asana==3.2.2
+zenpy
 anthillpy
 WrikePy
 BeautifulSoup4
