@@ -65,7 +65,7 @@ def init_argparse() -> argparse.ArgumentParser:
     install_path = os.path.dirname(os.path.abspath(__file__))
     parser = argparse.ArgumentParser(
         prog="n0s1",
-        description="""Secret scanner for Slack, Jira, Confluence, Asana, Wrike and Linear.
+        description="""Secret scanner for Slack, Jira, Confluence, Asana, Wrike, Zendesk and Linear.
         """,
     )
 
