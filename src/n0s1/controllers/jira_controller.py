@@ -149,25 +149,26 @@ class JiraController(hollow_controller.HollowController):
 
         for key in projects:
             self.log_message(f"Scanning Jira project: [{key}]...")
-            issues = self._get_issues(key, limit)
-            for issue in issues:
-                url = issue.self.split('/rest/api')[0] + "/browse/" + issue.key;
-                title = issue.fields.summary
-                description = issue.fields.description
-                comments = []
-                if include_coments:
-                    try:
-                        self.connect()
-                        issue_comments = self._client.comments(issue.id)
-                        comments.extend(c.body for c in issue_comments)
-                    except Exception as e:
-                        message = str(e) + f" client.comments({issue.id})"
-                        self.log_message(message, logging.WARNING)
-                        comments = []
-                        time.sleep(1)
+            result_list = self._get_issues(key, limit)
+            for issues in result_list:
+                for issue in issues:
+                    url = issue.self.split('/rest/api')[0] + "/browse/" + issue.key;
+                    title = issue.fields.summary
+                    description = issue.fields.description
+                    comments = []
+                    if include_coments:
+                        try:
+                            self.connect()
+                            issue_comments = self._client.comments(issue.id)
+                            comments.extend(c.body for c in issue_comments)
+                        except Exception as e:
+                            message = str(e) + f" client.comments({issue.id})"
+                            self.log_message(message, logging.WARNING)
+                            comments = []
+                            time.sleep(1)
 
-                ticket = self.pack_data(title, description, comments, url, issue.key)
-                yield ticket
+                    ticket = self.pack_data(title, description, comments, url, issue.key)
+                    yield ticket
 
     def post_comment(self, issue, comment):
         if not self._client:
