@@ -121,51 +121,107 @@ class ConfluenceController(hollow_controller.HollowController):
                 self.log_message(f"Unable to connect to {self.get_name()} instance. Check your credentials.", logging.ERROR)
         return False
 
-    def get_data(self, include_coments=False, limit=None):
-        from atlassian.confluence import ApiPermissionError
-        if not self._client:
-            return {}
+    def _get_workspaces(self, limit=None):
+        if self._scan_scope:
+            workspaces = []
+            for key in self._scan_scope.get("workspaces", {}):
+                workspaces.append(key)
+            yield workspaces
+        else:
+            space_start = 0
+            if not limit or limit < 0:
+                limit = 50
+            finished = False
+            while not finished:
+                try:
+                    self.connect()
+                    res = self._client.get_all_spaces(start=space_start, limit=limit)
+                    spaces = res.get("results", [])
+                except Exception as e:
+                    message = str(e) + f" get_all_spaces(start={space_start}, limit={limit})"
+                    self.log_message(message, logging.WARNING)
+                    spaces = [{}]
+                    time.sleep(1)
+                    continue
+                space_start += limit
+                if len(spaces) <= 0:
+                    finished = True
+                yield spaces
 
-        space_start = 0
+    def _get_pages(self, workspace_key, limit=None):
+        from atlassian.confluence import ApiPermissionError
+        start = 0
         if not limit or limit < 0:
             limit = 50
-        finished = False
-        while not finished:
-            try:
-                self.connect()
-                res = self._client.get_all_spaces(start=space_start, limit=limit)
-                spaces = res.get("results", [])
-            except Exception as e:
-                message = str(e) + f" get_all_spaces(start={space_start}, limit={limit})"
-                self.log_message(message, logging.WARNING)
-                spaces = [{}]
-                time.sleep(1)
-                continue
-            space_start += limit
+        pages_start = start
+        page_keys = []
+        if self._scan_scope:
+            page_keys = self._scan_scope.get("workspaces", {}).get(workspace_key, {})
+        if len(page_keys) > 0:
+            counter = 0
+            pages = []
+            for key in page_keys:
+                counter += 1
+                page = self._client.get_page_by_id(key)
+                pages.append(page)
+                if counter > limit:
+                    counter = 0
+                    yield pages
+                    pages = []
+            if len(pages) > 0:
+                yield pages
+        else:
+            if len(workspace_key) > 0:
+                pages_finished = False
+                while not pages_finished:
+                    try:
+                        self.connect()
+                        pages = self._client.get_all_pages_from_space(workspace_key, start=pages_start, limit=limit)
+                    except ApiPermissionError as e:
+                        message = str(e) + f" get_all_pages_from_space({workspace_key}, start={pages_start}, limit={limit}). Skipping..."
+                        self.log_message(message, logging.WARNING)
+                        pages = [{}]
+                        break
+                    except Exception as e:
+                        message = str(e) + f" get_all_pages_from_space({workspace_key}, start={pages_start}, limit={limit})"
+                        self.log_message(message, logging.WARNING)
+                        pages = [{}]
+                        time.sleep(1)
+                        continue
+                    pages_start += limit
+                    if len(pages) <= 0:
+                        pages_finished = True
+                    yield pages
 
+    def get_mapping(self, levels=-1, limit=None):
+        if not self._client:
+            return {}
+        map_data = {"workspaces": {}}
+        for spaces in self._get_workspaces(limit):
+            for space in spaces:
+                workspace_key = space.get("key", None)
+                if workspace_key:
+                    map_data["workspaces"][workspace_key] = {}
+                    if levels < 0 or levels > 1:
+                        for pages in self._get_pages(workspace_key, limit):
+                            for page in pages:
+                                page_id = page.get("id", None)
+                                page_title = page.get("title", "")
+                                if page_id:
+                                    map_data["workspaces"][workspace_key][page_id] = {"title": page_title}
+        return map_data
+
+    def get_data(self, include_coments=False, limit=None):
+        if not self._client:
+            return {}
+        for spaces in self._get_workspaces(limit):
             for s in spaces:
-                key = s.get("key", "")
+                key = s
+                if isinstance(s, dict):
+                    key = s.get("key", "")
                 self.log_message(f"Scanning Confluence space: [{key}]...")
                 if len(key) > 0:
-                    pages_start = 0
-                    pages_finished = False
-                    while not pages_finished:
-                        try:
-                            self.connect()
-                            pages = self._client.get_all_pages_from_space(key, start=pages_start, limit=limit)
-                        except ApiPermissionError as e:
-                            message = str(e) + f" get_all_pages_from_space({key}, start={pages_start}, limit={limit}). Skipping..."
-                            self.log_message(message, logging.WARNING)
-                            pages = [{}]
-                            break
-                        except Exception as e:
-                            message = str(e) + f" get_all_pages_from_space({key}, start={pages_start}, limit={limit})"
-                            self.log_message(message, logging.WARNING)
-                            pages = [{}]
-                            time.sleep(1)
-                            continue
-                        pages_start += limit
-
+                    for pages in self._get_pages(key, limit):
                         for p in pages:
                             comments = []
                             title = p.get("title", "")
@@ -183,6 +239,8 @@ class ConfluenceController(hollow_controller.HollowController):
                             description = body.get("body", {}).get("storage", {}).get("value", "")
                             url = body.get("_links", {}).get("base", "") + p.get("_links", {}).get("webui", "")
                             if len(page_id) > 0 and include_coments:
+                                if not limit or limit < 0:
+                                    limit = 50
                                 comments_start = 0
                                 comments_finished = False
                                 while not comments_finished:
@@ -207,12 +265,6 @@ class ConfluenceController(hollow_controller.HollowController):
 
                             ticket = self.pack_data(title, description, comments, url, page_id)
                             yield ticket
-
-                        if len(pages) <= 0:
-                            pages_finished = True
-
-            if len(spaces) <= 0:
-                finished = True
 
     def post_comment(self, issue, comment):
         if not self._client:
