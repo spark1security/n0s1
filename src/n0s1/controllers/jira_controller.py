@@ -64,32 +64,45 @@ class JiraController(hollow_controller.HollowController):
                 self.log_message(f"Unable to connect to {self.get_name()} instance. Check your credentials.", logging.ERROR)
         return False
 
-    def get_data(self, include_coments=False, limit=None):
+    def _get_projects(self, limit=None):
+        if self._scan_scope:
+            projects = []
+            for key in self._scan_scope.get("projects", {}):
+                projects.append(key)
+            return projects
+        self.connect()
+        return self._client.projects()
+
+    def _get_issues(self, project_key, limit=None):
         from jira.exceptions import JIRAError
-        if not self._client:
-            return {}
         start = 0
         if not limit or limit < 0:
             limit = 50
-        try:
-            self.connect()
-            projects = self._client.projects()
-        except Exception as e:
-            message = str(e) + f" client.projects()"
-            self.log_message(message, logging.WARNING)
-            projects = []
-
-        for key in projects:
-            ql = f"project = '{key}'"
-            self.log_message(f"Scanning Jira project: [{key}]...")
+        issue_start = start
+        if self._scan_scope:
+            issue_keys = self._scan_scope.get("projects", {}).get(project_key, {})
+            counter = 0
+            issues = []
+            for key in issue_keys:
+                counter += 1
+                issue = self._client.issue(key)
+                issues.append(issue)
+                if counter > limit:
+                    counter = 0
+                    yield issues
+                    issues = []
+            if len(issues) > 0:
+                yield issues
+        else:
+            ql = f"project = '{project_key}'"
             issues_finished = False
-            issue_start = start
             while not issues_finished:
                 try:
                     self.connect()
                     issues = self._client.search_issues(ql, startAt=issue_start, maxResults=limit)
                 except JIRAError as e:
-                    self.log_message(f"Error while searching issues on Jira project: [{key}]. Skipping...", logging.WARNING)
+                    self.log_message(f"Error while searching issues on Jira project: [{project_key}]. Skipping...",
+                                     logging.WARNING)
                     self.log_message(e)
                     issues = [{}]
                     break
@@ -101,24 +114,60 @@ class JiraController(hollow_controller.HollowController):
                     continue
                 issue_start += limit
                 issues_finished = len(issues) <= 0
-                for issue in issues:
-                    url = issue.self.split('/rest/api')[0] + "/browse/" + issue.key;
-                    title = issue.fields.summary
-                    description = issue.fields.description
-                    comments = []
-                    if include_coments:
-                        try:
-                            self.connect()
-                            issue_comments = self._client.comments(issue.id)
-                            comments.extend(c.body for c in issue_comments)
-                        except Exception as e:
-                            message = str(e) + f" client.comments({issue.id})"
-                            self.log_message(message, logging.WARNING)
-                            comments = []
-                            time.sleep(1)
+                yield issues
 
-                    ticket = self.pack_data(title, description, comments, url, issue.key)
-                    yield ticket
+    def get_mapping(self, levels=-1, limit=None):
+        from jira.exceptions import JIRAError
+        if not self._client:
+            return {}
+        start = 0
+        if not limit or limit < 0:
+            limit = 50
+        map_data = {"projects": {}}
+        if projects := self._get_projects():
+            for project in projects:
+                map_data["projects"][str(project.key)] = {}
+                issues = self._get_issues(str(project.key))
+                for issue in issues:
+                    map_data["projects"][str(project.key)][str(issue.key)] = {}
+        return map_data
+
+    def get_data(self, include_coments=False, limit=None):
+        from jira.exceptions import JIRAError
+        if not self._client:
+            return {}
+        start = 0
+        if not limit or limit < 0:
+            limit = 50
+        try:
+            self.connect()
+            projects = self._get_projects()
+        except Exception as e:
+            message = str(e) + f" client.projects()"
+            self.log_message(message, logging.WARNING)
+            projects = []
+
+        for key in projects:
+            self.log_message(f"Scanning Jira project: [{key}]...")
+            issues = self._get_issues(key, limit)
+            for issue in issues:
+                url = issue.self.split('/rest/api')[0] + "/browse/" + issue.key;
+                title = issue.fields.summary
+                description = issue.fields.description
+                comments = []
+                if include_coments:
+                    try:
+                        self.connect()
+                        issue_comments = self._client.comments(issue.id)
+                        comments.extend(c.body for c in issue_comments)
+                    except Exception as e:
+                        message = str(e) + f" client.comments({issue.id})"
+                        self.log_message(message, logging.WARNING)
+                        comments = []
+                        time.sleep(1)
+
+                ticket = self.pack_data(title, description, comments, url, issue.key)
+                yield ticket
 
     def post_comment(self, issue, comment):
         if not self._client:
