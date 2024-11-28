@@ -79,7 +79,9 @@ class JiraController(hollow_controller.HollowController):
         if not limit or limit < 0:
             limit = 50
         issue_start = start
-        issue_keys = self._scan_scope.get("projects", {}).get(project_key, {})
+        issue_keys = []
+        if self._scan_scope:
+            issue_keys = self._scan_scope.get("projects", {}).get(project_key, {})
         if len(issue_keys) > 0:
             counter = 0
             issues = []
@@ -117,29 +119,22 @@ class JiraController(hollow_controller.HollowController):
                 yield issues
 
     def get_mapping(self, levels=-1, limit=None):
-        from jira.exceptions import JIRAError
         if not self._client:
             return {}
-        start = 0
-        if not limit or limit < 0:
-            limit = 50
         map_data = {"projects": {}}
         if projects := self._get_projects(limit):
             for project in projects:
                 map_data["projects"][str(project.key)] = {}
                 if levels < 0 or levels > 1:
-                    issues = self._get_issues(str(project.key), limit)
-                    for issue in issues:
-                        map_data["projects"][str(project.key)][str(issue.key)] = {}
+                    for issues in self._get_issues(str(project.key), limit):
+                        for issue in issues:
+                            map_data["projects"][str(project.key)][str(issue.key)] = {}
         return map_data
 
     def get_data(self, include_coments=False, limit=None):
         from jira.exceptions import JIRAError
         if not self._client:
             return {}
-        start = 0
-        if not limit or limit < 0:
-            limit = 50
         try:
             self.connect()
             projects = self._get_projects(limit)
@@ -150,8 +145,7 @@ class JiraController(hollow_controller.HollowController):
 
         for key in projects:
             self.log_message(f"Scanning Jira project: [{key}]...")
-            result_list = self._get_issues(key, limit)
-            for issues in result_list:
+            for issues in self._get_issues(key, limit):
                 for issue in issues:
                     url = issue.self.split('/rest/api')[0] + "/browse/" + issue.key;
                     title = issue.fields.summary
