@@ -4,6 +4,7 @@ import logging
 import json
 import os
 import pathlib
+import pprint
 import re
 import sys
 import toml
@@ -180,6 +181,21 @@ def init_argparse() -> argparse.ArgumentParser:
         dest="insecure",
         action="store_true",
         help="Insecure mode. Ignore SSL certificate verification",
+    )
+    parent_parser.add_argument(
+        "--map",
+        dest="map",
+        nargs="?",
+        default="Disabled",
+        type=str,
+        help="Enable mapping mode and define how many levels for n0s1_map.json"
+    )
+    parent_parser.add_argument(
+        "--scope",
+        dest="scope",
+        nargs="?",
+        type=str,
+        help="Path to map file (n0s1_map.json) that will customize the scan scope."
     )
     subparsers = parser.add_subparsers(
         help="Subcommands", dest="command", metavar="COMMAND"
@@ -515,6 +531,7 @@ def main(callback=None):
     DEBUG = False
 
     regex_config = None
+    scan_scope = ""
     cfg = {}
 
     if not args.command:
@@ -538,6 +555,18 @@ def main(callback=None):
             cfg = yaml.load(f, Loader=yaml.FullLoader)
     else:
         log_message(f"Config file [{args.config_file}] not found!", level=logging.WARNING)
+
+    scope_config = None
+    if args.scope:
+        scan_scope = args.scope
+        if os.path.exists(scan_scope):
+            with open(scan_scope, "r") as f:
+                scope_config = json.load(f)
+            if scope_config:
+                log_message(f"Running scoped scan using map file [{scan_scope}]. Scan scope:", level=logging.INFO)
+                pprint.pprint(scope_config)
+        else:
+            log_message(f"Map file [{scan_scope}] not found!", level=logging.WARNING)
 
     datetime_now_obj = datetime.now(timezone.utc)
     date_utc = datetime_now_obj.strftime("%Y-%m-%dT%H:%M:%S")
@@ -572,6 +601,7 @@ def main(callback=None):
     controller_config["timeout"] = timeout
     controller_config["limit"] = limit
     controller_config["insecure"] = insecure
+    controller_config["scan_scope"] = scope_config
 
     TOKEN = None
     SERVER = None
@@ -709,7 +739,7 @@ def main(callback=None):
     scan_arguments = {"scan_comment": scan_comment, "post_comment": post_comment, "secret_manager": secret_manager,
                       "contact_help": contact_help, "label": label, "report_format": report_format, "debug": DEBUG,
                       "show_matched_secret_on_logs": show_matched_secret_on_logs, "scan_target": command,
-                      "timeout": timeout, "limit": limit}
+                      "timeout": timeout, "limit": limit, "scan_scope": scan_scope}
     report_json["tool"]["scan_arguments"] = scan_arguments
 
     N0S1_TOKEN = os.getenv("N0S1_TOKEN")
@@ -719,6 +749,16 @@ def main(callback=None):
         mode = "professional"
     message = f"Starting scan in {mode} mode..."
     log_message(message)
+
+    if not args.map:
+        args.map = "-1"
+    if args.map and args.map.lower() != "Disabled".lower():
+        levels = int(args.map)
+        map_data = controller.get_mapping(levels)
+        with open("n0s1_map.json", "w") as f:
+            json.dump(map_data, f)
+            log_message("Scan scope saved to map file: n0s1_map.json")
+        return True
 
     try:
         scan(regex_config, controller, scan_arguments)
