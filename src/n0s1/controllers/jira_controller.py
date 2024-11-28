@@ -79,8 +79,8 @@ class JiraController(hollow_controller.HollowController):
         if not limit or limit < 0:
             limit = 50
         issue_start = start
-        if self._scan_scope:
-            issue_keys = self._scan_scope.get("projects", {}).get(project_key, {})
+        issue_keys = self._scan_scope.get("projects", {}).get(project_key, {})
+        if len(issue_keys) > 0:
             counter = 0
             issues = []
             for key in issue_keys:
@@ -124,12 +124,13 @@ class JiraController(hollow_controller.HollowController):
         if not limit or limit < 0:
             limit = 50
         map_data = {"projects": {}}
-        if projects := self._get_projects():
+        if projects := self._get_projects(limit):
             for project in projects:
                 map_data["projects"][str(project.key)] = {}
-                issues = self._get_issues(str(project.key))
-                for issue in issues:
-                    map_data["projects"][str(project.key)][str(issue.key)] = {}
+                if levels < 0 or levels > 1:
+                    issues = self._get_issues(str(project.key), limit)
+                    for issue in issues:
+                        map_data["projects"][str(project.key)][str(issue.key)] = {}
         return map_data
 
     def get_data(self, include_coments=False, limit=None):
@@ -141,7 +142,7 @@ class JiraController(hollow_controller.HollowController):
             limit = 50
         try:
             self.connect()
-            projects = self._get_projects()
+            projects = self._get_projects(limit)
         except Exception as e:
             message = str(e) + f" client.projects()"
             self.log_message(message, logging.WARNING)
