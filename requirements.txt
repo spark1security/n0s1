@@ -9,3 +9,4 @@ anthillpy
 WrikePy
 BeautifulSoup4
 slack_sdk
+langchain-text-splitters

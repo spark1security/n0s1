@@ -194,8 +194,16 @@ def init_argparse() -> argparse.ArgumentParser:
         "--scope",
         dest="scope",
         nargs="?",
+        default="Disabled",
         type=str,
-        help="Path to map file (n0s1_map.json) that will customize the scan scope."
+        help="Defines the chunk of the map file (n0s1_map.json) to be scanned. Ex: 3/4 (will scan the third quarter of the map)"
+    )
+    parent_parser.add_argument(
+        "--scope-file",
+        dest="scope_file",
+        nargs="?",
+        type=str,
+        help="Path to map file (n0s1_map.json) for customized scan scope."
     )
     subparsers = parser.add_subparsers(
         help="Subcommands", dest="command", metavar="COMMAND"
@@ -557,11 +565,32 @@ def main(callback=None):
         log_message(f"Config file [{args.config_file}] not found!", level=logging.WARNING)
 
     scope_config = None
-    if args.scope:
-        scan_scope = args.scope
+    if args.scope_file:
+        scan_scope = args.scope_file
         if os.path.exists(scan_scope):
             with open(scan_scope, "r") as f:
                 scope_config = json.load(f)
+            if args.scope and scope_config:
+                fields = str(args.scope).split("/")
+                if len(fields) > 1:
+                    from langchain_text_splitters import RecursiveJsonSplitter
+                    json_str = json.dumps(scope_config)
+                    max_size = len(json_str)
+                    chunk_index = int(fields[0])-1
+                    chunks = int(fields[1])
+                    chunk_size = int(max_size / chunks) + 1
+                    chunk_increase = int(chunk_size * 0.1)
+                    done = False
+                    while not done:
+                        splitter = RecursiveJsonSplitter(max_chunk_size=chunk_size)
+                        json_chunks = splitter.split_json(json_data=scope_config)
+                        if len(json_chunks) > chunks:
+                            chunk_size += chunk_increase
+                        else:
+                            done = True
+                    if len(json_chunks) > chunk_index:
+                        scope_config = json_chunks[chunk_index]
+
             if scope_config:
                 log_message(f"Running scoped scan using map file [{scan_scope}]. Scan scope:", level=logging.INFO)
                 pprint.pprint(scope_config)
