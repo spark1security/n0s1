@@ -191,19 +191,19 @@ def init_argparse() -> argparse.ArgumentParser:
         help="Enable mapping mode and define how many levels for n0s1_map.json"
     )
     parent_parser.add_argument(
+        "--map-file",
+        dest="map_file",
+        nargs="?",
+        type=str,
+        help="Path to map file (e.g. n0s1_map.json) for customized scan scope."
+    )
+    parent_parser.add_argument(
         "--scope",
         dest="scope",
         nargs="?",
         default="Disabled",
         type=str,
         help="Defines the chunk of the map file (n0s1_map.json) to be scanned. Ex: 3/4 (will scan the third quarter of the map)"
-    )
-    parent_parser.add_argument(
-        "--scope-file",
-        dest="scope_file",
-        nargs="?",
-        type=str,
-        help="Path to map file (n0s1_map.json) for customized scan scope."
     )
     subparsers = parser.add_subparsers(
         help="Subcommands", dest="command", metavar="COMMAND"
@@ -553,41 +553,7 @@ def main(callback=None):
     else:
         log_message(f"Config file [{args.config_file}] not found!", level=logging.WARNING)
 
-    scope_config = None
-    if args.scope_file:
-        scan_scope = args.scope_file
-        if os.path.exists(scan_scope):
-            with open(scan_scope, "r") as f:
-                scope_config = json.load(f)
-            if args.scope and scope_config:
-                fields = str(args.scope).split("/")
-                if len(fields) > 1:
-                    from langchain_text_splitters import RecursiveJsonSplitter
-                    json_str = json.dumps(scope_config)
-                    max_size = len(json_str)
-                    chunk_index = int(fields[0])-1
-                    chunks = int(fields[1])
-                    chunk_size = int(max_size / chunks) + 1
-                    chunk_increase = int(chunk_size * 0.1)
-                    done = False
-                    while not done:
-                        splitter = RecursiveJsonSplitter(max_chunk_size=chunk_size)
-                        json_chunks = splitter.split_json(json_data=scope_config)
-                        if len(json_chunks) > chunks:
-                            chunk_size += chunk_increase
-                        else:
-                            if len(json_chunks) == 1:
-                                chunk_size -= chunk_increase
-                            else:
-                                done = True
-                    if len(json_chunks) > chunk_index:
-                        scope_config = json_chunks[chunk_index]
-
-            if scope_config:
-                log_message(f"Running scoped scan using map file [{scan_scope}]. Scan scope:", level=logging.INFO)
-                pprint.pprint(scope_config)
-        else:
-            log_message(f"Map file [{scan_scope}] not found!", level=logging.WARNING)
+    scope_config = get_scope_config(args)
 
     datetime_now_obj = datetime.now(timezone.utc)
     date_utc = datetime_now_obj.strftime("%Y-%m-%dT%H:%M:%S")
@@ -770,9 +736,12 @@ def main(callback=None):
     if args.map and args.map.lower() != "Disabled".lower():
         levels = int(args.map)
         map_data = controller.get_mapping(levels)
-        with open("n0s1_map.json", "w") as f:
+        map_file_path = args.map_file
+        if not map_file_path:
+            map_file_path = "n0s1_map.json"
+        with open(map_file_path, "w") as f:
             json.dump(map_data, f)
-            log_message("Scan scope saved to map file: n0s1_map.json")
+            log_message(f"Scan scope saved to map file: {map_file_path}")
         return True
 
     try:
@@ -787,6 +756,45 @@ def main(callback=None):
     finally:
         _save_report(report_format)
         log_message("Done!")
+
+
+def get_scope_config(args):
+    scope_config = None
+    if args.map_file:
+        map_file = args.map_file
+        if os.path.exists(map_file):
+            with open(map_file, "r") as f:
+                scope_config = json.load(f)
+            if args.scope and scope_config:
+                fields = str(args.scope).split("/")
+                if len(fields) > 1:
+                    from langchain_text_splitters import RecursiveJsonSplitter
+                    json_str = json.dumps(scope_config)
+                    max_size = len(json_str)
+                    chunk_index = int(fields[0]) - 1
+                    chunks = int(fields[1])
+                    chunk_size = int(max_size / chunks) + 1
+                    chunk_increase = int(chunk_size * 0.1)
+                    done = False
+                    while not done:
+                        splitter = RecursiveJsonSplitter(max_chunk_size=chunk_size)
+                        json_chunks = splitter.split_json(json_data=scope_config)
+                        if len(json_chunks) > chunks:
+                            chunk_size += chunk_increase
+                        else:
+                            if len(json_chunks) == 1:
+                                chunk_size -= chunk_increase
+                            else:
+                                done = True
+                    if len(json_chunks) > chunk_index:
+                        scope_config = json_chunks[chunk_index]
+
+            if scope_config:
+                log_message(f"Running scoped scan using map file [{map_file}]. Scan scope:", level=logging.INFO)
+                pprint.pprint(scope_config)
+        else:
+            log_message(f"Map file [{map_file}] not found!", level=logging.WARNING)
+    return scope_config
 
 
 if __name__ == "__main__":
