@@ -188,14 +188,14 @@ def init_argparse() -> argparse.ArgumentParser:
         nargs="?",
         default="Disabled",
         type=str,
-        help="Enable mapping mode and define how many levels for n0s1_map.json"
+        help="Enable mapping mode and define how many levels for the mapping."
     )
     parent_parser.add_argument(
         "--map-file",
         dest="map_file",
         nargs="?",
         type=str,
-        help="Path to map file (e.g. n0s1_map.json) for customized scan scope."
+        help="Path to map file (e.g. n0s1_map.json). Use it for customizing the scope of the scan."
     )
     parent_parser.add_argument(
         "--scope",
@@ -203,7 +203,7 @@ def init_argparse() -> argparse.ArgumentParser:
         nargs="?",
         default="Disabled",
         type=str,
-        help="Defines the chunk of the map file (n0s1_map.json) to be scanned. Ex: 3/4 (will scan the third quarter of the map)"
+        help="Define a chunk of the map file to be scanned. Ex: 3/4 (will scan the third quarter of the map)."
     )
     subparsers = parser.add_subparsers(
         help="Subcommands", dest="command", metavar="COMMAND"
