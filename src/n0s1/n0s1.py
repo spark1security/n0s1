@@ -587,7 +587,10 @@ def main(callback=None):
                         if len(json_chunks) > chunks:
                             chunk_size += chunk_increase
                         else:
-                            done = True
+                            if len(json_chunks) == 1:
+                                chunk_size -= chunk_increase
+                            else:
+                                done = True
                     if len(json_chunks) > chunk_index:
                         scope_config = json_chunks[chunk_index]
 
