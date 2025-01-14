@@ -2,6 +2,7 @@ import argparse
 import hashlib
 import logging
 import json
+import math
 import os
 import pathlib
 import pprint
@@ -564,7 +565,13 @@ def main(callback=None):
     else:
         log_message(f"Config file [{args.config_file}] not found!", level=logging.WARNING)
 
+    if not args.map:
+        args.map = "-1"
+
     scope_config = get_scope_config(args)
+    if scope_config:
+        log_message(f"Running scoped scan using map file [{args.map_file}]. Scan scope:", level=logging.INFO)
+        pprint.pprint(scope_config)
 
     datetime_now_obj = datetime.now(timezone.utc)
     date_utc = datetime_now_obj.strftime("%Y-%m-%dT%H:%M:%S")
@@ -748,8 +755,6 @@ def main(callback=None):
     message = f"Starting scan in {mode} mode..."
     log_message(message)
 
-    if not args.map:
-        args.map = "-1"
     if args.map and args.map.lower() != "Disabled".lower():
         levels = int(args.map)
         map_data = controller.get_mapping(levels)
@@ -777,6 +782,9 @@ def main(callback=None):
 
 def get_scope_config(args):
     scope_config = None
+    if args.map and args.map.lower() != "Disabled".lower():
+        # New mapping. Skipp loading old mapped scope
+        return scope_config
     if args.map_file:
         map_file = args.map_file
         if os.path.exists(map_file):
@@ -790,27 +798,43 @@ def get_scope_config(args):
                     max_size = len(json_str)
                     chunk_index = int(fields[0]) - 1
                     chunks = int(fields[1])
-                    chunk_size = int(max_size / chunks) + 1
-                    chunk_increase = int(chunk_size * 0.1)
+
+                    chunk_max = max_size - 1
+                    chunk_min = 1
+                    chunk_size = int((chunk_min+chunk_max) / 2)
+
+                    max_attempts = int(math.sqrt(max_size) + 5)
+
+                    counter = 0
                     done = False
                     while not done:
+                        counter += 1
+                        if counter >= max_attempts:
+                            break
                         splitter = RecursiveJsonSplitter(max_chunk_size=chunk_size)
                         json_chunks = splitter.split_json(json_data=scope_config)
-                        if len(json_chunks) > chunks:
-                            chunk_size += chunk_increase
+
+                        if len(json_chunks) == chunks:
+                            done = True
                         else:
-                            if len(json_chunks) == 1:
-                                chunk_size -= chunk_increase
+                            if DEBUG:
+                                message = f"Search counter: [{counter}]/[{max_attempts}] | Split nodes: {len(json_chunks)} | Binary search: {chunk_min}  < [chunk_size:{chunk_size}] < {chunk_max}"
+                                log_message(message,level=logging.WARNING)
+
+                            if len(json_chunks) < chunks:
+                                # chunk_size too big
+                                chunk_max = chunk_size
                             else:
-                                done = True
+                                # chunk_size too small
+                                chunk_min = chunk_size
+
+                            chunk_size = int((chunk_min+chunk_max) / 2)
+
                     if len(json_chunks) > chunk_index:
                         scope_config = json_chunks[chunk_index]
-
-            if scope_config:
-                log_message(f"Running scoped scan using map file [{map_file}]. Scan scope:", level=logging.INFO)
-                pprint.pprint(scope_config)
         else:
             log_message(f"Map file [{map_file}] not found!", level=logging.WARNING)
+
     return scope_config
 
 
