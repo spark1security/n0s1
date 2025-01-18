@@ -2,8 +2,10 @@ import argparse
 import hashlib
 import logging
 import json
+import math
 import os
 import pathlib
+import pprint
 import re
 import sys
 import toml
@@ -180,6 +182,29 @@ def init_argparse() -> argparse.ArgumentParser:
         dest="insecure",
         action="store_true",
         help="Insecure mode. Ignore SSL certificate verification",
+    )
+    parent_parser.add_argument(
+        "--map",
+        dest="map",
+        nargs="?",
+        default="Disabled",
+        type=str,
+        help="Enable mapping mode and define how many levels for the mapping."
+    )
+    parent_parser.add_argument(
+        "--map-file",
+        dest="map_file",
+        nargs="?",
+        type=str,
+        help="Path to map file (e.g. n0s1_map.json). Use it for customizing the scope of the scan."
+    )
+    parent_parser.add_argument(
+        "--scope",
+        dest="scope",
+        nargs="?",
+        default="Disabled",
+        type=str,
+        help="Define a chunk of the map file to be scanned. Ex: 3/4 (will scan the third quarter of the map)."
     )
     subparsers = parser.add_subparsers(
         help="Subcommands", dest="command", metavar="COMMAND"
@@ -504,6 +529,7 @@ def main(callback=None):
     DEBUG = False
 
     regex_config = None
+    scan_scope = ""
     cfg = {}
 
     if not args.command:
@@ -527,6 +553,14 @@ def main(callback=None):
             cfg = yaml.load(f, Loader=yaml.FullLoader)
     else:
         log_message(f"Config file [{args.config_file}] not found!", level=logging.WARNING)
+
+    if not args.map:
+        args.map = "-1"
+
+    scope_config = get_scope_config(args)
+    if scope_config:
+        log_message(f"Running scoped scan using map file [{args.map_file}]. Scan scope:", level=logging.INFO)
+        pprint.pprint(scope_config)
 
     datetime_now_obj = datetime.now(timezone.utc)
     date_utc = datetime_now_obj.strftime("%Y-%m-%dT%H:%M:%S")
@@ -561,6 +595,7 @@ def main(callback=None):
     controller_config["timeout"] = timeout
     controller_config["limit"] = limit
     controller_config["insecure"] = insecure
+    controller_config["scan_scope"] = scope_config
 
     TOKEN = None
     SERVER = None
@@ -692,7 +727,7 @@ def main(callback=None):
     scan_arguments = {"scan_comment": scan_comment, "post_comment": post_comment, "secret_manager": secret_manager,
                       "contact_help": contact_help, "label": label, "report_format": report_format, "debug": DEBUG,
                       "show_matched_secret_on_logs": show_matched_secret_on_logs, "scan_target": command,
-                      "timeout": timeout, "limit": limit}
+                      "timeout": timeout, "limit": limit, "scan_scope": scan_scope}
     report_json["tool"]["scan_arguments"] = scan_arguments
 
     N0S1_TOKEN = os.getenv("N0S1_TOKEN")
@@ -702,6 +737,17 @@ def main(callback=None):
         mode = "professional"
     message = f"Starting scan in {mode} mode..."
     log_message(message)
+
+    if args.map and args.map.lower() != "Disabled".lower():
+        levels = int(args.map)
+        map_data = controller.get_mapping(levels)
+        map_file_path = args.map_file
+        if not map_file_path:
+            map_file_path = "n0s1_map.json"
+        with open(map_file_path, "w") as f:
+            json.dump(map_data, f)
+            log_message(f"Scan scope saved to map file: {map_file_path}")
+        return True
 
     try:
         scan(regex_config, controller, scan_arguments)
@@ -715,6 +761,64 @@ def main(callback=None):
     finally:
         _save_report(report_format)
         log_message("Done!")
+
+
+def get_scope_config(args):
+    scope_config = None
+    if args.map and args.map.lower() != "Disabled".lower():
+        # New mapping. Skipp loading old mapped scope
+        return scope_config
+    if args.map_file:
+        map_file = args.map_file
+        if os.path.exists(map_file):
+            with open(map_file, "r") as f:
+                scope_config = json.load(f)
+            if args.scope and scope_config:
+                fields = str(args.scope).split("/")
+                if len(fields) > 1:
+                    from langchain_text_splitters import RecursiveJsonSplitter
+                    json_str = json.dumps(scope_config)
+                    max_size = len(json_str)
+                    chunk_index = int(fields[0]) - 1
+                    chunks = int(fields[1])
+
+                    chunk_max = max_size - 1
+                    chunk_min = 1
+                    chunk_size = int((chunk_min+chunk_max) / 2)
+
+                    max_attempts = int(math.sqrt(max_size) + 5)
+
+                    counter = 0
+                    done = False
+                    while not done:
+                        counter += 1
+                        if counter >= max_attempts:
+                            break
+                        splitter = RecursiveJsonSplitter(max_chunk_size=chunk_size)
+                        json_chunks = splitter.split_json(json_data=scope_config)
+
+                        if len(json_chunks) == chunks:
+                            done = True
+                        else:
+                            if DEBUG:
+                                message = f"Search counter: [{counter}]/[{max_attempts}] | Split nodes: {len(json_chunks)} | Binary search: {chunk_min}  < [chunk_size:{chunk_size}] < {chunk_max}"
+                                log_message(message,level=logging.WARNING)
+
+                            if len(json_chunks) < chunks:
+                                # chunk_size too big
+                                chunk_max = chunk_size
+                            else:
+                                # chunk_size too small
+                                chunk_min = chunk_size
+
+                            chunk_size = int((chunk_min+chunk_max) / 2)
+
+                    if len(json_chunks) > chunk_index:
+                        scope_config = json_chunks[chunk_index]
+        else:
+            log_message(f"Map file [{map_file}] not found!", level=logging.WARNING)
+
+    return scope_config
 
 
 if __name__ == "__main__":
