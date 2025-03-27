@@ -5,7 +5,7 @@ pyyaml
 atlassian-python-api
 asana==3.2.2
 zenpy
-anthillpy
+PyGithub
 WrikePy
 BeautifulSoup4
 slack_sdk

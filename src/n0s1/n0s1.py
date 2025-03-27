@@ -257,15 +257,29 @@ def init_argparse() -> argparse.ArgumentParser:
         help="Zendesk API key. Ref: https://developer.zendesk.com/api-reference/integration-services/connections/api_key_connections"
     )
 
-    anthill_scan_parser = subparsers.add_parser(
-        "anthill_scan", help="Scan AntHill nest", parents=[parent_parser]
+    github_scan_parser = subparsers.add_parser(
+        "github_scan", help="Scan GitHub repos", parents=[parent_parser]
     )
-    anthill_scan_parser.add_argument(
+    github_scan_parser.add_argument(
+        "--owner",
+        dest="owner",
+        nargs="?",
+        type=str,
+        help="The GitHub account owner (a.k.a org) of the repository. The name is not case sensitive."
+    )
+    github_scan_parser.add_argument(
+        "--repo",
+        dest="repo",
+        nargs="?",
+        type=str,
+        help="The name of the repository without the .git extension. The name is not case sensitive."
+    )
+    github_scan_parser.add_argument(
         "--api-key",
         dest="api_key",
         nargs="?",
         type=str,
-        help="AntHill token."
+        help="GitHub access token. Ref: https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app"
     )
 
     wrike_scan_parser = subparsers.add_parser(
@@ -643,10 +657,18 @@ def main(callback=None):
         controller_config["email"] = EMAIL
         controller_config["token"] = TOKEN
 
-    elif command == "anthill_scan":
-        TOKEN = os.getenv("ANTHILL_TOKEN")
+    elif command == "github_scan":
+        OWNER = os.getenv("GITHUB_ORG")
+        REPO = os.getenv("GITHUB_REPO")
+        TOKEN = os.getenv("GITHUB_TOKEN")
+        if args.owner and len(args.owner) > 0:
+            OWNER = args.owner
+        if args.repo and len(args.repo) > 0:
+            REPO = args.repo
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
+        controller_config["owner"] = OWNER
+        controller_config["repo"] = REPO
         controller_config["token"] = TOKEN
 
     elif command == "wrike_scan":
