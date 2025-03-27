@@ -232,17 +232,6 @@ def init_argparse() -> argparse.ArgumentParser:
         help="Asana API key. Ref: https://developers.asana.com/docs/personal-access-token#generating-a-pat"
     )
 
-    anthill_scan_parser = subparsers.add_parser(
-        "anthill_scan", help="Scan AntHill nest", parents=[parent_parser]
-    )
-    anthill_scan_parser.add_argument(
-        "--api-key",
-        dest="api_key",
-        nargs="?",
-        type=str,
-        help="AntHill token."
-    )
-
     zendesk_scan_parser = subparsers.add_parser(
         "zendesk_scan", help="Scan Zendesk tickets", parents=[parent_parser]
     )
@@ -636,12 +625,6 @@ def main(callback=None):
 
     elif command == "asana_scan":
         TOKEN = os.getenv("ASANA_TOKEN")
-        if args.api_key and len(args.api_key) > 0:
-            TOKEN = args.api_key
-        controller_config["token"] = TOKEN
-
-    elif command == "anthill_scan":
-        TOKEN = os.getenv("ANTHILL_TOKEN")
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
         controller_config["token"] = TOKEN
