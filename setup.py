@@ -51,7 +51,7 @@ setup(
     keywords="security, cybersecurity, scanner, secret scanner, secret leak, data leak, Slack, Jira, Confluence, Asana, Wrike, Linear, Zendesk, security scanner, data loss prevention",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
-    python_requires=">=3.8, <4",
+    python_requires=">=3.9, <4",
 
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
