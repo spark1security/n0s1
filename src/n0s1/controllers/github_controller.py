@@ -13,6 +13,7 @@ class GitHubController(hollow_controller.HollowController):
         self._client = None
 
     def set_config(self, config=None):
+        super().set_config(config)
         from github import Github
         TOKEN = config.get("token", "")
         self._client = Github(TOKEN)
@@ -35,6 +36,17 @@ class GitHubController(hollow_controller.HollowController):
 
     def _get_repo_fullname(self, repo_name):
         owner = self._owner
+        repo_fullname = ""
+
+        git_suffix = ".git"
+        suffix_len = len(git_suffix)
+        repo_name_len = len(repo_name)
+        git_url_suffix = repo_name.lower()[repo_name_len-suffix_len:]
+        if git_url_suffix == git_suffix:
+            repo_fullname = repo_name.lower().replace("git://github.com/", "")
+            repo_fullname = repo_fullname[:-suffix_len]
+            return repo_fullname
+
         if not owner or len(owner) <= 0:
             owner = self._client.get_user().login
         repo_fullname = owner + "/" + repo_name
@@ -44,8 +56,7 @@ class GitHubController(hollow_controller.HollowController):
         if self._repo and len(self._repo) > 0:
             repo_name = self._get_repo_fullname(self._repo)
             return self._client.get_repo(repo_name)
-        full_name = repo_gid.lower().replace("git://github.com/", "")
-        full_name = full_name[:-4]
+        full_name = self._get_repo_fullname(repo_gid)
         return self._client.get_repo(full_name)
 
     def _get_repos(self):
@@ -54,10 +65,9 @@ class GitHubController(hollow_controller.HollowController):
         if self._repo and len(self._repo) > 0:
             return [self._get_repo_obj()]
 
-        if self._scan_scope and self._owner and len(self._owner):
-            for key in self._scan_scope.get("repos", {}).get(self._owner, {}).get("repos", {}):
-                p = self._client.get_repo(key)
-                repos.append(p)
+        if self._scan_scope:
+            for key in self._scan_scope.get("repos", {}):
+                repos.append(key)
         if len(repos) > 0:
             return repos
         self.connect()
@@ -71,9 +81,7 @@ class GitHubController(hollow_controller.HollowController):
     def _get_branches(self, repo_gid, limit=None):
         branches = []
         if self._scan_scope:
-            for key in self._scan_scope.get("repos", {}).get(repo_gid, {}).get("branches", {}):
-                b = self._client.projects.get_project(key)
-                branches.append(b)
+            branches = self._scan_scope.get("repos", {}).get(repo_gid, {}).get("branches", {})
         if len(branches) > 0:
             return branches
         self.connect()
@@ -151,11 +159,18 @@ class GitHubController(hollow_controller.HollowController):
 
         if repos := self._get_repos():
             for repo in repos:
-                message = f"Searching in repository: {repo.html_url}"
+                repo_gid = ""
+                repo_html_url = ""
+                if isinstance(repo, str):
+                    repo_gid = repo
+                    repo_html_url = repo
+                else:
+                    repo_gid = repo.git_url
+                    repo_html_url = repo.html_url
+                message = f"Searching in repository: {repo_html_url}"
                 self.log_message(message, logging.INFO)
 
                 # Iterate through each branch
-                repo_gid = repo.full_name
                 for branch in self._get_branches(repo_gid):
                     message = f"Searching in branch: {branch.name}"
                     self.log_message(message, logging.INFO)
