@@ -92,14 +92,12 @@ class GitHubController(hollow_controller.HollowController):
 
     def _get_files(self, repo_gid, branch_gid, limit=None):
         files = []
-        self.connect()
-        repo_obj = self._get_repo_obj(repo_gid)
         if self._scan_scope:
-            for key in self._scan_scope.get("repos", {}).get(repo_gid, {}).get("branches", {}).get(branch_gid, {}).get("files", {}):
-                f = repo_obj.get_contents(key, ref=branch_gid)
-                files.append(f)
+            files = self._scan_scope.get("repos", {}).get(repo_gid, {}).get("branches", {}).get(branch_gid, {}).get("files", [])
         if len(files) > 0:
             return files
+        self.connect()
+        repo_obj = self._get_repo_obj(repo_gid)
         if repo_obj:
             files = []
             try:
@@ -159,33 +157,34 @@ class GitHubController(hollow_controller.HollowController):
 
         if repos := self._get_repos():
             for repo in repos:
-                repo_gid = ""
-                repo_html_url = ""
                 if isinstance(repo, str):
-                    repo_gid = repo
-                    repo_html_url = repo
-                else:
-                    repo_gid = repo.git_url
-                    repo_html_url = repo.html_url
+                    repo = self._get_repo_obj(repo)
+                repo_gid = repo.git_url
+                repo_html_url = repo.html_url
                 message = f"Searching in repository: {repo_html_url}"
                 self.log_message(message, logging.INFO)
 
                 # Iterate through each branch
                 for branch in self._get_branches(repo_gid):
-                    message = f"Searching in branch: {branch.name}"
+                    branch_gid = ""
+                    if isinstance(branch, str):
+                        branch_gid = branch
+                    else:
+                        branch_gid = branch.name
+                    message = f"Searching in branch: {branch_gid}"
                     self.log_message(message, logging.INFO)
 
                     # Iterate through each file in the branch
                     try:
-                        files = self._get_files(repo_gid, branch.name)
+                        files = self._get_files(repo_gid, branch_gid)
                         for f in files:
                             # Fetch file content
-                            file_data = repo.get_contents(f, ref=branch.name).decoded_content.decode(errors='ignore')
-                            url = repo.html_url + f"/blob/{branch.name}/{f}"
+                            file_data = repo.get_contents(f, ref=branch_gid).decoded_content.decode(errors='ignore')
+                            url = repo.html_url + f"/blob/{branch_gid}/{f}"
                             file = self.pack_data(file_data, url)
                             yield file
                     except Exception as e:
-                        message = f"Error accessing branch {branch.name}: {e}"
+                        message = f"Error accessing branch {branch_gid}: {e}"
                         self.log_message(message, logging.ERROR)
 
     def post_comment(self, issue, comment):

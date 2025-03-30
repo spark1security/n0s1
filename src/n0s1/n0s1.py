@@ -421,7 +421,10 @@ def match_regex(regex_config, text):
             end = m.regs[0][1]
             matched_text = text[begin:end]
             sanitized_text, snippet_text = _sanitize_text(text, begin, end)
-            return c, matched_text, sanitized_text, snippet_text
+            tmp = text[:begin]
+            lines = tmp.split("\n")
+            line_number = len(lines)
+            return c, matched_text, sanitized_text, snippet_text, line_number
     return None, None, None, None
 
 
@@ -439,6 +442,7 @@ def report_leaked_secret(scan_text_result, controller):
     issue_id = scan_text_result.get("ticket_data", {}).get("issue_id", "")
     post_comment = scan_text_result.get("scan_arguments", {}).get("post_comment", False)
     show_matched_secret_on_logs = scan_text_result.get("scan_arguments", {}).get("show_matched_secret_on_logs", False)
+    line_number = scan_text_result.get("line_number", -1)
 
     finding_info = "Platform:[{platform}] Field:[{field}] ID:[{regex_config_id}] Description:[{regex_config_description}] Regex: {regex}\n############## Sanitized Secret Leak ##############\n {leak}\n############## Sanitized Secret Leak ##############"
     finding_info = finding_info.format(regex_config_id=regex_id, regex_config_description=regex_description,
@@ -449,13 +453,24 @@ def report_leaked_secret(scan_text_result, controller):
     if show_matched_secret_on_logs:
         log_message(
             f"\n##################### Secret  #####################\n{snippet_text}\n##################### Secret  #####################")
-    log_message(f"\nLeak source: {url}")
+
+    leak_url = url
+    url_with_line_number = False
+    if line_number > 0 and controller.get_name().lower() == "GitHub".lower():
+        url_with_line_number = True
+        leak_url = f"{url}#L{line_number}"
+    log_message(f"\nLeak source: {leak_url}")
+
     log_message("\n\n")
     finding_id = f"{url}_{sanitized_secret}"
     finding_id = _sha1_hash(finding_id)
     new_finding = {"id": finding_id, "url": url, "secret": sanitized_secret,
                    "details": {"matched_regex_config": scan_text_result["matched_regex_config"], "platform": platform,
                                "ticket_field": field}}
+
+    if url_with_line_number:
+        new_finding["url"] = leak_url
+
     if finding_id not in report_json["findings"]:
         report_json["findings"][finding_id] = new_finding
     if post_comment:
@@ -482,9 +497,9 @@ def scan_text(regex_config, text):
     match = False
     scan_text_result = {}
     try:
-        matched_regex_config, secret, sanitized_secret, snippet_text = match_regex(regex_config, str(text))
-        scan_text_result = {"matched_regex_config": matched_regex_config, "secret": secret,
-                            "sanitized_secret": sanitized_secret, "snippet_text": snippet_text}
+        matched_regex_config, secret, sanitized_secret, snippet_text, line_number = match_regex(regex_config, str(text))
+        scan_text_result = {"matched_regex_config": matched_regex_config, "secret": secret, "sanitized_secret": sanitized_secret,
+                            "snippet_text": snippet_text, "line_number": line_number}
         if matched_regex_config:
             match = True
     except Exception as e:
