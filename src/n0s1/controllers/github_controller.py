@@ -60,23 +60,45 @@ class GitHubController(hollow_controller.HollowController):
         return self._client.get_repo(full_name)
 
     def _get_repos(self):
+        owner = {}
         repos = []
 
-        if self._repo and len(self._repo) > 0:
-            return [self._get_repo_obj()]
-
         if self._scan_scope:
+            owner = self._scan_scope.get("owner", {})
             for key in self._scan_scope.get("repos", {}):
                 repos.append(key)
         if len(repos) > 0:
-            return repos
+            return repos, owner
         self.connect()
         if self._owner and len(self._owner) > 0:
-            org = self._client.get_organization(self._owner)
-            repos = org.get_repos()
+            from github import UnknownObjectException
+            try:
+                org = self._client.get_organization(self._owner)
+                repos = org.get_repos()
+                owner = {"type": "org", "name": self._owner}
+            except UnknownObjectException as e:
+                try:
+                    message = f"Unable to get ORG {self._owner} as owner: {e}"
+                    self.log_message(message, logging.WARNING)
+                    message = f"Trying to get user {self._owner} as owner..."
+                    self.log_message(message, logging.WARNING)
+                    repos = self._client.get_user(self._owner).get_repos()
+                    owner = {"type": "user", "name": self._owner}
+                except Exception as e:
+                    message = f"Unable to get repos from {self._owner}: {e}"
+                    self.log_message(message, logging.ERROR)
         else:
-            repos = self._client.get_user().get_repos()
-        return repos
+            user = self._client.get_user()
+            repos = user.get_repos()
+            owner = {"type": "authenticated_user", "name": user.login}
+
+        if self._repo and len(self._repo) > 0:
+            for r in repos:
+                if r.name.lower() == self._repo.lower():
+                    return [r], owner
+            return [], owner
+
+        return repos, owner
 
     def _get_branches(self, repo_gid, limit=None):
         branches = []
@@ -116,8 +138,9 @@ class GitHubController(hollow_controller.HollowController):
     def get_mapping(self, levels=-1, limit=None):
         if not self._client:
             return {}
-        map_data = {"repos": {}}
-        if repos := self._get_repos():
+        repos, owner = self._get_repos()
+        map_data = {"owner": owner, "repos": {}}
+        if repos:
             for repo in repos:
                 repo_gid = repo.git_url
                 message = f"Searching in repository: {repo.html_url}"
@@ -155,7 +178,8 @@ class GitHubController(hollow_controller.HollowController):
         if not self._client:
             return {}
 
-        if repos := self._get_repos():
+        repos, owner = self._get_repos()
+        if repos:
             for repo in repos:
                 if isinstance(repo, str):
                     repo = self._get_repo_obj(repo)
