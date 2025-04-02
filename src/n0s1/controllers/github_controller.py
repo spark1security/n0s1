@@ -114,10 +114,11 @@ class GitHubController(hollow_controller.HollowController):
 
     def _get_files(self, repo_gid, branch_gid, limit=None):
         files = []
+        files_content = []
         if self._scan_scope:
             files = self._scan_scope.get("repos", {}).get(repo_gid, {}).get("branches", {}).get(branch_gid, {}).get("files", [])
         if len(files) > 0:
-            return files
+            return files, files_content
         self.connect()
         repo_obj = self._get_repo_obj(repo_gid)
         if repo_obj:
@@ -130,10 +131,11 @@ class GitHubController(hollow_controller.HollowController):
                         contents.extend(repo_obj.get_contents(file_content.path, ref=branch_gid))
                     else:
                         files.append(file_content.path)
+                        files_content.append(file_content)
             except Exception as e:
                 message = f"Error listing files from branch {branch_gid}: {e}"
                 self.log_message(message, logging.ERROR)
-        return files
+        return files, files_content
 
     def get_mapping(self, levels=-1, limit=None):
         if not self._client:
@@ -168,7 +170,7 @@ class GitHubController(hollow_controller.HollowController):
                                 map_data["repos"][repo_gid]["branches"][branch_gid] = b_item
                             if levels > 0 and levels <= 2:
                                 continue
-                            files = self._get_files(repo_gid, branch_gid)
+                            files, files_content = self._get_files(repo_gid, branch_gid)
                             map_data["repos"][repo_gid]["branches"][branch_gid]["files"] = files
                             if levels > 0 and levels <= 3:
                                 continue
@@ -200,13 +202,25 @@ class GitHubController(hollow_controller.HollowController):
 
                     # Iterate through each file in the branch
                     try:
-                        files = self._get_files(repo_gid, branch_gid)
+                        files, files_content = self._get_files(repo_gid, branch_gid)
+                        use_preloaded_content = False
+                        if len(files_content) > 0:
+                            use_preloaded_content = True
+                            files = files_content
                         for f in files:
-                            # Fetch file content
-                            file_data = repo.get_contents(f, ref=branch_gid).decoded_content.decode(errors='ignore')
-                            url = repo.html_url + f"/blob/{branch_gid}/{f}"
-                            file = self.pack_data(file_data, url)
-                            yield file
+                            try:
+                                if use_preloaded_content:
+                                    file_data = f.decoded_content.decode(errors='ignore')
+                                    f = f.path
+                                else:
+                                    # Fetch file content
+                                    file_data = repo.get_contents(f, ref=branch_gid).decoded_content.decode(errors='ignore')
+                                url = repo.html_url + f"/blob/{branch_gid}/{f}"
+                                file = self.pack_data(file_data, url)
+                                yield file
+                            except Exception as e:
+                                message = f"Error accessing file {f} from branch {branch_gid}: {e}"
+                                self.log_message(message, logging.ERROR)
                     except Exception as e:
                         message = f"Error accessing branch {branch_gid}: {e}"
                         self.log_message(message, logging.ERROR)

@@ -425,7 +425,7 @@ def match_regex(regex_config, text):
             lines = tmp.split("\n")
             line_number = len(lines)
             return c, matched_text, sanitized_text, snippet_text, line_number
-    return None, None, None, None
+    return None, None, None, None, None
 
 
 def report_leaked_secret(scan_text_result, controller):
