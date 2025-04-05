@@ -257,6 +257,31 @@ def init_argparse() -> argparse.ArgumentParser:
         help="Zendesk API key. Ref: https://developer.zendesk.com/api-reference/integration-services/connections/api_key_connections"
     )
 
+    github_scan_parser = subparsers.add_parser(
+        "github_scan", help="Scan GitHub repos", parents=[parent_parser]
+    )
+    github_scan_parser.add_argument(
+        "--owner",
+        dest="owner",
+        nargs="?",
+        type=str,
+        help="The GitHub account owner (a.k.a org) of the repository. The name is not case sensitive."
+    )
+    github_scan_parser.add_argument(
+        "--repo",
+        dest="repo",
+        nargs="?",
+        type=str,
+        help="The name of the repository without the .git extension. The name is not case sensitive."
+    )
+    github_scan_parser.add_argument(
+        "--api-key",
+        dest="api_key",
+        nargs="?",
+        type=str,
+        help="GitHub access token. Ref: https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app"
+    )
+
     wrike_scan_parser = subparsers.add_parser(
         "wrike_scan", help="Scan Wrike tasks", parents=[parent_parser]
     )
@@ -396,8 +421,11 @@ def match_regex(regex_config, text):
             end = m.regs[0][1]
             matched_text = text[begin:end]
             sanitized_text, snippet_text = _sanitize_text(text, begin, end)
-            return c, matched_text, sanitized_text, snippet_text
-    return None, None, None, None
+            tmp = text[:begin]
+            lines = tmp.split("\n")
+            line_number = len(lines)
+            return c, matched_text, sanitized_text, snippet_text, line_number
+    return None, None, None, None, None
 
 
 def report_leaked_secret(scan_text_result, controller):
@@ -414,6 +442,7 @@ def report_leaked_secret(scan_text_result, controller):
     issue_id = scan_text_result.get("ticket_data", {}).get("issue_id", "")
     post_comment = scan_text_result.get("scan_arguments", {}).get("post_comment", False)
     show_matched_secret_on_logs = scan_text_result.get("scan_arguments", {}).get("show_matched_secret_on_logs", False)
+    line_number = scan_text_result.get("line_number", -1)
 
     finding_info = "Platform:[{platform}] Field:[{field}] ID:[{regex_config_id}] Description:[{regex_config_description}] Regex: {regex}\n############## Sanitized Secret Leak ##############\n {leak}\n############## Sanitized Secret Leak ##############"
     finding_info = finding_info.format(regex_config_id=regex_id, regex_config_description=regex_description,
@@ -424,13 +453,24 @@ def report_leaked_secret(scan_text_result, controller):
     if show_matched_secret_on_logs:
         log_message(
             f"\n##################### Secret  #####################\n{snippet_text}\n##################### Secret  #####################")
-    log_message(f"\nLeak source: {url}")
+
+    leak_url = url
+    url_with_line_number = False
+    if line_number > 0 and controller.get_name().lower() == "GitHub".lower():
+        url_with_line_number = True
+        leak_url = f"{url}#L{line_number}"
+    log_message(f"\nLeak source: {leak_url}")
+
     log_message("\n\n")
     finding_id = f"{url}_{sanitized_secret}"
     finding_id = _sha1_hash(finding_id)
     new_finding = {"id": finding_id, "url": url, "secret": sanitized_secret,
                    "details": {"matched_regex_config": scan_text_result["matched_regex_config"], "platform": platform,
                                "ticket_field": field}}
+
+    if url_with_line_number:
+        new_finding["url"] = leak_url
+
     if finding_id not in report_json["findings"]:
         report_json["findings"][finding_id] = new_finding
     if post_comment:
@@ -457,9 +497,9 @@ def scan_text(regex_config, text):
     match = False
     scan_text_result = {}
     try:
-        matched_regex_config, secret, sanitized_secret, snippet_text = match_regex(regex_config, str(text))
-        scan_text_result = {"matched_regex_config": matched_regex_config, "secret": secret,
-                            "sanitized_secret": sanitized_secret, "snippet_text": snippet_text}
+        matched_regex_config, secret, sanitized_secret, snippet_text, line_number = match_regex(regex_config, str(text))
+        scan_text_result = {"matched_regex_config": matched_regex_config, "secret": secret, "sanitized_secret": sanitized_secret,
+                            "snippet_text": snippet_text, "line_number": line_number}
         if matched_regex_config:
             match = True
     except Exception as e:
@@ -630,6 +670,20 @@ def main(callback=None):
             TOKEN = args.api_key
         controller_config["server"] = SERVER
         controller_config["email"] = EMAIL
+        controller_config["token"] = TOKEN
+
+    elif command == "github_scan":
+        OWNER = os.getenv("GITHUB_ORG")
+        REPO = os.getenv("GITHUB_REPO")
+        TOKEN = os.getenv("GITHUB_TOKEN")
+        if args.owner and len(args.owner) > 0:
+            OWNER = args.owner
+        if args.repo and len(args.repo) > 0:
+            REPO = args.repo
+        if args.api_key and len(args.api_key) > 0:
+            TOKEN = args.api_key
+        controller_config["owner"] = OWNER
+        controller_config["repo"] = REPO
         controller_config["token"] = TOKEN
 
     elif command == "wrike_scan":
