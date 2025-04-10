@@ -131,7 +131,7 @@ class AsanaController(hollow_controller.HollowController):
                                     "name": t.get("name", ""),
                                     "stories": {}
                                 }
-                                if len(project_gid) > 0:
+                                if len(task_gid) > 0:
                                     map_data["workspaces"][workspace_gid]["projects"][project_gid]["tasks"][task_gid] = t_item
                                 if levels > 0 and levels <= 3:
                                     continue

@@ -26,6 +26,7 @@ try:
     from . import linear_controller as linear_controller
     from . import asana_controller as asana_controller
     from . import zendesk_controller as zendesk_controller
+    from . import github_controller as github_controller
     from . import wrike_controller as wrike_controller
     from . import slack_controller as slack_controller
 except Exception:
@@ -34,6 +35,7 @@ except Exception:
     import n0s1.controllers.linear_controller as linear_controller
     import n0s1.controllers.asana_controller as asana_controller
     import n0s1.controllers.zendesk_controller as zendesk_controller
+    import n0s1.controllers.github_controller as github_controller
     import n0s1.controllers.wrike_controller as wrike_controller
     import n0s1.controllers.slack_controller as slack_controller
 
@@ -48,6 +50,8 @@ factory.register_platform("asana", asana_controller.AsanaController)
 factory.register_platform("asana_scan", asana_controller.AsanaController)
 factory.register_platform("zendesk", zendesk_controller.ZendeskController)
 factory.register_platform("zendesk_scan", zendesk_controller.ZendeskController)
+factory.register_platform("github", github_controller.GitHubController)
+factory.register_platform("github_scan", github_controller.GitHubController)
 factory.register_platform("wrike", wrike_controller.WrikeController)
 factory.register_platform("wrike_scan", wrike_controller.WrikeController)
 factory.register_platform("slack", slack_controller.SlackController)
