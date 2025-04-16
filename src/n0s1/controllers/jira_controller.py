@@ -152,7 +152,19 @@ class JiraController(hollow_controller.HollowController):
             return {}
         try:
             self.connect()
-            projects = self._get_projects(limit)
+            using_jql = False
+            if self._scan_scope:
+                jql = self._scan_scope.get("jql", None)
+                if jql:
+                    issues = self._client.search_issues(jql)
+                    for issue in issues:
+                        ticket = self._extract_ticket(include_coments, issue)
+                        using_jql = True
+                        yield ticket
+            if using_jql:
+                projects = []
+            else:
+                projects = self._get_projects(limit)
         except Exception as e:
             message = str(e) + f" client.projects()"
             self.log_message(message, logging.WARNING)
@@ -162,23 +174,26 @@ class JiraController(hollow_controller.HollowController):
             self.log_message(f"Scanning Jira project: [{key}]...")
             for issues in self._get_issues(key, limit):
                 for issue in issues:
-                    url = issue.self.split('/rest/api')[0] + "/browse/" + issue.key;
-                    title = issue.fields.summary
-                    description = issue.fields.description
-                    comments = []
-                    if include_coments:
-                        try:
-                            self.connect()
-                            issue_comments = self._client.comments(issue.id)
-                            comments.extend(c.body for c in issue_comments)
-                        except Exception as e:
-                            message = str(e) + f" client.comments({issue.id})"
-                            self.log_message(message, logging.WARNING)
-                            comments = []
-                            time.sleep(1)
-
-                    ticket = self.pack_data(title, description, comments, url, issue.key)
+                    ticket = self._extract_ticket(include_coments, issue)
                     yield ticket
+
+    def _extract_ticket(self, include_coments, issue):
+        url = issue.self.split('/rest/api')[0] + "/browse/" + issue.key;
+        title = issue.fields.summary
+        description = issue.fields.description
+        comments = []
+        if include_coments:
+            try:
+                self.connect()
+                issue_comments = self._client.comments(issue.id)
+                comments.extend(c.body for c in issue_comments)
+            except Exception as e:
+                message = str(e) + f" client.comments({issue.id})"
+                self.log_message(message, logging.WARNING)
+                comments = []
+                time.sleep(1)
+        ticket = self.pack_data(title, description, comments, url, issue.key)
+        return ticket
 
     def post_comment(self, issue, comment):
         if not self._client:
