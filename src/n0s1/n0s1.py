@@ -823,7 +823,7 @@ def main(callback=None):
 def get_scope_config(args):
     scope_config = None
     if args.scope:
-        scope_terms = ["jql", "search"]
+        scope_terms = ["jql", "cql", "search"]
         for t in scope_terms:
             query_index = args.scope.lower().replace(" ", "").find(f"{t}:".lower())
             if query_index == 0:
