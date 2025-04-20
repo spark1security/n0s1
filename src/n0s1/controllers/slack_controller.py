@@ -33,6 +33,20 @@ class SlackController(hollow_controller.HollowController):
         return True
 
     def get_data(self, include_coments=False, limit=None):
+
+        using_scan_scope = False
+        if self._scan_scope:
+            query = self._scan_scope.get("search", None)
+            if query:
+                messages = self.run_slack_query(query)
+                for m in messages:
+                    if len(m) > 0:
+                        using_scan_scope = True
+                        yield from self._extract_ticket(m)
+
+        if using_scan_scope:
+            return
+
         max_day_range = 365 * 100
         range_days = 1
         now = datetime.datetime.now()
@@ -56,12 +70,7 @@ class SlackController(hollow_controller.HollowController):
                     range_days = range_days * 2
                 else:
                     range_days = 1
-                    for item in m:
-                        message = item.get("text", "")
-                        iid = item.get("iid", "")
-                        url = item.get("permalink", "")
-                        ticket = self.pack_data(message, item, url, iid)
-                        yield ticket
+                    yield from self._extract_ticket(m)
 
             end_day = start_day + datetime.timedelta(days=1)
             start_day = start_day - datetime.timedelta(days=range_days)
@@ -69,6 +78,14 @@ class SlackController(hollow_controller.HollowController):
             end_day_str = end_day.strftime("%Y-%m-%d")
             query = f"after:{start_day_str} before:{end_day_str}"
             days_counter += range_days
+
+    def _extract_ticket(self, message):
+        for item in message:
+            message = item.get("text", "")
+            iid = item.get("iid", "")
+            url = item.get("permalink", "")
+            ticket = self.pack_data(message, item, url, iid)
+            yield ticket
 
     def post_comment(self, issue, comment):
         from slack_sdk.errors import SlackApiError
