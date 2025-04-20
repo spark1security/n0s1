@@ -416,6 +416,11 @@ def _safe_re_search(regex_str, text):
 def match_regex(regex_config, text):
     for c in regex_config["rules"]:
         regex_str = c["regex"]
+        modifiers = ["(?i)", "(?m)", "(?s)", "(?x)", "(?g)", "(?u)", "(?A)", "(?L)", "(?U)", ]
+        for modifier in modifiers:
+            if regex_str.find(modifier) > 0:
+                regex_str = regex_str.replace(modifier, "")
+                regex_str = modifier + regex_str
         if m := _safe_re_search(regex_str, text):
             begin = m.regs[0][0]
             end = m.regs[0][1]
