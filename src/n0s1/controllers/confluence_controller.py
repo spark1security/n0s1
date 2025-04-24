@@ -217,26 +217,25 @@ class ConfluenceController(hollow_controller.HollowController):
 
         pages = []
         using_cql = False
-        if self._scan_scope:
-            cql = self.get_query_from_scope()
-            if cql:
-                try:
-                    res = self._client.cql(cql, limit=limit)
-                    results = res.get("results", [])
-                    for r in results:
-                        content_type = r.get("content", {}).get("type", None)
-                        if content_type and content_type.lower() == "page".lower():
-                            pages.append(r.get("content", {}))
-                    if len(pages) > 0:
-                        using_cql = True
-                        yield from self.process_pages(include_coments, limit, pages)
-                    else:
-                        message = f"No pages found for [cql:{cql}]. Scan will not be scoped."
-                        self.log_message(message, logging.WARNING)
-                        self._scan_scope = None
-                except Exception as e:
-                    message = str(e) + f" cql({cql}, limit={limit})"
+        cql = self.get_query_from_scope()
+        if cql:
+            try:
+                res = self._client.cql(cql, limit=limit)
+                results = res.get("results", [])
+                for r in results:
+                    content_type = r.get("content", {}).get("type", None)
+                    if content_type and content_type.lower() == "page".lower():
+                        pages.append(r.get("content", {}))
+                if len(pages) > 0:
+                    using_cql = True
+                    yield from self.process_pages(include_coments, limit, pages)
+                else:
+                    message = f"No pages found for [cql:{cql}]. Scan will not be scoped."
                     self.log_message(message, logging.WARNING)
+                    self._scan_scope = None
+            except Exception as e:
+                message = str(e) + f" cql({cql}, limit={limit})"
+                self.log_message(message, logging.WARNING)
 
         if using_cql:
             return

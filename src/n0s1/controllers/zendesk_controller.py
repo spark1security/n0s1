@@ -47,12 +47,11 @@ class ZendeskController(hollow_controller.HollowController):
             server = self._config.get("server", "")
 
             using_scan_scope = False
-            if self._scan_scope:
-                query = self.get_query_from_scope()
-                if query:
-                    tickets = self._client.search(query=query)
-                    if len(tickets) > 0:
-                        using_scan_scope = True
+            query = self.get_query_from_scope()
+            if query:
+                tickets = self._client.search(query=query)
+                if len(tickets) > 0:
+                    using_scan_scope = True
 
             if not using_scan_scope:
                 # Fetch all tickets (paginated)

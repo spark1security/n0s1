@@ -181,10 +181,9 @@ class GitHubController(hollow_controller.HollowController):
             return {}
 
         repos = None
-        if self._scan_scope:
-            q = self.get_query_from_scope()
-            if q:
-                repos = self._client.search_repositories(query=q)
+        q = self.get_query_from_scope()
+        if q:
+            repos = self._client.search_repositories(query=q)
         if not repos:
             repos, owner = self._get_repos()
         if repos:

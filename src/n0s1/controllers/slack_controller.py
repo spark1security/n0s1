@@ -35,14 +35,13 @@ class SlackController(hollow_controller.HollowController):
     def get_data(self, include_coments=False, limit=None):
 
         using_scan_scope = False
-        if self._scan_scope:
-            query = self.get_query_from_scope()
-            if query:
-                messages = self.run_slack_query(query)
-                for m in messages:
-                    if len(m) > 0:
-                        using_scan_scope = True
-                        yield from self._extract_ticket(m)
+        query = self.get_query_from_scope()
+        if query:
+            messages = self.run_slack_query(query)
+            for m in messages:
+                if len(m) > 0:
+                    using_scan_scope = True
+                    yield from self._extract_ticket(m)
 
         if using_scan_scope:
             return
