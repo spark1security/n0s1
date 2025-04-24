@@ -45,8 +45,18 @@ class ZendeskController(hollow_controller.HollowController):
 
         try:
             server = self._config.get("server", "")
-            # Fetch all tickets (paginated)
-            tickets = self._client.tickets()
+
+            using_scan_scope = False
+            query = self.get_query_from_scope()
+            if query:
+                tickets = self._client.search(query=query)
+                if len(tickets) > 0:
+                    using_scan_scope = True
+
+            if not using_scan_scope:
+                # Fetch all tickets (paginated)
+                tickets = self._client.tickets()
+
             for ticket in tickets:
                 self.log_message(f"Scanning Zendesk Ticket ID: {ticket.id}, Subject: {ticket.subject}, Status: {ticket.status}, Created: {ticket.created_at}")
                 comments = []

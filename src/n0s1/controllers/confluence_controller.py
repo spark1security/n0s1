@@ -214,6 +214,32 @@ class ConfluenceController(hollow_controller.HollowController):
     def get_data(self, include_coments=False, limit=None):
         if not self._client:
             return {}
+
+        pages = []
+        using_cql = False
+        cql = self.get_query_from_scope()
+        if cql:
+            try:
+                res = self._client.cql(cql, limit=limit)
+                results = res.get("results", [])
+                for r in results:
+                    content_type = r.get("content", {}).get("type", None)
+                    if content_type and content_type.lower() == "page".lower():
+                        pages.append(r.get("content", {}))
+                if len(pages) > 0:
+                    using_cql = True
+                    yield from self.process_pages(include_coments, limit, pages)
+                else:
+                    message = f"No pages found for [cql:{cql}]. Scan will not be scoped."
+                    self.log_message(message, logging.WARNING)
+                    self._scan_scope = None
+            except Exception as e:
+                message = str(e) + f" cql({cql}, limit={limit})"
+                self.log_message(message, logging.WARNING)
+
+        if using_cql:
+            return
+
         for spaces in self._get_workspaces(limit):
             for s in spaces:
                 key = s
@@ -222,49 +248,54 @@ class ConfluenceController(hollow_controller.HollowController):
                 self.log_message(f"Scanning Confluence space: [{key}]...")
                 if len(key) > 0:
                     for pages in self._get_pages(key, limit):
-                        for p in pages:
-                            comments = []
-                            title = p.get("title", "")
-                            page_id = p.get("id", "")
-                            try:
-                                self.connect()
-                                body = self._client.get_page_by_id(page_id, expand="body.storage")
-                            except Exception as e:
-                                message = str(e) + f" get_page_by_id({page_id})"
-                                self.log_message(message, logging.WARNING)
-                                body = {}
-                                time.sleep(1)
-                                continue
+                        yield from self.process_pages(include_coments, limit, pages)
 
-                            description = body.get("body", {}).get("storage", {}).get("value", "")
-                            url = body.get("_links", {}).get("base", "") + p.get("_links", {}).get("webui", "")
-                            if len(page_id) > 0 and include_coments:
-                                if not limit or limit < 0:
-                                    limit = 50
-                                comments_start = 0
-                                comments_finished = False
-                                while not comments_finished:
-                                    try:
-                                        self.connect()
-                                        comments_response = self._client.get_page_comments(page_id, expand="body.storage", start=comments_start, limit=limit)
-                                        comments_result = comments_response.get("results", [])
-                                    except Exception as e:
-                                        message = str(e) + f" get_page_comments({page_id}, expand=\"body.storage\", start={comments_start}, limit={limit})"
-                                        self.log_message(message, logging.WARNING)
-                                        comments_result = [{}]
-                                        time.sleep(1)
-                                        continue
-                                    comments_start += limit
+    def process_pages(self, include_coments, limit, pages):
+        for p in pages:
+            comments = []
+            title = p.get("title", "")
+            page_id = p.get("id", "")
+            try:
+                self.connect()
+                body = self._client.get_page_by_id(page_id, expand="body.storage")
+            except Exception as e:
+                message = str(e) + f" get_page_by_id({page_id})"
+                self.log_message(message, logging.WARNING)
+                body = {}
+                time.sleep(1)
+                continue
 
-                                    for c in comments_result:
-                                        comment = c.get("body", {}).get("storage", {}).get("value", "")
-                                        comments.append(comment)
+            description = body.get("body", {}).get("storage", {}).get("value", "")
+            url = body.get("_links", {}).get("base", "") + p.get("_links", {}).get("webui", "")
+            if len(page_id) > 0 and include_coments:
+                if not limit or limit < 0:
+                    limit = 50
+                comments_start = 0
+                comments_finished = False
+                while not comments_finished:
+                    try:
+                        self.connect()
+                        comments_response = self._client.get_page_comments(page_id, expand="body.storage",
+                                                                           start=comments_start, limit=limit)
+                        comments_result = comments_response.get("results", [])
+                    except Exception as e:
+                        message = str(
+                            e) + f" get_page_comments({page_id}, expand=\"body.storage\", start={comments_start}, limit={limit})"
+                        self.log_message(message, logging.WARNING)
+                        comments_result = [{}]
+                        time.sleep(1)
+                        continue
+                    comments_start += limit
 
-                                    if len(comments_result) <= 0:
-                                        comments_finished = True
+                    for c in comments_result:
+                        comment = c.get("body", {}).get("storage", {}).get("value", "")
+                        comments.append(comment)
 
-                            ticket = self.pack_data(title, description, comments, url, page_id)
-                            yield ticket
+                    if len(comments_result) <= 0:
+                        comments_finished = True
+
+            ticket = self.pack_data(title, description, comments, url, page_id)
+            yield ticket
 
     def post_comment(self, issue, comment):
         if not self._client:

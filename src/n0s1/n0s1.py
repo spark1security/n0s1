@@ -204,7 +204,7 @@ def init_argparse() -> argparse.ArgumentParser:
         nargs="?",
         default="Disabled",
         type=str,
-        help="Define a chunk of the map file to be scanned. Ex: 3/4 (will scan the third quarter of the map)."
+        help="Define a search query Ex: \"search:org:spark1security action in:name\" for GitHub or \"jql:project != IT\" for Jira. If using with --map-file, it defines a chunk of the map file to be scanned. Ex: 3/4 (will scan the third quarter of the map)."
     )
     subparsers = parser.add_subparsers(
         help="Subcommands", dest="command", metavar="COMMAND"
@@ -416,6 +416,11 @@ def _safe_re_search(regex_str, text):
 def match_regex(regex_config, text):
     for c in regex_config["rules"]:
         regex_str = c["regex"]
+        modifiers = ["(?i)", "(?m)", "(?s)", "(?x)", "(?g)", "(?u)", "(?A)", "(?L)", "(?U)", ]
+        for modifier in modifiers:
+            if regex_str.find(modifier) > 0:
+                regex_str = regex_str.replace(modifier, "")
+                regex_str = modifier + regex_str
         if m := _safe_re_search(regex_str, text):
             begin = m.regs[0][0]
             end = m.regs[0][1]
@@ -599,7 +604,10 @@ def main(callback=None):
 
     scope_config = get_scope_config(args)
     if scope_config:
-        log_message(f"Running scoped scan using map file [{args.map_file}]. Scan scope:", level=logging.INFO)
+        if args.map_file:
+            log_message(f"Running scoped scan using map file [{args.map_file}]. Scan scope:", level=logging.INFO)
+        else:
+            log_message(f"Running scoped scan using search query:", level=logging.INFO)
         pprint.pprint(scope_config)
 
     datetime_now_obj = datetime.now(timezone.utc)
@@ -819,6 +827,15 @@ def main(callback=None):
 
 def get_scope_config(args):
     scope_config = None
+    if args.scope:
+        scope_terms = ["jql", "cql", "search", "query"]
+        for t in scope_terms:
+            query_index = args.scope.lower().replace(" ", "").find(f"{t}:".lower())
+            if query_index == 0:
+                query = args.scope[len(t)+1:]
+                scope_config = {t: query}
+                return scope_config
+
     if args.map and args.map.lower() != "Disabled".lower():
         # New mapping. Skipp loading old mapped scope
         return scope_config
