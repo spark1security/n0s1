@@ -218,7 +218,7 @@ class ConfluenceController(hollow_controller.HollowController):
         pages = []
         using_cql = False
         if self._scan_scope:
-            cql = self._scan_scope.get("cql", None)
+            cql = self.get_query_from_scope()
             if cql:
                 try:
                     res = self._client.cql(cql, limit=limit)

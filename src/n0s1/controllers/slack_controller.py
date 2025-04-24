@@ -36,9 +36,7 @@ class SlackController(hollow_controller.HollowController):
 
         using_scan_scope = False
         if self._scan_scope:
-            query = self._scan_scope.get("query", None)
-            if not query:
-                query = self._scan_scope.get("search", None)
+            query = self.get_query_from_scope()
             if query:
                 messages = self.run_slack_query(query)
                 for m in messages:

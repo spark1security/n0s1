@@ -76,3 +76,15 @@ class HollowController:
             "issue_id": ticket_key
         }
         return ticket_data
+
+    def get_query_from_scope(self):
+        query = None
+        if self._scan_scope:
+            query = self._scan_scope.get("query", None)
+            if not query:
+                query = self._scan_scope.get("search", None)
+            if not query:
+                query = self._scan_scope.get("jql", None)
+            if not query:
+                query = self._scan_scope.get("cql", None)
+        return query

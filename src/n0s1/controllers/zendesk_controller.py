@@ -48,9 +48,7 @@ class ZendeskController(hollow_controller.HollowController):
 
             using_scan_scope = False
             if self._scan_scope:
-                query = self._scan_scope.get("query", None)
-                if not query:
-                    query = self._scan_scope.get("search", None)
+                query = self.get_query_from_scope()
                 if query:
                     tickets = self._client.search(query=query)
                     if len(tickets) > 0:

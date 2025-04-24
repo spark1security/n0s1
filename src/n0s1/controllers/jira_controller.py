@@ -154,7 +154,7 @@ class JiraController(hollow_controller.HollowController):
             self.connect()
             using_jql = False
             if self._scan_scope:
-                jql = self._scan_scope.get("jql", None)
+                jql = self.get_query_from_scope()
                 if jql:
                     issues = self._client.search_issues(jql)
                     for issue in issues:
