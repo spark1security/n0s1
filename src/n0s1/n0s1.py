@@ -493,7 +493,7 @@ def report_leaked_secret(scan_text_result, controller):
 
     leak_url = url
     url_with_line_number = False
-    if line_number > 0 and controller.get_name().lower() == "GitHub".lower():
+    if line_number > 0 and (controller.get_name().lower() == "GitHub".lower() or controller.get_name().lower() == "GitLab".lower()) :
         url_with_line_number = True
         leak_url = f"{url}#L{line_number}"
     log_message(f"\nLeak source: {leak_url}")

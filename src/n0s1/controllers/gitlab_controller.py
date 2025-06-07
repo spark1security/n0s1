@@ -214,7 +214,12 @@ class GitLabController(hollow_controller.HollowController):
                             try:
                                 # Fetch file content
                                 file_content = project.files.get(file_path=file_path, ref=branch_name)
-                                file_data = str(file_content.decode())
+                                raw_content = file_content.decode()
+                                # Properly decode bytes to string
+                                if isinstance(raw_content, bytes):
+                                    file_data = raw_content.decode('utf-8', errors='replace')
+                                else:
+                                    file_data = raw_content
                                 url = f"{project_url}/-/blob/{branch_name}/{file_path}"
                                 file = self.pack_data(file_data, url)
                                 yield file
