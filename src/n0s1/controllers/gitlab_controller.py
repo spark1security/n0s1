@@ -82,7 +82,8 @@ class GitLabController(hollow_controller.HollowController):
     def _get_branches(self, project_id, limit=None):
         branches = []
         if self._scan_scope:
-            branches = self._scan_scope.get("projects", {}).get(project_id, {}).get("branches", {})
+            project_id_str = str(project_id)
+            branches = self._scan_scope.get("projects", {}).get(project_id_str, {}).get("branches", {})
         if len(branches) > 0:
             return branches
         
