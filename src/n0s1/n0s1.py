@@ -307,6 +307,13 @@ def init_argparse() -> argparse.ArgumentParser:
         help="The GitLab project ID or path with namespace to scan. If not provided, all accessible projects will be scanned."
     )
     gitlab_scan_parser.add_argument(
+        "--branch",
+        dest="branch",
+        nargs="?",
+        type=str,
+        help="The repo branch to scan. If not provided, all accessible branches will be scanned."
+    )
+    gitlab_scan_parser.add_argument(
         "--api-key",
         dest="api_key",
         nargs="?",
@@ -730,6 +737,7 @@ def main(callback=None):
         URL = os.getenv("GITLAB_URL", "https://gitlab.com")
         GROUP = os.getenv("GITLAB_GROUP")
         PROJECT = os.getenv("GITLAB_PROJECT")
+        BRANCH = os.getenv("GIT_BRANCH")
         TOKEN = os.getenv("GITLAB_TOKEN")
         if args.url and len(args.url) > 0:
             URL = args.url
@@ -737,11 +745,14 @@ def main(callback=None):
             GROUP = args.group
         if args.project and len(args.project) > 0:
             PROJECT = args.project
+        if args.branch and len(args.branch) > 0:
+            BRANCH = args.branch
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
         controller_config["url"] = URL
         controller_config["group"] = GROUP
         controller_config["project"] = PROJECT
+        controller_config["branch"] = BRANCH
         controller_config["token"] = TOKEN
 
     elif command == "wrike_scan":

@@ -20,6 +20,7 @@ class GitLabController(hollow_controller.HollowController):
         self._client = gitlab.Gitlab(URL, private_token=TOKEN)
         self._group = config.get("group", "")
         self._project = config.get("project", "")
+        self._branch = config.get("branch", "")
         return self.is_connected()
 
     def get_name(self):
@@ -79,19 +80,38 @@ class GitLabController(hollow_controller.HollowController):
 
         return projects, owner
 
+    def _filter_branches(self, branches, project_id):
+        filtered_branches = branches
+        if self._branch and len(self._branch) > 0:
+            filtered_branches = []
+            input_branches = self._branch.split(",")
+            if len(input_branches) == 1:
+                if input_branches[0].lower() == "default".lower():
+                    # Special case for default branch
+                    self.connect()
+                    project_obj = self._get_project_obj(project_id)
+                    if project_obj:
+                        filtered_branches.append(project_obj.default_branch)
+                        return filtered_branches
+            for b in branches:
+                branch_name = b.name if hasattr(b, 'name') else b
+                if branch_name in input_branches and branch_name not in filtered_branches:
+                    filtered_branches.append(b)
+        return filtered_branches
+
     def _get_branches(self, project_id, limit=None):
         branches = []
         if self._scan_scope:
             project_id_str = str(project_id)
             branches = self._scan_scope.get("projects", {}).get(project_id_str, {}).get("branches", {})
         if len(branches) > 0:
-            return branches
+            return self._filter_branches(branches, project_id)
         
         self.connect()
         project_obj = self._get_project_obj(project_id)
         if project_obj:
             branches = project_obj.branches.list(all=True)
-        return branches
+        return self._filter_branches(branches, project_id)
 
     def _get_files(self, project_id, branch_name, path="", limit=None):
         files = []
