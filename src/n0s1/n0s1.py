@@ -275,6 +275,13 @@ def init_argparse() -> argparse.ArgumentParser:
         help="The name of the repository without the .git extension. The name is not case sensitive."
     )
     github_scan_parser.add_argument(
+        "--branch",
+        dest="branch",
+        nargs="?",
+        type=str,
+        help="The repo branch to scan. If not provided, all accessible branches will be scanned."
+    )
+    github_scan_parser.add_argument(
         "--api-key",
         dest="api_key",
         nargs="?",
@@ -722,15 +729,19 @@ def main(callback=None):
     elif command == "github_scan":
         OWNER = os.getenv("GITHUB_ORG")
         REPO = os.getenv("GITHUB_REPO")
+        BRANCH = os.getenv("GIT_BRANCH")
         TOKEN = os.getenv("GITHUB_TOKEN")
         if args.owner and len(args.owner) > 0:
             OWNER = args.owner
         if args.repo and len(args.repo) > 0:
             REPO = args.repo
+        if args.branch and len(args.branch) > 0:
+            BRANCH = args.branch
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
         controller_config["owner"] = OWNER
         controller_config["repo"] = REPO
+        controller_config["branch"] = BRANCH
         controller_config["token"] = TOKEN
 
     elif command == "gitlab_scan":

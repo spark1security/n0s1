@@ -19,6 +19,7 @@ class GitHubController(hollow_controller.HollowController):
         self._client = Github(TOKEN)
         self._owner = config.get("owner", "")
         self._repo = config.get("repo", "")
+        self._branch = config.get("branch", "")
         return self.is_connected()
 
     def get_name(self):
@@ -100,17 +101,36 @@ class GitHubController(hollow_controller.HollowController):
 
         return repos, owner
 
+    def _filter_branches(self, branches, repo_gid):
+        filtered_branches = branches
+        if self._branch and len(self._branch) > 0:
+            filtered_branches = []
+            input_branches = self._branch.split(",")
+            if len(input_branches) == 1:
+                if input_branches[0].lower() == "default".lower():
+                    # Special case for default branch
+                    self.connect()
+                    repo_obj = self._get_repo_obj(repo_gid)
+                    if repo_obj:
+                        filtered_branches.append(repo_obj.default_branch)
+                        return filtered_branches
+            for b in branches:
+                branch_name = b.name if hasattr(b, 'name') else b
+                if branch_name in input_branches and branch_name not in filtered_branches:
+                    filtered_branches.append(b)
+        return filtered_branches
+
     def _get_branches(self, repo_gid, limit=None):
         branches = []
         if self._scan_scope:
             branches = self._scan_scope.get("repos", {}).get(repo_gid, {}).get("branches", {})
         if len(branches) > 0:
-            return branches
+            return self._filter_branches(branches, repo_gid)
         self.connect()
         repo_obj = self._get_repo_obj(repo_gid)
         if repo_obj:
             branches = repo_obj.get_branches()
-        return branches
+        return self._filter_branches(branches, repo_gid)
 
     def _get_files(self, repo_gid, branch_gid, limit=None):
         files = []
