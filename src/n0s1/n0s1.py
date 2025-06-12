@@ -293,22 +293,22 @@ def init_argparse() -> argparse.ArgumentParser:
         "gitlab_scan", help="Scan GitLab repos", parents=[parent_parser]
     )
     gitlab_scan_parser.add_argument(
-        "--url",
-        dest="url",
+        "--server",
+        dest="server",
         nargs="?",
         type=str,
         help="GitLab instance URL (defaults to https://gitlab.com)"
     )
     gitlab_scan_parser.add_argument(
-        "--group",
-        dest="group",
+        "--owner",
+        dest="owner",
         nargs="?",
         type=str,
         help="The GitLab group to scan. If not provided, all accessible projects will be scanned."
     )
     gitlab_scan_parser.add_argument(
-        "--project",
-        dest="project",
+        "--repo",
+        dest="repo",
         nargs="?",
         type=str,
         help="The GitLab project ID or path with namespace to scan. If not provided, all accessible projects will be scanned."
@@ -750,12 +750,12 @@ def main(callback=None):
         PROJECT = os.getenv("GITLAB_PROJECT")
         BRANCH = os.getenv("GIT_BRANCH")
         TOKEN = os.getenv("GITLAB_TOKEN")
-        if args.url and len(args.url) > 0:
-            URL = args.url
-        if args.group and len(args.group) > 0:
-            GROUP = args.group
-        if args.project and len(args.project) > 0:
-            PROJECT = args.project
+        if args.server and len(args.server) > 0:
+            URL = args.server
+        if args.owner and len(args.owner) > 0:
+            GROUP = args.owner
+        if args.repo and len(args.repo) > 0:
+            PROJECT = args.repo
         if args.branch and len(args.branch) > 0:
             BRANCH = args.branch
         if args.api_key and len(args.api_key) > 0:
