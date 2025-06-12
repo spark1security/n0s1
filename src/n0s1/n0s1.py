@@ -275,11 +275,57 @@ def init_argparse() -> argparse.ArgumentParser:
         help="The name of the repository without the .git extension. The name is not case sensitive."
     )
     github_scan_parser.add_argument(
+        "--branch",
+        dest="branch",
+        nargs="?",
+        type=str,
+        help="The repo branch to scan. If not provided, all accessible branches will be scanned."
+    )
+    github_scan_parser.add_argument(
         "--api-key",
         dest="api_key",
         nargs="?",
         type=str,
         help="GitHub access token. Ref: https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app"
+    )
+
+    gitlab_scan_parser = subparsers.add_parser(
+        "gitlab_scan", help="Scan GitLab repos", parents=[parent_parser]
+    )
+    gitlab_scan_parser.add_argument(
+        "--url",
+        dest="url",
+        nargs="?",
+        type=str,
+        help="GitLab instance URL (defaults to https://gitlab.com)"
+    )
+    gitlab_scan_parser.add_argument(
+        "--group",
+        dest="group",
+        nargs="?",
+        type=str,
+        help="The GitLab group to scan. If not provided, all accessible projects will be scanned."
+    )
+    gitlab_scan_parser.add_argument(
+        "--project",
+        dest="project",
+        nargs="?",
+        type=str,
+        help="The GitLab project ID or path with namespace to scan. If not provided, all accessible projects will be scanned."
+    )
+    gitlab_scan_parser.add_argument(
+        "--branch",
+        dest="branch",
+        nargs="?",
+        type=str,
+        help="The repo branch to scan. If not provided, all accessible branches will be scanned."
+    )
+    gitlab_scan_parser.add_argument(
+        "--api-key",
+        dest="api_key",
+        nargs="?",
+        type=str,
+        help="GitLab personal access token. Ref: https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html"
     )
 
     wrike_scan_parser = subparsers.add_parser(
@@ -461,7 +507,7 @@ def report_leaked_secret(scan_text_result, controller):
 
     leak_url = url
     url_with_line_number = False
-    if line_number > 0 and controller.get_name().lower() == "GitHub".lower():
+    if line_number > 0 and (controller.get_name().lower() == "GitHub".lower() or controller.get_name().lower() == "GitLab".lower()) :
         url_with_line_number = True
         leak_url = f"{url}#L{line_number}"
     log_message(f"\nLeak source: {leak_url}")
@@ -683,15 +729,41 @@ def main(callback=None):
     elif command == "github_scan":
         OWNER = os.getenv("GITHUB_ORG")
         REPO = os.getenv("GITHUB_REPO")
+        BRANCH = os.getenv("GIT_BRANCH")
         TOKEN = os.getenv("GITHUB_TOKEN")
         if args.owner and len(args.owner) > 0:
             OWNER = args.owner
         if args.repo and len(args.repo) > 0:
             REPO = args.repo
+        if args.branch and len(args.branch) > 0:
+            BRANCH = args.branch
         if args.api_key and len(args.api_key) > 0:
             TOKEN = args.api_key
         controller_config["owner"] = OWNER
         controller_config["repo"] = REPO
+        controller_config["branch"] = BRANCH
+        controller_config["token"] = TOKEN
+
+    elif command == "gitlab_scan":
+        URL = os.getenv("GITLAB_URL", "https://gitlab.com")
+        GROUP = os.getenv("GITLAB_GROUP")
+        PROJECT = os.getenv("GITLAB_PROJECT")
+        BRANCH = os.getenv("GIT_BRANCH")
+        TOKEN = os.getenv("GITLAB_TOKEN")
+        if args.url and len(args.url) > 0:
+            URL = args.url
+        if args.group and len(args.group) > 0:
+            GROUP = args.group
+        if args.project and len(args.project) > 0:
+            PROJECT = args.project
+        if args.branch and len(args.branch) > 0:
+            BRANCH = args.branch
+        if args.api_key and len(args.api_key) > 0:
+            TOKEN = args.api_key
+        controller_config["url"] = URL
+        controller_config["group"] = GROUP
+        controller_config["project"] = PROJECT
+        controller_config["branch"] = BRANCH
         controller_config["token"] = TOKEN
 
     elif command == "wrike_scan":
