@@ -1,89 +1,32 @@
-import hashlib
 import logging
-import re
+import sys
+
+try:
+    import controllers.spark1 as spark1
+except:
+    import n0s1.controllers.spark1 as spark1
+
+try:
+    import controllers.platform_controller as platform_controller
+except:
+    import n0s1.controllers.platform_controller as platform_controller
+
+try:
+    import utils
+except:
+    import n0s1.utils as utils
 
 # Global variables that will be set by the main module
 DEBUG = False
 cfg = {}
 report_json = {}
 
-
-def log_message(message, level=logging.INFO):
-    global DEBUG
-    debug_file = "n0s1_debug.log"
-
-    if level == logging.NOTSET or level == logging.DEBUG:
-        logging.debug(message)
-    if level == logging.INFO:
-        logging.info(message)
-    if level == logging.WARNING:
-        logging.warning(message)
-    if level == logging.ERROR:
-        logging.error(message)
-    if level == logging.CRITICAL:
-        logging.critical(message)
-
-    if DEBUG:
-        with open(debug_file, "a") as f:
-            if f.tell() == 0:
-                f.write("Debug logging message for n0s1\n")
-            f.write(f"{message}\n")
-
-
-def _sanitize_text(text, begin, end):
-    text_len = len(text)
-    s_begin = max(begin - 20, 0)
-    s_end = min(end + 20, text_len)
-    sanitized_text = f"{text[s_begin:begin]}<REDACTED>{text[end:s_end]}"
-    snippet_text = text[s_begin:s_end]
-    return sanitized_text, snippet_text
-
-
-def _sha1_hash(to_hash):
-    try:
-        message_digest = hashlib.sha256()
-        string_m = str(to_hash)
-        byte_m = bytes(string_m, encoding='utf')
-        message_digest.update(byte_m)
-        return message_digest.hexdigest()
-    except TypeError as e:
-        raise "Unable to generate SHA-256 hash for input string" from e
-
-
-def _safe_re_search(regex_str, text):
-    global DEBUG
-    m = None
-    try:
-        m = re.search(regex_str, text)
-    except Exception:
-        try:
-            regex_str = regex_str.replace("(?i)", "")
-            m = re.search(regex_str, text, re.IGNORECASE)
-        except Exception as e:
-            if DEBUG:
-                log_message(str(e))
-    return m
-
-
-def match_regex(regex_config, text):
-    for c in regex_config["rules"]:
-        regex_str = c["regex"]
-        modifiers = ["(?i)", "(?m)", "(?s)", "(?x)", "(?g)", "(?u)", "(?A)", "(?L)", "(?U)", ]
-        for modifier in modifiers:
-            if regex_str.find(modifier) > 0:
-                regex_str = regex_str.replace(modifier, "")
-                regex_str = modifier + regex_str
-        if m := _safe_re_search(regex_str, text):
-            begin = m.regs[0][0]
-            end = m.regs[0][1]
-            matched_text = text[begin:end]
-            sanitized_text, snippet_text = _sanitize_text(text, begin, end)
-            tmp = text[:begin]
-            lines = tmp.split("\n")
-            line_number = len(lines)
-            return c, matched_text, sanitized_text, snippet_text, line_number
-    return None, None, None, None, None
-
+def set_globals(debug_flag, config_dict, report_dict):
+    """Set global variables from the main module"""
+    global DEBUG, cfg, report_json
+    DEBUG = debug_flag
+    cfg = config_dict
+    report_json = report_dict
 
 def report_leaked_secret(scan_text_result, controller):
     global report_json, cfg
@@ -105,10 +48,10 @@ def report_leaked_secret(scan_text_result, controller):
     finding_info = finding_info.format(regex_config_id=regex_id, regex_config_description=regex_description,
                                        regex=regex, platform=platform, field=field, leak=sanitized_secret)
 
-    log_message("\nPotential secret leak regex match!")
-    log_message(finding_info)
+    utils.log_message("\nPotential secret leak regex match!")
+    utils.log_message(finding_info)
     if show_matched_secret_on_logs:
-        log_message(
+        utils.log_message(
             f"\n##################### Secret  #####################\n{snippet_text}\n##################### Secret  #####################")
 
     leak_url = url
@@ -116,11 +59,11 @@ def report_leaked_secret(scan_text_result, controller):
     if line_number > 0 and (controller.get_name().lower() == "GitHub".lower() or controller.get_name().lower() == "GitLab".lower()) :
         url_with_line_number = True
         leak_url = f"{url}#L{line_number}"
-    log_message(f"\nLeak source: {leak_url}")
+    utils.log_message(f"\nLeak source: {leak_url}")
 
-    log_message("\n\n")
+    utils.log_message("\n\n")
     finding_id = f"{url}_{sanitized_secret}"
-    finding_id = _sha1_hash(finding_id)
+    finding_id = utils.generate_sha1_hash(finding_id)
     new_finding = {"id": finding_id, "url": url, "secret": sanitized_secret,
                    "details": {"matched_regex_config": scan_text_result["matched_regex_config"], "platform": platform,
                                "ticket_field": field}}
@@ -154,14 +97,14 @@ def scan_text(regex_config, text):
     match = False
     scan_text_result = {}
     try:
-        matched_regex_config, secret, sanitized_secret, snippet_text, line_number = match_regex(regex_config, str(text))
+        matched_regex_config, secret, sanitized_secret, snippet_text, line_number = utils.match_regex(regex_config, str(text))
         scan_text_result = {"matched_regex_config": matched_regex_config, "secret": secret, "sanitized_secret": sanitized_secret,
                             "snippet_text": snippet_text, "line_number": line_number}
         if matched_regex_config:
             match = True
     except Exception as e:
         if DEBUG:
-            log_message(str(e), level=logging.WARNING)
+            utils.log_message(str(e), level=logging.WARNING)
     return match, scan_text_result
 
 
@@ -173,6 +116,34 @@ def scan_text_and_report_leaks(controller, data, name, regex_config, scan_argume
     scan_text_result["scan_arguments"] = scan_arguments
     if secret_found:
         report_leaked_secret(scan_text_result, controller)
+
+
+def command_scan(api_key, regex_config, scan_comment, post_comment, secret_manager, contact_help, label, report_format, show_matched_secret_on_logs, command, timeout, limit, scan_scope):
+    controller_config = {}
+    controller_config["token"] = api_key
+    controller_factory = platform_controller.factory
+    controller = controller_factory.get_platform(command)
+    controller.set_log_message_callback(utils.log_message)
+    if not controller.set_config(controller_config):
+        sys.exit(-1)
+    if not regex_config:
+        regex_config = utils.load_regex_config()
+    scan_arguments = {"scan_comment": scan_comment, "post_comment": post_comment, "secret_manager": secret_manager,
+                      "contact_help": contact_help, "label": label, "report_format": report_format, "debug": DEBUG,
+                      "show_matched_secret_on_logs": show_matched_secret_on_logs, "scan_target": command,
+                      "timeout": timeout, "limit": limit, "scan_scope": scan_scope}
+    scan(regex_config, controller, scan_arguments)
+
+
+def linear_scan(api_key, regex_config=None, scan_comment=False, post_comment=False, secret_manager="a secret manager tool", contact_help="contact@spark1.us", label="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1", report_format="n0s1", show_matched_secret_on_logs=False, timeout=None, limit=None, scan_scope=None):
+    command = "linear_scan"
+    return command_scan(api_key, regex_config, scan_comment, post_comment, secret_manager, contact_help, label, report_format, show_matched_secret_on_logs, command, timeout, limit, scan_scope)
+
+
+def asana_scan(api_key, regex_config=None, scan_comment=False, post_comment=False, secret_manager="a secret manager tool", contact_help="contact@spark1.us", label="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1", report_format="n0s1", show_matched_secret_on_logs=False, timeout=None, limit=None, scan_scope=None):
+    command = "asana_scan"
+    return command_scan(api_key, regex_config, scan_comment, post_comment, secret_manager, contact_help, label, report_format, show_matched_secret_on_logs, command, timeout, limit, scan_scope)
+
 
 
 def scan(regex_config, controller, scan_arguments):
@@ -188,7 +159,7 @@ def scan(regex_config, controller, scan_arguments):
         issue_id = ticket.get("issue_id")
         url = ticket.get("url")
         if DEBUG:
-            log_message(f"Scanning [{issue_id}]: {url}")
+            utils.log_message(f"Scanning [{issue_id}]: {url}")
 
         comments = ticket.get("ticket", {}).get("comments", {}).get("data", [])
         label = cfg.get("comment_params", {}).get("label", "")
@@ -216,9 +187,4 @@ def scan(regex_config, controller, scan_arguments):
                         scan_text_and_report_leaks(controller, item_data, name, regex_config, scan_arguments, ticket)
 
 
-def set_globals(debug_flag, config_dict, report_dict):
-    """Set global variables from the main module"""
-    global DEBUG, cfg, report_json
-    DEBUG = debug_flag
-    cfg = config_dict
-    report_json = report_dict
+linear_scan("XXXTTTUUU")

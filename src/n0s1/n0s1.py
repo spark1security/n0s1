@@ -1,5 +1,4 @@
 import argparse
-import hashlib
 import logging
 import json
 import math
@@ -8,8 +7,6 @@ import pathlib
 import pprint
 import re
 import sys
-import toml
-import yaml
 from datetime import datetime, timezone
 
 try:
@@ -37,29 +34,15 @@ try:
 except:
     import n0s1.secret_scan as secret_scan
 
+
+try:
+    import utils
+except:
+    import n0s1.utils as utils
+
 global n0s1_version, report_json, report_file, cfg, DEBUG
 
 
-def log_message(message, level=logging.INFO):
-    global DEBUG
-    debug_file = "n0s1_debug.log"
-
-    if level == logging.NOTSET or level == logging.DEBUG:
-        logging.debug(message)
-    if level == logging.INFO:
-        logging.info(message)
-    if level == logging.WARNING:
-        logging.warning(message)
-    if level == logging.ERROR:
-        logging.error(message)
-    if level == logging.CRITICAL:
-        logging.critical(message)
-
-    if DEBUG:
-        with open(debug_file, "a") as f:
-            if f.tell() == 0:
-                f.write("Debug logging message for n0s1\n")
-            f.write(f"{message}\n")
 
 
 
@@ -430,7 +413,7 @@ def _save_report(report_format=""):
                 json.dump(report_json, f)
                 return True
     except Exception as e:
-        log_message(str(e), level=logging.ERROR)
+        utils.log_message(str(e), level=logging.ERROR)
 
     return False
 
@@ -463,21 +446,8 @@ def main(callback=None):
 
     DEBUG = args.debug
 
-    if os.path.exists(args.regex_file):
-        with open(args.regex_file, "r") as f:
-            extension = os.path.splitext(args.regex_file)[1]
-            if extension.lower() == ".yaml".lower():
-                regex_config = yaml.load(f, Loader=yaml.FullLoader)
-            else:
-                regex_config = toml.load(f)
-    else:
-        log_message(f"Regex file [{args.regex_file}] not found!", level=logging.WARNING)
-
-    if os.path.exists(args.config_file):
-        with open(args.config_file, "r") as f:
-            cfg = yaml.load(f, Loader=yaml.FullLoader)
-    else:
-        log_message(f"Config file [{args.config_file}] not found!", level=logging.WARNING)
+    regex_config = utils.load_regex_config(args.regex_file)
+    cfg = utils.load_n0s1_config(args.config_file)
 
     if not args.map:
         args.map = "-1"
@@ -485,9 +455,9 @@ def main(callback=None):
     scope_config = get_scope_config(args)
     if scope_config:
         if args.map_file:
-            log_message(f"Running scoped scan using map file [{args.map_file}]. Scan scope:", level=logging.INFO)
+            utils.log_message(f"Running scoped scan using map file [{args.map_file}]. Scan scope:", level=logging.INFO)
         else:
-            log_message(f"Running scoped scan using search query:", level=logging.INFO)
+            utils.log_message(f"Running scoped scan using search query:", level=logging.INFO)
         pprint.pprint(scope_config)
 
     datetime_now_obj = datetime.now(timezone.utc)
@@ -644,14 +614,14 @@ def main(callback=None):
         return
 
     message = f"n0s1 secret scanner version [{n0s1_version}] - Scan date: {date_utc}"
-    log_message(message)
+    utils.log_message(message)
     if DEBUG:
         message = f"Args: {args}"
-        log_message(message)
+        utils.log_message(message)
         message = f"Controller settings: {SERVER} {EMAIL}"
         if args.show_matched_secret_on_logs:
             message += f" {TOKEN}"
-        log_message(message)
+        utils.log_message(message)
 
     if not controller.set_config(controller_config):
         sys.exit(-1)
@@ -704,7 +674,7 @@ def main(callback=None):
     if n0s1_pro.is_connected(scan_arguments):
         mode = "professional"
     message = f"Starting scan in {mode} mode..."
-    log_message(message)
+    utils.log_message(message)
 
     if args.map and args.map.lower() != "Disabled".lower():
         levels = int(args.map)
@@ -714,7 +684,7 @@ def main(callback=None):
             map_file_path = "n0s1_map.json"
         with open(map_file_path, "w") as f:
             json.dump(map_data, f)
-            log_message(f"Scan scope saved to map file: {map_file_path}")
+            utils.log_message(f"Scan scope saved to map file: {map_file_path}")
         return True
 
     try:
@@ -722,15 +692,15 @@ def main(callback=None):
         secret_scan.set_globals(DEBUG, cfg, report_json)
         secret_scan.scan(regex_config, controller, scan_arguments)
     except KeyboardInterrupt:
-        log_message("Keyboard interrupt detected. Saving findings and exiting...")
+        utils.log_message("Keyboard interrupt detected. Saving findings and exiting...")
         sys.exit(130)
     except Exception as e:
-        log_message("Execution interrupted by an exception. Saving partial report and exiting...")
-        log_message(e)
+        utils.log_message("Execution interrupted by an exception. Saving partial report and exiting...")
+        utils.log_message(e)
         sys.exit(1)
     finally:
         _save_report(report_format)
-        log_message("Done!")
+        utils.log_message("Done!")
 
 
 def get_scope_config(args):
@@ -781,7 +751,7 @@ def get_scope_config(args):
                         else:
                             if DEBUG:
                                 message = f"Search counter: [{counter}]/[{max_attempts}] | Split nodes: {len(json_chunks)} | Binary search: {chunk_min}  < [chunk_size:{chunk_size}] < {chunk_max}"
-                                log_message(message,level=logging.WARNING)
+                                utils.log_message(message,level=logging.WARNING)
 
                             if len(json_chunks) < chunks:
                                 # chunk_size too big
@@ -795,10 +765,10 @@ def get_scope_config(args):
                     if len(json_chunks) > chunk_index:
                         scope_config = json_chunks[chunk_index]
         else:
-            log_message(f"Map file [{map_file}] not found!", level=logging.WARNING)
+            utils.log_message(f"Map file [{map_file}] not found!", level=logging.WARNING)
 
     return scope_config
 
 
 if __name__ == "__main__":
-    main(log_message)
+    main(utils.log_message)
