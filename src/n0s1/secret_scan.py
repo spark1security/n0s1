@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 
 try:
@@ -118,14 +119,32 @@ def scan_text_and_report_leaks(controller, data, name, regex_config, scan_argume
         report_leaked_secret(scan_text_result, controller)
 
 
-def command_scan(api_key, regex_config, scan_comment, post_comment, secret_manager, contact_help, label, report_format, show_matched_secret_on_logs, command, timeout, limit, scan_scope):
+def command_scan(api_key, debug, regex_config, scan_comment, post_comment, secret_manager, contact_help, label, report_format, show_matched_secret_on_logs, command, timeout, limit, insecure, scan_scope, server=None, email=None, owner=None, repo=None, branch=None):
+    DEBUG = debug
     controller_config = {}
     controller_config["token"] = api_key
+    controller_config["timeout"] = timeout
+    controller_config["limit"] = limit
+    controller_config["insecure"] = insecure
+
+    if server:
+        controller_config["server"] = server
+    if email:
+        controller_config["email"] = email
+    if owner:
+        controller_config["owner"] = owner
+    if repo:
+        controller_config["repo"] = repo
+    if branch:
+        controller_config["branch"] = branch
+
     controller_factory = platform_controller.factory
     controller = controller_factory.get_platform(command)
     controller.set_log_message_callback(utils.log_message)
     if not controller.set_config(controller_config):
         sys.exit(-1)
+    if regex_config and os.path.exists(regex_config):
+        regex_config = utils.load_regex_config(regex_config)
     if not regex_config:
         regex_config = utils.load_regex_config()
     scan_arguments = {"scan_comment": scan_comment, "post_comment": post_comment, "secret_manager": secret_manager,
@@ -135,14 +154,89 @@ def command_scan(api_key, regex_config, scan_comment, post_comment, secret_manag
     scan(regex_config, controller, scan_arguments)
 
 
-def linear_scan(api_key, regex_config=None, scan_comment=False, post_comment=False, secret_manager="a secret manager tool", contact_help="contact@spark1.us", label="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1", report_format="n0s1", show_matched_secret_on_logs=False, timeout=None, limit=None, scan_scope=None):
-    command = "linear_scan"
-    return command_scan(api_key, regex_config, scan_comment, post_comment, secret_manager, contact_help, label, report_format, show_matched_secret_on_logs, command, timeout, limit, scan_scope)
+def slack_scan(api_key, debug=False, regex_config=None, scan_comment=True, post_comment=False,
+                   secret_manager="a secret manager tool", contact_help="contact@spark1.us",
+                   label="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1", report_format="n0s1",
+                   show_matched_secret_on_logs=False, timeout=None, limit=None, scan_scope=None):
+    command = "slack_scan"
+    return command_scan(api_key=api_key, debug=debug, regex_config=regex_config, scan_comment=scan_comment,
+                        post_comment=post_comment, secret_manager=secret_manager, contact_help=contact_help,
+                        label=label, report_format=report_format,
+                        show_matched_secret_on_logs=show_matched_secret_on_logs, command=command, timeout=timeout,
+                        limit=limit, insecure=insecure, scan_scope=scan_scope)
 
 
-def asana_scan(api_key, regex_config=None, scan_comment=False, post_comment=False, secret_manager="a secret manager tool", contact_help="contact@spark1.us", label="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1", report_format="n0s1", show_matched_secret_on_logs=False, timeout=None, limit=None, scan_scope=None):
+def asana_scan(api_key, debug=False, regex_config=None, scan_comment=True, post_comment=False, secret_manager="a secret manager tool", contact_help="contact@spark1.us", label="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1", report_format="n0s1", show_matched_secret_on_logs=False, timeout=None, limit=None, insecure=False, scan_scope=None):
     command = "asana_scan"
-    return command_scan(api_key, regex_config, scan_comment, post_comment, secret_manager, contact_help, label, report_format, show_matched_secret_on_logs, command, timeout, limit, scan_scope)
+    return command_scan(api_key=api_key, debug=debug, regex_config=regex_config, scan_comment=scan_comment,
+                        post_comment=post_comment, secret_manager=secret_manager, contact_help=contact_help,
+                        label=label, report_format=report_format,
+                        show_matched_secret_on_logs=show_matched_secret_on_logs, command=command, timeout=timeout,
+                        limit=limit, insecure=insecure, scan_scope=scan_scope)
+
+
+def zendesk_scan(server, email, api_key, debug=False, regex_config=None, scan_comment=True, post_comment=False, secret_manager="a secret manager tool", contact_help="contact@spark1.us", label="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1", report_format="n0s1", show_matched_secret_on_logs=False, timeout=None, limit=None, insecure=False, scan_scope=None):
+    command = "zendesk_scan"
+    return command_scan(server=server, email=email, api_key=api_key, debug=debug, regex_config=regex_config, scan_comment=scan_comment,
+                        post_comment=post_comment, secret_manager=secret_manager, contact_help=contact_help,
+                        label=label, report_format=report_format,
+                        show_matched_secret_on_logs=show_matched_secret_on_logs, command=command, timeout=timeout,
+                        limit=limit, insecure=insecure, scan_scope=scan_scope)
+
+
+def github_scan(owner, repo, branch, api_key, debug=False, regex_config=None, scan_comment=True, post_comment=False, secret_manager="a secret manager tool", contact_help="contact@spark1.us", label="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1", report_format="n0s1", show_matched_secret_on_logs=False, timeout=None, limit=None, insecure=False, scan_scope=None):
+    command = "github_scan"
+    return command_scan(owner=owner, repo=repo, branch=branch, api_key=api_key, debug=debug, regex_config=regex_config, scan_comment=scan_comment,
+                        post_comment=post_comment, secret_manager=secret_manager, contact_help=contact_help,
+                        label=label, report_format=report_format,
+                        show_matched_secret_on_logs=show_matched_secret_on_logs, command=command, timeout=timeout,
+                        limit=limit, insecure=insecure, scan_scope=scan_scope)
+
+
+def gitlab_scan(server, owner, repo, branch, api_key, debug=False, regex_config=None, scan_comment=True, post_comment=False, secret_manager="a secret manager tool", contact_help="contact@spark1.us", label="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1", report_format="n0s1", show_matched_secret_on_logs=False, timeout=None, limit=None, insecure=False, scan_scope=None):
+    command = "gitlab_scan"
+    return command_scan(server=server, owner=owner, repo=repo, branch=branch, api_key=api_key, debug=debug, regex_config=regex_config, scan_comment=scan_comment,
+                        post_comment=post_comment, secret_manager=secret_manager, contact_help=contact_help,
+                        label=label, report_format=report_format,
+                        show_matched_secret_on_logs=show_matched_secret_on_logs, command=command, timeout=timeout,
+                        limit=limit, insecure=insecure, scan_scope=scan_scope)
+
+
+def wrike_scan(api_key, debug=False, regex_config=None, scan_comment=True, post_comment=False, secret_manager="a secret manager tool", contact_help="contact@spark1.us", label="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1", report_format="n0s1", show_matched_secret_on_logs=False, timeout=None, limit=None, insecure=False, scan_scope=None):
+    command = "wrike_scan"
+    return command_scan(api_key=api_key, debug=debug, regex_config=regex_config, scan_comment=scan_comment, post_comment=post_comment, secret_manager=secret_manager, contact_help=contact_help, label=label, report_format=report_format, show_matched_secret_on_logs=show_matched_secret_on_logs, command=command, timeout=timeout, limit=limit, insecure=insecure, scan_scope=scan_scope)
+
+
+def linear_scan(api_key, debug=False, regex_config=None, scan_comment=True, post_comment=False, secret_manager="a secret manager tool", contact_help="contact@spark1.us", label="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1", report_format="n0s1", show_matched_secret_on_logs=False, timeout=None, limit=None, insecure=False, scan_scope=None):
+    command = "linear_scan"
+    return command_scan(api_key=api_key, debug=debug, regex_config=regex_config, scan_comment=scan_comment, post_comment=post_comment, secret_manager=secret_manager, contact_help=contact_help, label=label, report_format=report_format, show_matched_secret_on_logs=show_matched_secret_on_logs, command=command, timeout=timeout, limit=limit, insecure=insecure, scan_scope=scan_scope)
+
+
+def jira_scan(server, email, api_key, debug=False, regex_config=None, scan_comment=True, post_comment=False, secret_manager="a secret manager tool", contact_help="contact@spark1.us", label="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1", report_format="n0s1", show_matched_secret_on_logs=False, timeout=None, limit=None, insecure=False, scan_scope=None):
+    command = "jira_scan"
+    return command_scan(server=server, email=email, api_key=api_key, debug=debug, regex_config=regex_config, scan_comment=scan_comment, post_comment=post_comment, secret_manager=secret_manager, contact_help=contact_help, label=label, report_format=report_format, show_matched_secret_on_logs=show_matched_secret_on_logs, command=command, timeout=timeout, limit=limit, insecure=insecure, scan_scope=scan_scope)
+
+
+def confluence_scan(server=None, email=None, api_key=None, debug=False, regex_config=None, scan_comment=True, post_comment=False, secret_manager="a secret manager tool", contact_help="contact@spark1.us", label="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1", report_format="n0s1", show_matched_secret_on_logs=False, timeout=None, limit=None, insecure=False, scan_scope=None):
+    command = "confluence_scan"
+    SERVER = os.getenv("CONFLUENCE_SERVER")
+    if not SERVER:
+        SERVER = os.getenv("JIRA_SERVER")
+    EMAIL = os.getenv("CONFLUENCE_EMAIL")
+    if not EMAIL:
+        EMAIL = os.getenv("JIRA_EMAIL")
+    TOKEN = os.getenv("CONFLUENCE_TOKEN")
+    if not TOKEN:
+        TOKEN = os.getenv("JIRA_TOKEN")
+
+    if not server:
+        server = SERVER
+    if not email:
+        email = EMAIL
+    if not api_key:
+        api_key = TOKEN
+
+    return command_scan(server=server, email=email, api_key=api_key, debug=debug, regex_config=regex_config, scan_comment=scan_comment, post_comment=post_comment, secret_manager=secret_manager, contact_help=contact_help, label=label, report_format=report_format, show_matched_secret_on_logs=show_matched_secret_on_logs, command=command, timeout=timeout, limit=limit, insecure=insecure, scan_scope=scan_scope)
 
 
 
@@ -186,5 +280,3 @@ def scan(regex_config, controller, scan_arguments):
                     if item_data and item_data.lower().find(label.lower()) == -1:
                         scan_text_and_report_leaks(controller, item_data, name, regex_config, scan_arguments, ticket)
 
-
-linear_scan("XXXTTTUUU")

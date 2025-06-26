@@ -34,18 +34,12 @@ try:
 except:
     import n0s1.secret_scan as secret_scan
 
-
 try:
     import utils
 except:
     import n0s1.utils as utils
 
 global n0s1_version, report_json, report_file, cfg, DEBUG
-
-
-
-
-
 
 
 def init_argparse() -> argparse.ArgumentParser:
@@ -393,9 +387,6 @@ def init_argparse() -> argparse.ArgumentParser:
     return parser
 
 
-
-
-
 def _save_report(report_format=""):
     global report_json, report_file
 
@@ -416,15 +407,6 @@ def _save_report(report_format=""):
         utils.log_message(str(e), level=logging.ERROR)
 
     return False
-
-
-
-
-
-
-
-
-
 
 
 def main(callback=None):
