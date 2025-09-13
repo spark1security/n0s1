@@ -127,6 +127,8 @@ def command_scan(api_key, debug, regex_config, scan_comment, post_comment, secre
     controller_config["limit"] = limit
     controller_config["insecure"] = insecure
 
+    if scan_scope:
+        controller_config["scan_scope"] = scan_scope
     if server:
         controller_config["server"] = server
     if email:
