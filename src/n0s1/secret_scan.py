@@ -221,23 +221,6 @@ def jira_scan(server, email, api_key, debug=False, regex_config=None, scan_comme
 
 def confluence_scan(server=None, email=None, api_key=None, debug=False, regex_config=None, scan_comment=True, post_comment=False, secret_manager="a secret manager tool", contact_help="contact@spark1.us", label="n0s1bot_auto_comment_e869dd5fa15ca0749a350aac758c7f56f56ad9be1", report_format="n0s1", show_matched_secret_on_logs=False, timeout=None, limit=None, insecure=False, scan_scope=None):
     command = "confluence_scan"
-    SERVER = os.getenv("CONFLUENCE_SERVER")
-    if not SERVER:
-        SERVER = os.getenv("JIRA_SERVER")
-    EMAIL = os.getenv("CONFLUENCE_EMAIL")
-    if not EMAIL:
-        EMAIL = os.getenv("JIRA_EMAIL")
-    TOKEN = os.getenv("CONFLUENCE_TOKEN")
-    if not TOKEN:
-        TOKEN = os.getenv("JIRA_TOKEN")
-
-    if not server:
-        server = SERVER
-    if not email:
-        email = EMAIL
-    if not api_key:
-        api_key = TOKEN
-
     return command_scan(server=server, email=email, api_key=api_key, debug=debug, regex_config=regex_config, scan_comment=scan_comment, post_comment=post_comment, secret_manager=secret_manager, contact_help=contact_help, label=label, report_format=report_format, show_matched_secret_on_logs=show_matched_secret_on_logs, command=command, timeout=timeout, limit=limit, insecure=insecure, scan_scope=scan_scope)
 
 
