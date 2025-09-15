@@ -110,3 +110,12 @@ def load_n0s1_config(n0s1_config_file):
     else:
         log_message(f"Config file [{n0s1_config_file}] not found!", level=logging.WARNING)
     return cfg
+
+def get_version():
+    try:
+        here = pathlib.Path(__file__).parent.resolve()
+        init_file = pathlib.Path(here / "__init__.py")
+        n0s1_version = re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', init_file.read_text(), re.M).group(1)
+    except Exception:
+        n0s1_version = "0.0.1"
+    return n0s1_version

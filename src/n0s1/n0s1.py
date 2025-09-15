@@ -55,13 +55,7 @@ def init_argparse() -> argparse.ArgumentParser:
         description="""Secret scanner for Slack, Jira, Confluence, Asana, Wrike, Zendesk and Linear.
         """,
     )
-
-    try:
-        here = pathlib.Path(__file__).parent.resolve()
-        init_file = pathlib.Path(here / "__init__.py")
-        n0s1_version = re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', init_file.read_text(), re.M).group(1)
-    except Exception:
-        n0s1_version = "0.0.1"
+    n0s1_version = utils.get_version()
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + n0s1_version)
 
     # Create parent subparser. Note `add_help=False` and creation via `argparse.`

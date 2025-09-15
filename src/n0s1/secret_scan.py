@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from datetime import datetime, timezone
 
 try:
     import controllers.spark1 as spark1
@@ -21,6 +22,9 @@ except:
 DEBUG = False
 cfg = {}
 report_json = {}
+logging.basicConfig(level=logging.INFO)
+install_path = os.path.dirname(os.path.abspath(__file__))
+
 
 def set_globals(debug_flag, config_dict, report_dict):
     """Set global variables from the main module"""
@@ -120,7 +124,21 @@ def scan_text_and_report_leaks(controller, data, name, regex_config, scan_argume
 
 
 def command_scan(api_key, debug, regex_config, scan_comment, post_comment, secret_manager, contact_help, label, report_format, show_matched_secret_on_logs, command, timeout, limit, insecure, scan_scope, server=None, email=None, owner=None, repo=None, branch=None):
-    DEBUG = debug
+    datetime_now_obj = datetime.now(timezone.utc)
+    date_utc = datetime_now_obj.strftime("%Y-%m-%dT%H:%M:%S")
+    report_json = {"tool": {"name": "n0s1", "version": utils.get_version(), "author": "Spark 1 Security"},
+                   "scan_date": {"timestamp": datetime_now_obj.timestamp(), "date_utc": date_utc},
+                   "regex_config": regex_config, "findings": {}}
+    scan_arguments = {"scan_comment": scan_comment, "post_comment": post_comment, "secret_manager": secret_manager,
+                      "contact_help": contact_help, "label": label, "report_format": report_format, "debug": DEBUG,
+                      "show_matched_secret_on_logs": show_matched_secret_on_logs, "scan_target": command,
+                      "timeout": timeout, "limit": limit, "scan_scope": scan_scope}
+    report_json["tool"]["scan_arguments"] = scan_arguments
+
+    config_file = f"{install_path}/config/config.yaml"
+    cfg = utils.load_n0s1_config(config_file)
+    set_globals(debug, cfg, report_json)
+
     controller_config = {}
     controller_config["token"] = api_key
     controller_config["timeout"] = timeout
@@ -154,6 +172,7 @@ def command_scan(api_key, debug, regex_config, scan_comment, post_comment, secre
                       "show_matched_secret_on_logs": show_matched_secret_on_logs, "scan_target": command,
                       "timeout": timeout, "limit": limit, "scan_scope": scan_scope}
     scan(regex_config, controller, scan_arguments)
+    return report_json
 
 
 def slack_scan(api_key, debug=False, regex_config=None, scan_comment=True, post_comment=False,
