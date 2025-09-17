@@ -90,10 +90,8 @@ class JiraController(hollow_controller.HollowController):
 
     def _get_issues(self, project_key, limit=None):
         from jira.exceptions import JIRAError
-        start = 0
         if not limit or limit < 0:
             limit = 50
-        issue_start = start
         issue_keys = []
         if self._scan_scope:
             issue_keys = self._scan_scope.get("projects", {}).get(project_key, {})
@@ -113,10 +111,11 @@ class JiraController(hollow_controller.HollowController):
         else:
             ql = f"project = '{project_key}'"
             issues_finished = False
+            nextPageToken = None
             while not issues_finished:
                 try:
                     self.connect()
-                    issues = self._client.search_issues(ql, startAt=issue_start, maxResults=limit)
+                    issues = self._client.enhanced_search_issues(ql, nextPageToken=nextPageToken, maxResults=limit)
                 except JIRAError as e:
                     self.log_message(f"Error while searching issues on Jira project: [{project_key}]. Skipping...",
                                      logging.WARNING)
@@ -124,13 +123,15 @@ class JiraController(hollow_controller.HollowController):
                     issues = [{}]
                     break
                 except Exception as e:
-                    message = str(e) + f" client.search_issues({ql}, startAt={issue_start}, maxResults={limit})"
+                    message = str(e) + f" client.enhanced_search_issues({ql}, nextPageToken={nextPageToken}, maxResults={limit})"
                     self.log_message(message, logging.WARNING)
                     issues = [{}]
                     time.sleep(1)
                     continue
-                issue_start += limit
                 issues_finished = len(issues) <= 0
+                nextPageToken = issues.nextPageToken
+                if not nextPageToken:
+                    issues_finished = True
                 yield issues
 
     def get_mapping(self, levels=-1, limit=None):
