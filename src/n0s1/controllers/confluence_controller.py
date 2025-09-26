@@ -121,6 +121,33 @@ class ConfluenceController(hollow_controller.HollowController):
                 self.log_message(f"Unable to connect to {self.get_name()} instance. Check your credentials.", logging.ERROR)
         return False
 
+    def _paginated_get(self, func, *args, limit=None, **kwargs):
+        start = 0
+        if not limit or limit < 0:
+            limit = 50
+        finished = False
+        while not finished:
+            try:
+                self.connect()
+                res = func(*args, start=start, limit=limit, **kwargs)
+                results = res.get("results", [])
+                total_size = res.get("totalSize", -1)
+                for i in results:
+                    print(i.get("content", {}).get("type", "?") + " - " + i.get("url", "*"))
+            except Exception as e:
+                message = str(e) + f" {func.__name__}({args}, start={start}, limit={limit}, {kwargs})"
+                self.log_message(message, logging.WARNING)
+                results = [{}]
+                time.sleep(1)
+                continue
+            start += limit
+            if total_size > 0 and total_size <= start:
+                finished = True
+            print (start)
+            if len(results) <= 0:
+                finished = True
+            yield results
+
     def _get_workspaces(self, limit=None):
         if self._scan_scope:
             workspaces = []
@@ -128,25 +155,7 @@ class ConfluenceController(hollow_controller.HollowController):
                 workspaces.append(key)
             yield workspaces
         else:
-            space_start = 0
-            if not limit or limit < 0:
-                limit = 50
-            finished = False
-            while not finished:
-                try:
-                    self.connect()
-                    res = self._client.get_all_spaces(start=space_start, limit=limit)
-                    spaces = res.get("results", [])
-                except Exception as e:
-                    message = str(e) + f" get_all_spaces(start={space_start}, limit={limit})"
-                    self.log_message(message, logging.WARNING)
-                    spaces = [{}]
-                    time.sleep(1)
-                    continue
-                space_start += limit
-                if len(spaces) <= 0:
-                    finished = True
-                yield spaces
+            yield from self._paginated_get(self._client.get_all_spaces, limit=limit)
 
     def _get_pages(self, workspace_key, limit=None):
         from atlassian.confluence import ApiPermissionError
@@ -220,12 +229,31 @@ class ConfluenceController(hollow_controller.HollowController):
         cql = self.get_query_from_scope()
         if cql:
             try:
-                res = self._client.cql(cql, limit=limit)
-                results = res.get("results", [])
-                for r in results:
-                    content_type = r.get("content", {}).get("type", None)
-                    if content_type and content_type.lower() == "page".lower():
-                        pages.append(r.get("content", {}))
+                issues_finished = False
+                next_page = None
+                counter = 0
+                while not issues_finished:
+                    try:
+                        self.connect()
+                        response = self._client.enhanced_cql(cql, next=next_page, limit=limit)
+                        results = []
+                        if response:
+                            results = response.get("results", [])
+                            next_page = response.get("_links", {}).get("next", None)
+                        issues_finished = len(results) <= 0
+                        if not next_page:
+                            issues_finished = True
+                        counter += len(results)
+                        for r in results:
+                            content_type = r.get("content", {}).get("type", None)
+                            if content_type and content_type.lower() == "page".lower():
+                                pages.append(r.get("content", {}))
+                    except Exception as e:
+                        message = str(e) + f" enhanced_cql({cql}, nextPageToken={nextPageToken}, limit={limit})"
+                        self.log_message(message, logging.WARNING)
+                        pages = [{}]
+                        time.sleep(1)
+                        continue
                 if len(pages) > 0:
                     using_cql = True
                     yield from self.process_pages(include_coments, limit, pages)
