@@ -221,11 +221,21 @@ class ConfluenceController(hollow_controller.HollowController):
         if cql:
             try:
                 res = self._client.cql(cql, limit=limit)
-                results = res.get("results", [])
-                for r in results:
-                    content_type = r.get("content", {}).get("type", None)
-                    if content_type and content_type.lower() == "page".lower():
-                        pages.append(r.get("content", {}))
+                while res:
+                    results = res.get("results", [])
+                    for r in results:
+                        content_type = r.get("content", {}).get("type", None)
+                        if content_type and content_type.lower() == "page".lower():
+                            pages.append(r.get("content", {}))
+
+                    next = res.get("_links", {}).get("next", None)
+                    res = None
+                    if next:
+                        url = f"{self._url}/wiki{next}"
+                        response = self._get_request(url)
+                        if response:
+                            res = response.json()
+
                 if len(pages) > 0:
                     using_cql = True
                     yield from self.process_pages(include_coments, limit, pages)
