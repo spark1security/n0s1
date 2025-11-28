@@ -179,8 +179,20 @@ class JiraController(hollow_controller.HollowController):
 
     def _extract_ticket(self, include_coments, issue):
         url = issue.self.split('/rest/api')[0] + "/browse/" + issue.key;
-        title = issue.fields.summary
-        description = issue.fields.description
+        title = ""
+        description = ""
+        try:
+            title = issue.fields.summary
+        except Exception as e:
+            message = str(e) + f" _extract_ticket({issue.id}) - field: summary"
+            self.log_message(message, logging.WARNING)
+
+        try:
+            description = issue.fields.description
+        except Exception as e:
+            message = str(e) + f" _extract_ticket({issue.id}) - field: description"
+            self.log_message(message, logging.WARNING)
+
         comments = []
         if include_coments:
             try:
