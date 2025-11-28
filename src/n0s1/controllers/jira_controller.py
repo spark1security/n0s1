@@ -156,11 +156,18 @@ class JiraController(hollow_controller.HollowController):
             using_jql = False
             jql = self.get_query_from_scope()
             if jql:
-                issues = self._client.search_issues(jql)
-                for issue in issues:
-                    ticket = self._extract_ticket(include_coments, issue)
-                    using_jql = True
-                    yield ticket
+                issues_finished = False
+                nextPageToken = None
+                while not issues_finished:
+                    issues = self._client.enhanced_search_issues(jql, nextPageToken=nextPageToken, maxResults=limit)
+                    for issue in issues:
+                        ticket = self._extract_ticket(include_coments, issue)
+                        using_jql = True
+                        yield ticket
+                    issues_finished = len(issues) <= 0
+                    nextPageToken = issues.nextPageToken
+                    if not nextPageToken:
+                        issues_finished = True
             if using_jql:
                 projects = []
             else:
