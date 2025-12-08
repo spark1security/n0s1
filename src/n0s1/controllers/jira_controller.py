@@ -36,32 +36,47 @@ class JiraController(hollow_controller.HollowController):
         return "Jira"
 
     def is_connected(self):
-        if self._client:
-            if user := self._client.myself():
-                self.log_message(f"Logged to {self.get_name()} as {user}")
-            else:
-                self.log_message(f"Unable to connect to {self.get_name()} instance. Check your credentials.", logging.ERROR)
-                return False
-
-            if projects := self._client.projects():
-                project_found = False
-                issue_found = False
-                for key in projects:
-                    project_found = True
-                    ql = f"project = '{key}'"
-                    for issue in self._client.search_issues(ql):
-                        if issue:
-                            issue_found = True
-                            return True
-                if project_found:
-                    if issue_found:
-                        return True
-                    else:
-                        self.log_message(f"Unable to list {self.get_name()} issues. Check your permissions.", logging.ERROR)
+        from jira import JIRAError
+        try:
+            if self._client:
+                if user := self._client.myself():
+                    self.log_message(f"Logged to {self.get_name()} as {user}")
                 else:
-                    self.log_message(f"Unable to list {self.get_name()} projects. Check your permissions.", logging.ERROR)
-            else:
-                self.log_message(f"Unable to connect to {self.get_name()} instance. Check your credentials.", logging.ERROR)
+                    self.log_message(f"Unable to connect to {self.get_name()} instance. Check your credentials.", logging.ERROR)
+                    return False
+
+                if projects := self._client.projects():
+                    project_found = False
+                    issue_found = False
+                    for key in projects:
+                        project_found = True
+                        ql = f"project = '{key}'"
+                        try:
+                            for issue in self._client.search_issues(ql):
+                                if issue:
+                                    issue_found = True
+                                    return True
+                        except JIRAError as e:
+                            if e.status_code == 400:
+                                self.log_message(f"Skipping project '{key}' due to JIRAError 400: {e.text}",
+                                                 logging.WARNING)
+                                continue
+                            else:
+                                self.log_message(f"JIRAError: {e.status_code} {e.text}", logging.ERROR)
+                                continue
+                    if project_found:
+                        if issue_found:
+                            return True
+                        else:
+                            self.log_message(f"Unable to list {self.get_name()} issues. Check your permissions.", logging.ERROR)
+                    else:
+                        self.log_message(f"Unable to list {self.get_name()} projects. Check your permissions.", logging.ERROR)
+                else:
+                    self.log_message(f"Unable to connect to {self.get_name()} instance. Check your credentials.", logging.ERROR)
+        except JIRAError as e:
+            self.log_message(f"JIRAError: {e.status_code} {e.text}", logging.ERROR)
+            self.log_message("Failed to retrieve user information. Check your credentials and permissions.",
+                             logging.ERROR)
         return False
 
     def _get_projects(self, limit=None):
