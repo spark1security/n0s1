@@ -16,6 +16,11 @@ class HollowController:
             self._scan_scope = self._config.get("scan_scope", None)
         return self._config is not None
 
+    def get_config(self):
+        if self._config is not None:
+            return self._config
+        return {}
+
     def set_log_message_callback(self, log_message_callback):
         self.log_message_callback = log_message_callback
 

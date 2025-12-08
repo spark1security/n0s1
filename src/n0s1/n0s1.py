@@ -183,6 +183,12 @@ class Scanner():
 
         DEBUG = self.debug
 
+        self.scan_arguments = {"scan_comment": not self.skip_comment, "post_comment": self.post_comment, "secret_manager": self.secret_manager,
+                          "contact_help": self.contact_help, "label": self.label, "report_format": self.report_format, "debug": self.debug,
+                          "show_matched_secret_on_logs": self.show_matched_secret_on_logs, "scan_target": self.target,
+                          "timeout": self.timeout, "limit": self.limit, "scan_scope": self.get_scope_config()}
+        self.report_json["tool"]["scan_arguments"] = self.scan_arguments
+
     def _setup_target(self):
         command = self.target
 
@@ -194,6 +200,129 @@ class Scanner():
 
     def set_controller_callback(self, callback):
         self.controller.set_log_message_callback(callback)
+
+    def get_controller_mapping(self, levels=-1, limit=None):
+        return self.controller.get_mapping(levels=levels, limit=limit)
+
+    def _set_controller_config(self):
+        controller_config = self.controller.get_config()
+        TOKEN = None
+        SERVER = None
+        EMAIL = None
+        if self.target.lower() == "linear_scan" or self.target.lower() == "linear":
+            TOKEN = os.getenv("LINEAR_TOKEN")
+            if self.api_key and len(self.api_key) > 0:
+                TOKEN = self.api_key
+            controller_config["token"] = TOKEN
+
+        elif self.target.lower() == "slack_scan" or self.target.lower() == "slack":
+            TOKEN = os.getenv("SLACK_TOKEN")
+            if self.api_key and len(self.api_key) > 0:
+                TOKEN = self.api_key
+            controller_config["token"] = TOKEN
+
+        elif self.target.lower() == "asana_scan" or self.target.lower() == "asana":
+            TOKEN = os.getenv("ASANA_TOKEN")
+            if self.api_key and len(self.api_key) > 0:
+                TOKEN = self.api_key
+            controller_config["token"] = TOKEN
+
+        elif self.target.lower() == "zendesk_scan" or self.target.lower() == "zendesk":
+            SERVER = os.getenv("ZENDESK_SERVER")
+            EMAIL = os.getenv("ZENDESK_EMAIL")
+            TOKEN = os.getenv("ZENDESK_TOKEN")
+            if self.server and len(self.server) > 0:
+                SERVER = self.server
+            if self.email and len(self.email) > 0:
+                EMAIL = self.email
+            if self.api_key and len(self.api_key) > 0:
+                TOKEN = self.api_key
+            controller_config["server"] = SERVER
+            controller_config["email"] = EMAIL
+            controller_config["token"] = TOKEN
+
+        elif self.target.lower() == "github_scan" or self.target.lower() == "github":
+            OWNER = os.getenv("GITHUB_ORG")
+            REPO = os.getenv("GITHUB_REPO")
+            BRANCH = os.getenv("GIT_BRANCH")
+            TOKEN = os.getenv("GITHUB_TOKEN")
+            if self.owner and len(self.owner) > 0:
+                OWNER = self.owner
+            if self.repo and len(self.repo) > 0:
+                REPO = self.repo
+            if self.branch and len(self.branch) > 0:
+                BRANCH = self.branch
+            if self.api_key and len(self.api_key) > 0:
+                TOKEN = self.api_key
+            controller_config["owner"] = OWNER
+            controller_config["repo"] = REPO
+            controller_config["branch"] = BRANCH
+            controller_config["token"] = TOKEN
+
+        elif self.target.lower() == "gitlab_scan" or self.target.lower() == "gitlab":
+            URL = os.getenv("GITLAB_URL", "https://gitlab.com")
+            GROUP = os.getenv("GITLAB_GROUP")
+            PROJECT = os.getenv("GITLAB_PROJECT")
+            BRANCH = os.getenv("GIT_BRANCH")
+            TOKEN = os.getenv("GITLAB_TOKEN")
+            if self.server and len(self.server) > 0:
+                URL = self.server
+            if self.owner and len(self.owner) > 0:
+                GROUP = self.owner
+            if self.repo and len(self.repo) > 0:
+                PROJECT = self.repo
+            if self.branch and len(self.branch) > 0:
+                BRANCH = self.branch
+            if self.api_key and len(self.api_key) > 0:
+                TOKEN = self.api_key
+            controller_config["url"] = URL
+            controller_config["group"] = GROUP
+            controller_config["project"] = PROJECT
+            controller_config["branch"] = BRANCH
+            controller_config["token"] = TOKEN
+
+        elif self.target.lower() == "wrike_scan" or self.target.lower() == "wrike":
+            TOKEN = os.getenv("WRIKE_TOKEN")
+            if self.api_key and len(self.api_key) > 0:
+                TOKEN = self.api_key
+            controller_config["token"] = TOKEN
+
+        elif self.target.lower() == "jira_scan" or self.target.lower() == "jira":
+            SERVER = os.getenv("JIRA_SERVER")
+            EMAIL = os.getenv("JIRA_EMAIL")
+            TOKEN = os.getenv("JIRA_TOKEN")
+            if self.server and len(self.server) > 0:
+                SERVER = self.server
+            if self.email and len(self.email) > 0:
+                EMAIL = self.email
+            if self.api_key and len(self.api_key) > 0:
+                TOKEN = self.api_key
+            controller_config["server"] = SERVER
+            controller_config["email"] = EMAIL
+            controller_config["token"] = TOKEN
+
+        elif self.target.lower() == "confluence_scan" or self.target.lower() == "confluence":
+            SERVER = os.getenv("CONFLUENCE_SERVER")
+            if not SERVER:
+                SERVER = os.getenv("JIRA_SERVER")
+            EMAIL = os.getenv("CONFLUENCE_EMAIL")
+            if not EMAIL:
+                EMAIL = os.getenv("JIRA_EMAIL")
+            TOKEN = os.getenv("CONFLUENCE_TOKEN")
+            if not TOKEN:
+                TOKEN = os.getenv("JIRA_TOKEN")
+            if self.server and len(self.server) > 0:
+                SERVER = self.server
+            if self.email and len(self.email) > 0:
+                EMAIL = self.email
+            if self.api_key and len(self.api_key) > 0:
+                TOKEN = self.self
+            controller_config["server"] = SERVER
+            controller_config["email"] = EMAIL
+            controller_config["token"] = TOKEN
+        else:
+            return
+        self.controller.set_config(controller_config)
 
     def _setup_regex_config(self):
         if os.path.exists(self.regex_file):
@@ -214,7 +343,9 @@ class Scanner():
         else:
             log_message(f"Config file [{self.config_file}] not found!", level=logging.WARNING)
 
-    def _save_report(self, report_format=""):
+    def save_report(self, report_format=""):
+        if len(report_format) <=0:
+            report_format = self.report_format
         try:
             if report_format.lower().find("sarif".lower()) != -1:
                 github_report = report_sarif.n0s1_report_to_sarif_report(self.report_json)
@@ -233,7 +364,12 @@ class Scanner():
 
         return False
 
-    def report_leaked_secret(self, scan_text_result, controller):
+    def get_report(self):
+        if self.report_json is not None:
+            return self.report_json
+        return {}
+
+    def report_leaked_secret(self, scan_text_result):
         snippet_text = scan_text_result.get("snippet_text", "")
         sanitized_secret = scan_text_result.get("sanitized_secret", "")
         matched = scan_text_result.get("matched_regex_config", {})
@@ -262,7 +398,7 @@ class Scanner():
         leak_url = url
         url_with_line_number = False
         if line_number > 0 and (
-                controller.get_name().lower() == "GitHub".lower() or controller.get_name().lower() == "GitLab".lower()):
+                self.controller.get_name().lower() == "GitHub".lower() or self.controller.get_name().lower() == "GitLab".lower()):
             url_with_line_number = True
             leak_url = f"{url}#L{line_number}"
         log_message(f"\nLeak source: {leak_url}")
@@ -293,10 +429,10 @@ class Scanner():
             comment = comment_template.format(finding_info=finding_info, bot_name=bot_name,
                                               secret_manager=secret_manager,
                                               contact_help=contact_help, label=label)
-            if controller.get_name().lower() == "Slack".lower():
+            if self.controller.get_name().lower() == "Slack".lower():
                 comment = comment + f"\nLeak source: {url}"
 
-            return controller.post_comment(issue_id, comment)
+            return self.controller.post_comment(issue_id, comment)
         return True
 
     def get_scope_config(self):
@@ -365,8 +501,23 @@ class Scanner():
 
         return scope_config
 
+    def get_config(self):
+        if self.cfg:
+            return self.cfg
+        return {}
+
     def scan(self):
         global DEBUG
+
+        N0S1_TOKEN = os.getenv("N0S1_TOKEN")
+        n0s1_pro = spark1.Spark1(token_auth=N0S1_TOKEN)
+        mode = "community"
+        if n0s1_pro.is_connected(self.scan_arguments):
+            mode = "professional"
+        message = f"Starting scan in {mode} mode..."
+        log_message(message)
+
+        self._set_controller_config()
         if not self.regex_config or not self.controller:
             raise ValueError("No regex configuration provided to the scanner")
             return
@@ -399,11 +550,21 @@ class Scanner():
                 data_type = item.get("data_type", None)
                 if data_type and data_type.lower() == "str".lower():
                     if data and data.lower().find(label.lower()) == -1:
-                        scan_text_and_report_leaks(self.controller, data, name, self.regex_config, self.scan_arguments, ticket)
+                        self.scan_text_and_report_leaks(data, name, self.regex_config, self.scan_arguments, ticket)
                 elif data_type:
                     for item_data in data:
                         if item_data and item_data.lower().find(label.lower()) == -1:
-                            scan_text_and_report_leaks(self.controller, item_data, name, self.regex_config, self.scan_arguments, ticket)
+                            self.scan_text_and_report_leaks(item_data, name, self.regex_config, self.scan_arguments, ticket)
+        return self.report_json
+
+    def scan_text_and_report_leaks(self, data, name, regex_config, scan_arguments, ticket):
+        secret_found, scan_text_result = scan_text(regex_config, data)
+        scan_text_result["ticket_data"] = ticket
+        scan_text_result["ticket_data"]["field"] = name
+        scan_text_result["ticket_data"]["platform"] = self.controller.get_name()
+        scan_text_result["scan_arguments"] = scan_arguments
+        if secret_found:
+            self.report_leaked_secret(scan_text_result)
 
 
 def log_message(message, level=logging.INFO):
@@ -837,16 +998,6 @@ def scan_text(regex_config, text):
     return match, scan_text_result
 
 
-def scan_text_and_report_leaks(controller, data, name, regex_config, scan_arguments, ticket):
-    secret_found, scan_text_result = scan_text(regex_config, data)
-    scan_text_result["ticket_data"] = ticket
-    scan_text_result["ticket_data"]["field"] = name
-    scan_text_result["ticket_data"]["platform"] = controller.get_name()
-    scan_text_result["scan_arguments"] = scan_arguments
-    if secret_found:
-        report_leaked_secret(scan_text_result, controller)
-
-
 def main(callback=None):
     global n0s1_version, DEBUG
 
@@ -857,10 +1008,6 @@ def main(callback=None):
     args = parser.parse_args()
 
     DEBUG = False
-
-    regex_config = None
-    scan_scope = ""
-    cfg = {}
 
     if not args.command:
         parser.print_help()
@@ -886,10 +1033,9 @@ def main(callback=None):
 
     command = args.command
     scanner.set(target=command)
-
     scanner.set_controller_callback(callback)
 
-    controller_config = {}
+    cfg = scanner.get_config()
 
     if args.timeout and len(args.timeout) > 0:
         timeout = int(args.timeout)
@@ -906,141 +1052,33 @@ def main(callback=None):
     else:
         insecure = cfg.get("general_params", {}).get("insecure", False)
 
-    controller_config["timeout"] = timeout
-    controller_config["limit"] = limit
-    controller_config["insecure"] = insecure
-    controller_config["scan_scope"] = scope_config
+    scanner.set(report_file=report_file)
+    scanner.set(timeout=timeout)
+    scanner.set(limit=limit)
+    scanner.set(insecure=insecure)
 
-    TOKEN = None
-    SERVER = None
-    EMAIL = None
-    if command == "linear_scan":
-        TOKEN = os.getenv("LINEAR_TOKEN")
-        if args.api_key and len(args.api_key) > 0:
-            TOKEN = args.api_key
-        controller_config["token"] = TOKEN
-
-    elif command == "slack_scan":
-        TOKEN = os.getenv("SLACK_TOKEN")
-        if args.api_key and len(args.api_key) > 0:
-            TOKEN = args.api_key
-        controller_config["token"] = TOKEN
-
-    elif command == "asana_scan":
-        TOKEN = os.getenv("ASANA_TOKEN")
-        if args.api_key and len(args.api_key) > 0:
-            TOKEN = args.api_key
-        controller_config["token"] = TOKEN
-
-    elif command == "zendesk_scan":
-        SERVER = os.getenv("ZENDESK_SERVER")
-        EMAIL = os.getenv("ZENDESK_EMAIL")
-        TOKEN = os.getenv("ZENDESK_TOKEN")
-        if args.server and len(args.server) > 0:
-            SERVER = args.server
-        if args.email and len(args.email) > 0:
-            EMAIL = args.email
-        if args.api_key and len(args.api_key) > 0:
-            TOKEN = args.api_key
-        controller_config["server"] = SERVER
-        controller_config["email"] = EMAIL
-        controller_config["token"] = TOKEN
-
-    elif command == "github_scan":
-        OWNER = os.getenv("GITHUB_ORG")
-        REPO = os.getenv("GITHUB_REPO")
-        BRANCH = os.getenv("GIT_BRANCH")
-        TOKEN = os.getenv("GITHUB_TOKEN")
-        if args.owner and len(args.owner) > 0:
-            OWNER = args.owner
-        if args.repo and len(args.repo) > 0:
-            REPO = args.repo
-        if args.branch and len(args.branch) > 0:
-            BRANCH = args.branch
-        if args.api_key and len(args.api_key) > 0:
-            TOKEN = args.api_key
-        controller_config["owner"] = OWNER
-        controller_config["repo"] = REPO
-        controller_config["branch"] = BRANCH
-        controller_config["token"] = TOKEN
-
-    elif command == "gitlab_scan":
-        URL = os.getenv("GITLAB_URL", "https://gitlab.com")
-        GROUP = os.getenv("GITLAB_GROUP")
-        PROJECT = os.getenv("GITLAB_PROJECT")
-        BRANCH = os.getenv("GIT_BRANCH")
-        TOKEN = os.getenv("GITLAB_TOKEN")
-        if args.server and len(args.server) > 0:
-            URL = args.server
-        if args.owner and len(args.owner) > 0:
-            GROUP = args.owner
-        if args.repo and len(args.repo) > 0:
-            PROJECT = args.repo
-        if args.branch and len(args.branch) > 0:
-            BRANCH = args.branch
-        if args.api_key and len(args.api_key) > 0:
-            TOKEN = args.api_key
-        controller_config["url"] = URL
-        controller_config["group"] = GROUP
-        controller_config["project"] = PROJECT
-        controller_config["branch"] = BRANCH
-        controller_config["token"] = TOKEN
-
-    elif command == "wrike_scan":
-        TOKEN = os.getenv("WRIKE_TOKEN")
-        if args.api_key and len(args.api_key) > 0:
-            TOKEN = args.api_key
-        controller_config["token"] = TOKEN
-
-    elif command == "jira_scan":
-        SERVER = os.getenv("JIRA_SERVER")
-        EMAIL = os.getenv("JIRA_EMAIL")
-        TOKEN = os.getenv("JIRA_TOKEN")
-        if args.server and len(args.server) > 0:
-            SERVER = args.server
-        if args.email and len(args.email) > 0:
-            EMAIL = args.email
-        if args.api_key and len(args.api_key) > 0:
-            TOKEN = args.api_key
-        controller_config["server"] = SERVER
-        controller_config["email"] = EMAIL
-        controller_config["token"] = TOKEN
-
-    elif command == "confluence_scan":
-        SERVER = os.getenv("CONFLUENCE_SERVER")
-        if not SERVER:
-            SERVER = os.getenv("JIRA_SERVER")
-        EMAIL = os.getenv("CONFLUENCE_EMAIL")
-        if not EMAIL:
-            EMAIL = os.getenv("JIRA_EMAIL")
-        TOKEN = os.getenv("CONFLUENCE_TOKEN")
-        if not TOKEN:
-            TOKEN = os.getenv("JIRA_TOKEN")
-        if args.server and len(args.server) > 0:
-            SERVER = args.server
-        if args.email and len(args.email) > 0:
-            EMAIL = args.email
-        if args.api_key and len(args.api_key) > 0:
-            TOKEN = args.api_key
-        controller_config["server"] = SERVER
-        controller_config["email"] = EMAIL
-        controller_config["token"] = TOKEN
-    else:
+    commands = ["linear_scan", "slack_scan", "asana_scan", "zendesk_scan", "github_scan", "gitlab_scan", "wrike_scan", "jira_scan", "confluence_scan"]
+    if command not in commands:
         parser.print_help()
         return
 
+    scanner.set(api_key=args.api_key)
+
+    if command == "jira_scan" or command == "confluence_scan" or command == "zendesk_scan" or command == "gitlab_scan":
+        scanner.set(server=args.server)
+    if command == "jira_scan" or command == "confluence_scan" or command == "zendesk_scan":
+        scanner.set(email=args.email)
+    if command == "github_scan" or command == "gitlab_scan":
+        scanner.set(owner=args.owner)
+        scanner.set(repo=args.repo)
+        scanner.set(branch=args.branch)
+
+    date_utc = scanner.get_report().get("scan_date", {}).get("date_utc", "")
     message = f"n0s1 secret scanner version [{n0s1_version}] - Scan date: {date_utc}"
     log_message(message)
     if DEBUG:
         message = f"Args: {args}"
         log_message(message)
-        message = f"Controller settings: {SERVER} {EMAIL}"
-        if args.show_matched_secret_on_logs:
-            message += f" {TOKEN}"
-        log_message(message)
-
-    if not controller.set_config(controller_config):
-        sys.exit(-1)
 
     if args.post_comment:
         post_comment = args.post_comment
@@ -1051,7 +1089,6 @@ def main(callback=None):
         skip_comment = args.skip_comment
     else:
         skip_comment = cfg.get("general_params", {}).get("skip_comment", False)
-    scan_comment = not skip_comment
 
     if args.secret_manager:
         secret_manager = args.secret_manager
@@ -1078,23 +1115,17 @@ def main(callback=None):
     else:
         report_format = cfg.get("general_params", {}).get("report_format", "n0s1")
 
-    scan_arguments = {"scan_comment": scan_comment, "post_comment": post_comment, "secret_manager": secret_manager,
-                      "contact_help": contact_help, "label": label, "report_format": report_format, "debug": DEBUG,
-                      "show_matched_secret_on_logs": show_matched_secret_on_logs, "scan_target": command,
-                      "timeout": timeout, "limit": limit, "scan_scope": scan_scope}
-    report_json["tool"]["scan_arguments"] = scan_arguments
-
-    N0S1_TOKEN = os.getenv("N0S1_TOKEN")
-    n0s1_pro = spark1.Spark1(token_auth=N0S1_TOKEN)
-    mode = "community"
-    if n0s1_pro.is_connected(scan_arguments):
-        mode = "professional"
-    message = f"Starting scan in {mode} mode..."
-    log_message(message)
+    scanner.set(post_comment=post_comment)
+    scanner.set(skip_comment=skip_comment)
+    scanner.set(secret_manager=secret_manager)
+    scanner.set(contact_help=contact_help)
+    scanner.set(label=label)
+    scanner.set(show_matched_secret_on_logs=show_matched_secret_on_logs)
+    scanner.set(report_format=report_format)
 
     if args.map and args.map.lower() != "Disabled".lower():
         levels = int(args.map)
-        map_data = controller.get_mapping(levels)
+        map_data = scanner.get_controller_mapping(levels)
         map_file_path = args.map_file
         if not map_file_path:
             map_file_path = "n0s1_map.json"
@@ -1113,10 +1144,8 @@ def main(callback=None):
         log_message(e)
         sys.exit(1)
     finally:
-        _save_report(report_format)
+        scanner.save_report()
         log_message("Done!")
-
-
 
 
 
