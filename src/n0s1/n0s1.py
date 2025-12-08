@@ -202,6 +202,7 @@ class Scanner():
         self.controller.set_log_message_callback(callback)
 
     def get_controller_mapping(self, levels=-1, limit=None):
+        self._set_controller_config()
         return self.controller.get_mapping(levels=levels, limit=limit)
 
     def _set_controller_config(self):
@@ -322,6 +323,12 @@ class Scanner():
             controller_config["token"] = TOKEN
         else:
             return
+
+        controller_config["timeout"] = self.timeout
+        controller_config["limit"] = self.limit
+        controller_config["insecure"] = self.insecure
+        controller_config["scan_scope"] = self.scope_config
+
         self.controller.set_config(controller_config)
 
     def _setup_regex_config(self):
@@ -1019,6 +1026,10 @@ def main(callback=None):
 
     if not args.map:
         args.map = "-1"
+
+    scanner.set(scope=args.scope)
+    scanner.set(map=args.map)
+    scanner.set(map_file=args.map_file)
 
     scope_config = scanner.get_scope_config()
     if scope_config:
