@@ -156,11 +156,18 @@ class JiraController(hollow_controller.HollowController):
             using_jql = False
             jql = self.get_query_from_scope()
             if jql:
-                issues = self._client.search_issues(jql)
-                for issue in issues:
-                    ticket = self._extract_ticket(include_coments, issue)
-                    using_jql = True
-                    yield ticket
+                issues_finished = False
+                nextPageToken = None
+                while not issues_finished:
+                    issues = self._client.enhanced_search_issues(jql, nextPageToken=nextPageToken, maxResults=limit)
+                    for issue in issues:
+                        ticket = self._extract_ticket(include_coments, issue)
+                        using_jql = True
+                        yield ticket
+                    issues_finished = len(issues) <= 0
+                    nextPageToken = issues.nextPageToken
+                    if not nextPageToken:
+                        issues_finished = True
             if using_jql:
                 projects = []
             else:
@@ -179,8 +186,20 @@ class JiraController(hollow_controller.HollowController):
 
     def _extract_ticket(self, include_coments, issue):
         url = issue.self.split('/rest/api')[0] + "/browse/" + issue.key;
-        title = issue.fields.summary
-        description = issue.fields.description
+        title = ""
+        description = ""
+        try:
+            title = issue.fields.summary
+        except Exception as e:
+            message = str(e) + f" _extract_ticket({issue.id}) - field: summary"
+            self.log_message(message, logging.WARNING)
+
+        try:
+            description = issue.fields.description
+        except Exception as e:
+            message = str(e) + f" _extract_ticket({issue.id}) - field: description"
+            self.log_message(message, logging.WARNING)
+
         comments = []
         if include_coments:
             try:
