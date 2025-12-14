@@ -20,9 +20,7 @@ def read_file(path: str) -> str | None:
         return None
 
 
-def iter_files_from_fs_map(
-    fs_map: Dict[str, Any]
-) -> Iterator[Tuple[str, str]]:
+def iter_files_from_fs_map(fs_map: Dict[str, Any], log_message=None) -> Iterator[Tuple[str, str]]:
     """
     Recursively traverses a filesystem JSON map and yields (path, content)
     for each readable text file.
@@ -46,7 +44,12 @@ def iter_files_from_fs_map(
 
     # Recurse into subdirectories
     for subdir in fs_map.get("subdirectories", []):
-        yield from iter_files_from_fs_map(subdir)
+        if log_message:
+            subdir_path = subdir.get("path", None)
+            total_files = len(subdir.get("files", []))
+            if subdir_path:
+                log_message(f"Reading [{total_files}] files from directory {subdir_path} ...", logging.INFO)
+        yield from iter_files_from_fs_map(subdir, log_message)
 
 
 def build_fs_map(path: Union[str, Path], levels: int = -1) -> Dict[str, Any]:
@@ -110,7 +113,7 @@ class LocalController(hollow_controller.HollowController):
     def is_connected(self):
         if self._path:
             if os.path.exists(self._path):
-                self.log_message(f"Targeting path {self._path} in {self.get_name()}")
+                self.log_message(f"Accessing {self.get_name()} path: [{self._path}].")
                 return True
             else:
                 self.log_message(f"Unable to access {self._path} in {self.get_name()}. Check your permissions and if the path exists.", logging.ERROR)
@@ -128,16 +131,21 @@ class LocalController(hollow_controller.HollowController):
         if not self._path:
             return {}
 
+        total_files = 0
         fs_map = {}
         if self._scan_scope:
             fs_map = self._scan_scope
         else:
             fs_map = self.get_mapping()
 
-        for file_path, file_content in iter_files_from_fs_map(fs_map):
+        for file_path, file_content in iter_files_from_fs_map(fs_map, self.log_message):
             if file_path and file_content:
                 file = self.pack_data(file_path, file_content)
+                total_files += 1
                 yield file
+
+        message = f"Total of [{total_files}] file(s) scanned from base path: {self._path}"
+        self.log_message(message, logging.INFO)
 
     def post_comment(self, issue, comment):
         message = f"Unable to post comment to {issue} using {self.get_name()}!"
