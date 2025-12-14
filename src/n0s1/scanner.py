@@ -199,8 +199,8 @@ class SecretScanner():
         controller_factory = platform_controller.factory
         self.controller = controller_factory.get_platform(command)
 
-    def set_controller_callback(self, callback):
-        self.controller.set_log_message_callback(callback)
+    def set_controller_callback(self, callback, overwrite=True):
+        self.controller.set_log_message_callback(callback, overwrite)
 
     def get_controller_mapping(self, levels=-1, limit=None):
         self._set_controller_config()
@@ -334,7 +334,7 @@ class SecretScanner():
         controller_config["scan_scope"] = self.scope_config
 
         self.controller.set_config(controller_config)
-        self.set_controller_callback(log_message)
+        self.set_controller_callback(log_message, False)
 
     def _setup_regex_config(self):
         if os.path.exists(self.regex_file):
