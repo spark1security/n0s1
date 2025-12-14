@@ -334,6 +334,7 @@ class SecretScanner():
         controller_config["scan_scope"] = self.scope_config
 
         self.controller.set_config(controller_config)
+        self.set_controller_callback(log_message)
 
     def _setup_regex_config(self):
         if os.path.exists(self.regex_file):

@@ -358,7 +358,7 @@ def init_argparse() -> argparse.ArgumentParser:
     return parser
 
 
-def main(callback=None):
+def main():
     secret_scanner = scanner.SecretScanner()
 
     logging.basicConfig(level=logging.INFO)
@@ -393,7 +393,6 @@ def main(callback=None):
 
     command = args.command
     secret_scanner.set(target=command)
-    secret_scanner.set_controller_callback(callback)
 
     cfg = secret_scanner.get_config()
 
@@ -518,4 +517,4 @@ def main(callback=None):
 
 
 if __name__ == "__main__":
-    main(scanner.log_message)
+    main()
