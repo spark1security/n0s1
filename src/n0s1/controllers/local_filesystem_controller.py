@@ -101,6 +101,7 @@ class LocalController(hollow_controller.HollowController):
     def set_config(self, config=None):
         super().set_config(config)
         self._path = config.get("scan_path", "")
+        self._path = os.path.expanduser(self._path)
         return self.is_connected()
 
     def get_name(self):
