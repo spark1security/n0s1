@@ -63,6 +63,7 @@ email_default_value = None
 owner_default_value = None
 repo_default_value = None
 branch_default_value = None
+scan_path_default_value = None
 
 class SecretScanner():
     def __init__(self, target=None, regex_file=regex_file_default_value, config_file=config_file_default_value,
@@ -74,7 +75,7 @@ class SecretScanner():
                  insecure=insecure_default_value, map=map_default_value, map_file=map_file_default_value,
                  scope=scope_default_value, api_key=api_key_default_value, server=server_default_value,
                  email=email_default_value, owner=owner_default_value, repo=repo_default_value,
-                 branch=branch_default_value):
+                 branch=branch_default_value, scan_path=scan_path_default_value):
         global n0s1_version
         self.target = None
         self.regex_file = None
@@ -100,6 +101,7 @@ class SecretScanner():
         self.owner = None
         self.repo = None
         self.branch = None
+        self.scan_path = None
 
         self.regex_config = None
         self.cfg = None
@@ -115,13 +117,13 @@ class SecretScanner():
                        "scan_date": {"timestamp": datetime_now_obj.timestamp(), "date_utc": date_utc},
                        "regex_config": {}, "findings": {}}
 
-        self.set(target=target, regex_file=regex_file, config_file=config_file, report_file=report_file, report_format=report_format, post_comment=post_comment, skip_comment=skip_comment, show_matched_secret_on_logs=show_matched_secret_on_logs, debug=debug, secret_manager=secret_manager, contact_help=contact_help, label=label, timeout=timeout, limit=limit, insecure=insecure, map=map, map_file=map_file, scope=scope, api_key=api_key, server=server, email=email, owner=owner, repo=repo, branch=branch)
+        self.set(target=target, regex_file=regex_file, config_file=config_file, report_file=report_file, report_format=report_format, post_comment=post_comment, skip_comment=skip_comment, show_matched_secret_on_logs=show_matched_secret_on_logs, debug=debug, secret_manager=secret_manager, contact_help=contact_help, label=label, timeout=timeout, limit=limit, insecure=insecure, map=map, map_file=map_file, scope=scope, api_key=api_key, server=server, email=email, owner=owner, repo=repo, branch=branch, scan_path=scan_path)
 
 
     def set(self, target=None, regex_file=None, config_file=None, report_file=None, report_format=None, post_comment=None,
             skip_comment=None, show_matched_secret_on_logs=None, debug=None, secret_manager=None, contact_help=None,
             label=None, timeout=None, limit=None, insecure=None, map=None, map_file=None, scope=None, api_key=None,
-            server=None, email=None, owner=None, repo=None, branch=None):
+            server=None, email=None, owner=None, repo=None, branch=None, scan_path=None):
         global DEBUG
         if target is not None:
             self.target = target
@@ -177,6 +179,8 @@ class SecretScanner():
             self.repo = repo
         if branch is not None:
             self.branch = branch
+        if scan_path is not None:
+            self.scan_path = scan_path
 
         DEBUG = self.debug
 
@@ -207,7 +211,10 @@ class SecretScanner():
         TOKEN = None
         SERVER = None
         EMAIL = None
-        if self.target.lower() == "linear_scan" or self.target.lower() == "linear":
+        if self.target.lower() == "local_scan" or self.target.lower() == "local":
+            controller_config["scan_path"] = self.scan_path
+
+        elif self.target.lower() == "linear_scan" or self.target.lower() == "linear":
             TOKEN = os.getenv("LINEAR_TOKEN")
             if self.api_key and len(self.api_key) > 0:
                 TOKEN = self.api_key
@@ -402,7 +409,10 @@ class SecretScanner():
         leak_url = url
         url_with_line_number = False
         if line_number > 0 and (
-                self.controller.get_name().lower() == "GitHub".lower() or self.controller.get_name().lower() == "GitLab".lower()):
+                self.controller.get_name().lower() == "GitHub".lower() or
+                self.controller.get_name().lower() == "GitLab".lower() or
+                self.controller.get_name().lower() == "LocalFilesystem".lower()
+        ):
             url_with_line_number = True
             leak_url = f"{url}#L{line_number}"
         log_message(f"\nLeak source: {leak_url}")

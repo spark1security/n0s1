@@ -155,6 +155,17 @@ def init_argparse() -> argparse.ArgumentParser:
         help="Subcommands", dest="command", metavar="COMMAND"
     )
 
+    local_scan_parser = subparsers.add_parser(
+        "local_scan", help="Scan local filesystem", parents=[parent_parser]
+    )
+    local_scan_parser.add_argument(
+        "--path",
+        dest="path",
+        nargs="?",
+        type=str,
+        help="Path to the local file or folder to be scanned"
+    )
+
     slack_scan_parser = subparsers.add_parser(
         "slack_scan", help="Scan Slack messages", parents=[parent_parser]
     )
@@ -406,12 +417,20 @@ def main(callback=None):
     secret_scanner.set(limit=limit)
     secret_scanner.set(insecure=insecure)
 
-    commands = ["linear_scan", "slack_scan", "asana_scan", "zendesk_scan", "github_scan", "gitlab_scan", "wrike_scan", "jira_scan", "confluence_scan"]
-    if command not in commands:
+    commands = ["local_scan", "linear_scan", "slack_scan", "asana_scan", "zendesk_scan", "github_scan", "gitlab_scan", "wrike_scan", "jira_scan", "confluence_scan"]
+    extended_commands = []
+    for c in commands:
+        short_c = c.replace("_scan", "")
+        extended_commands.append(c)
+        extended_commands.append(short_c)
+    if command not in extended_commands:
         parser.print_help()
         return
 
-    secret_scanner.set(api_key=args.api_key)
+    if command == "local_scan":
+        secret_scanner.set(scan_path=args.path)
+    else:
+        secret_scanner.set(api_key=args.api_key)
 
     if command == "jira_scan" or command == "confluence_scan" or command == "zendesk_scan" or command == "gitlab_scan":
         secret_scanner.set(server=args.server)
