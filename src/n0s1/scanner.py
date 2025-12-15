@@ -77,6 +77,8 @@ class SecretScanner():
                  email=email_default_value, owner=owner_default_value, repo=repo_default_value,
                  branch=branch_default_value, scan_path=scan_path_default_value):
         global n0s1_version
+        self.logging_function = log_message
+
         self.target = None
         self.regex_file = None
         self.config_file = None
@@ -143,7 +145,7 @@ class SecretScanner():
         if skip_comment is not None:
             self.skip_comment = skip_comment
         if show_matched_secret_on_logs is not None:
-            self.show_matched_secret_on_logs=show_matched_secret_on_logs
+            self.show_matched_secret_on_logs = show_matched_secret_on_logs
         if debug is not None:
             self.debug = debug
         if secret_manager is not None:
@@ -198,9 +200,15 @@ class SecretScanner():
 
         controller_factory = platform_controller.factory
         self.controller = controller_factory.get_platform(command)
+        self.set_logging_function(self.logging_function)
 
-    def set_controller_callback(self, callback, overwrite=True):
-        self.controller.set_log_message_callback(callback, overwrite)
+    def set_logging_function(self, logging_function):
+        self.logging_function = logging_function
+        if self.controller:
+            self.controller.set_log_message_callback(self.logging_function)
+
+    def log_message(self, message, level=logging.INFO):
+        self.logging_function(message, level)
 
     def get_controller_mapping(self, levels=-1, limit=None):
         self._set_controller_config()
@@ -334,7 +342,6 @@ class SecretScanner():
         controller_config["scan_scope"] = self.scope_config
 
         self.controller.set_config(controller_config)
-        self.set_controller_callback(log_message, False)
 
     def _setup_regex_config(self):
         if os.path.exists(self.regex_file):
@@ -345,7 +352,7 @@ class SecretScanner():
                 else:
                     self.regex_config = toml.load(f)
         else:
-            log_message(f"Regex file [{self.regex_file}] not found!", level=logging.WARNING)
+            self.log_message(f"Regex file [{self.regex_file}] not found!", level=logging.WARNING)
         self.report_json["regex_config"] = self.regex_config
 
     def _setup_cfg(self):
@@ -353,7 +360,7 @@ class SecretScanner():
             with open(self.config_file, "r") as f:
                 self.cfg = yaml.load(f, Loader=yaml.FullLoader)
         else:
-            log_message(f"Config file [{self.config_file}] not found!", level=logging.WARNING)
+            self.log_message(f"Config file [{self.config_file}] not found!", level=logging.WARNING)
 
     def save_report(self, report_format=""):
         if len(report_format) <=0:
@@ -372,7 +379,7 @@ class SecretScanner():
                     json.dump(self.report_json, f)
                     return True
         except Exception as e:
-            log_message(str(e), level=logging.ERROR)
+            self.log_message(str(e), level=logging.ERROR)
 
         return False
 
@@ -401,10 +408,10 @@ class SecretScanner():
         finding_info = finding_info.format(regex_config_id=regex_id, regex_config_description=regex_description,
                                            regex=regex, platform=platform, field=field, leak=sanitized_secret)
 
-        log_message("\nPotential secret leak regex match!")
-        log_message(finding_info)
+        self.log_message("\nPotential secret leak regex match!")
+        self.log_message(finding_info)
         if show_matched_secret_on_logs:
-            log_message(
+            self.log_message(
                 f"\n##################### Secret  #####################\n{snippet_text}\n##################### Secret  #####################")
 
         leak_url = url
@@ -416,9 +423,9 @@ class SecretScanner():
         ):
             url_with_line_number = True
             leak_url = f"{url}#L{line_number}"
-        log_message(f"\nLeak source: {leak_url}")
+        self.log_message(f"\nLeak source: {leak_url}")
 
-        log_message("\n\n")
+        self.log_message("\n\n")
         finding_id = f"{url}_{sanitized_secret}"
         finding_id = _sha1_hash(finding_id)
         new_finding = {"id": finding_id, "url": url, "secret": sanitized_secret,
@@ -498,7 +505,7 @@ class SecretScanner():
                             else:
                                 if self.debug:
                                     message = f"Search counter: [{counter}]/[{max_attempts}] | Split nodes: {len(json_chunks)} | Binary search: {chunk_min}  < [chunk_size:{chunk_size}] < {chunk_max}"
-                                    log_message(message, level=logging.WARNING)
+                                    self.log_message(message, level=logging.WARNING)
 
                                 if len(json_chunks) < chunks:
                                     # chunk_size too big
@@ -512,7 +519,7 @@ class SecretScanner():
                         if len(json_chunks) > chunk_index:
                             scope_config = json_chunks[chunk_index]
             else:
-                log_message(f"Map file [{map_file}] not found!", level=logging.WARNING)
+                self.log_message(f"Map file [{map_file}] not found!", level=logging.WARNING)
 
         return scope_config
 
@@ -529,7 +536,7 @@ class SecretScanner():
         if n0s1_pro.is_connected(self.scan_arguments):
             mode = "professional"
         message = f"Starting scan in {mode} mode..."
-        log_message(message)
+        self.log_message(message)
 
         self._set_controller_config()
         if not self.regex_config or not self.controller:
@@ -543,7 +550,7 @@ class SecretScanner():
             issue_id = ticket.get("issue_id")
             url = ticket.get("url")
             if self.debug:
-                log_message(f"Scanning [{issue_id}]: {url}")
+                self.log_message(f"Scanning [{issue_id}]: {url}")
 
             comments = ticket.get("ticket", {}).get("comments", {}).get("data", [])
             label = self.cfg.get("comment_params", {}).get("label", "")
@@ -601,6 +608,7 @@ def log_message(message, level=logging.INFO):
             if f.tell() == 0:
                 f.write("Debug logging message for n0s1\n")
             f.write(f"{message}\n")
+
 
 def _sanitize_text(text, begin, end):
     text_len = len(text)

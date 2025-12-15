@@ -21,10 +21,7 @@ class HollowController:
             return self._config
         return {}
 
-    def set_log_message_callback(self, log_message_callback, overwrite=True):
-        if not overwrite and self.log_message_callback is not None:
-            self.log_message(f"Log message callback already set for {self.get_name()} controller.", logging.WARNING)
-            return
+    def set_log_message_callback(self, log_message_callback):
         self.log_message_callback = log_message_callback
 
     def get_name(self):
