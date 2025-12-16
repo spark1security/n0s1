@@ -329,7 +329,7 @@ class SecretScanner():
             if self.email and len(self.email) > 0:
                 EMAIL = self.email
             if self.api_key and len(self.api_key) > 0:
-                TOKEN = self.self
+                TOKEN = self.api_key
             controller_config["server"] = SERVER
             controller_config["email"] = EMAIL
             controller_config["token"] = TOKEN
