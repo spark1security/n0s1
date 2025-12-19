@@ -39,8 +39,9 @@ class GitLabController(hollow_controller.HollowController):
         return False
 
     def _get_project_obj(self, project_id=None):
-        if self._project and len(self._project) > 0:
-            return self._client.projects.get(self._project)
+        if self._group and self._project and  len(self._group) and len(self._project) > 0:
+            path_with_namespace = f"{self._group}/{self._project}".lower()
+            return self._client.projects.get(path_with_namespace)
         return self._client.projects.get(project_id)
 
     def _get_projects(self):
@@ -69,7 +70,8 @@ class GitLabController(hollow_controller.HollowController):
 
         if self._project and len(self._project) > 0:
             for p in projects:
-                if p.path_with_namespace.lower() == self._project.lower() or str(p.id) == self._project:
+                path_with_namespace = f"{self._group}/{self._project}".lower()
+                if p.path_with_namespace.lower() == path_with_namespace or str(p.id) == self._project:
                     return [p], owner
             try:
                 # Try direct access by ID or path
