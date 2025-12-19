@@ -78,8 +78,8 @@ def test_zendesk_scan():
     print("="*60)
 
     api_key = os.getenv("ZENDESK_TOKEN")
-    email = os.getenv("ZENDESK_EMAIL")
-    server = os.getenv("ZENDESK_SERVER")
+    email = os.getenv("ZENDESK_EMAIL", "marcelo@spark1.us")
+    server = os.getenv("ZENDESK_SERVER", "spark1help")
 
     if not all([api_key, email, server]):
         print("SKIPPED: ZENDESK_TOKEN, ZENDESK_EMAIL, or ZENDESK_SERVER environment variable not set")
@@ -106,8 +106,8 @@ def test_github_scan():
 
     api_key = os.getenv("GITHUB_TOKEN")
     owner = os.getenv("GITHUB_OWNER")
-    repo = os.getenv("GITHUB_REPO")
-    branch = os.getenv("GITHUB_BRANCH")  # Optional
+    repo = os.getenv("GITHUB_REPO", "n0s1")
+    branch = os.getenv("GITHUB_BRANCH", "main,ciconfig")  # Optional
 
     if not api_key:
         print("SKIPPED: GITHUB_TOKEN environment variable not set")
@@ -135,9 +135,10 @@ def test_gitlab_scan():
 
     api_key = os.getenv("GITLAB_TOKEN")
     server = os.getenv("GITLAB_SERVER", "https://gitlab.com")
-    owner = os.getenv("GITLAB_OWNER")  # Optional
+    owner = os.getenv("GITLAB_OWNER", "spark1.us")  # Optional
     repo = os.getenv("GITLAB_REPO")    # Optional
-    branch = os.getenv("GITLAB_BRANCH")  # Optional
+    branch = os.getenv("GITLAB_BRANCH", "dolores-sit-quos-explicabo-ut")  # Optional
+    scope = "search:qe-python"
 
     if not api_key:
         print("SKIPPED: GITLAB_TOKEN environment variable not set")
@@ -151,7 +152,8 @@ def test_gitlab_scan():
         branch=branch,
         api_key=api_key,
         debug=True,
-        report_format="n0s1"
+        report_format="n0s1",
+        scope=scope
     )
     result = scanner_instance.scan()
     print(f"Result: {result}")
@@ -210,9 +212,10 @@ def test_jira_scan():
     print("="*60)
 
     api_key = os.getenv("JIRA_TOKEN")
-    email = os.getenv("JIRA_EMAIL")
-    server = os.getenv("JIRA_SERVER")
-    scope = os.getenv("JIRA_SCOPE", "")
+    email = os.getenv("JIRA_EMAIL", "marcelo@spark1.us")
+    server = os.getenv("JIRA_SERVER", "https://spark1us.atlassian.net")
+    scope = os.getenv("JIRA_SCOPE", "jql:project=MAR OR project=\"Auto Service\"")
+
 
     if not api_key:
         print("SKIPPED: JIRA_TOKEN environment variable not set")
@@ -239,8 +242,8 @@ def test_confluence_scan():
     print("="*60)
 
     api_key = os.getenv("CONFLUENCE_TOKEN", os.getenv("JIRA_TOKEN"))
-    email = os.getenv("CONFLUENCE_EMAIL", os.getenv("JIRA_EMAIL"))
-    server = os.getenv("CONFLUENCE_SERVER", os.getenv("JIRA_SERVER"))
+    email = os.getenv("CONFLUENCE_EMAIL", "marcelo@spark1.us")
+    server = os.getenv("CONFLUENCE_SERVER", "https://spark1us.atlassian.net")
     scope = os.getenv("CONFLUENCE_SCOPE", "cql:space=SEC and type=page")
 
     if not api_key:
@@ -284,7 +287,7 @@ def run_all_tests():
     for test_name, test_func in tests:
         try:
             result = test_func()
-            results[test_name] = "PASSED" if result is not None else "SKIPPED"
+            results[test_name] = f"PASSED | Total findings: [{len(result.get("findings", []))}]" if result is not None else "SKIPPED"
         except Exception as e:
             print(f"ERROR in {test_name}: {str(e)}")
             results[test_name] = f"FAILED: {str(e)}"
