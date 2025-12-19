@@ -469,9 +469,16 @@ result = scanner_instance.scan()
 ```python
 # Create map file (scope_map.json)
 # {
-#   "projects": ["PROJ-1", "PROJ-2", "PROJ-3"],
-#   "exclude": ["PROJ-TEST"]
+#  "projects": {
+#   "AS": {},
+#   "DLP": {},
+#   "GTMS": {},
+#   "IT": {},
+#   "ITSAMPLE": {},
+#   "MAR": {}
+#  }
 # }
+
 
 scanner_instance = scanner.SecretScanner(
     target="jira_scan",

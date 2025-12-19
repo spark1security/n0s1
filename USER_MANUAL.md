@@ -390,9 +390,21 @@ n0s1 jira_scan --regex-file custom-regex.yaml --server https://company.atlassian
 
 Create a map file to define specific scan targets:
 
+```bash
+n0s1 jira_scan --server https://company.atlassian.net --email user@company.com --api-key TOKEN --map 1 --map-file scope.json
+cat scope.json
+```
+
 ```json
 {
-  "projects": ["PROJ-1", "PROJ-2", "PROJ-3"]
+  "projects": {
+    "AS": {},
+    "DLP": {},
+    "GTMS": {},
+    "IT": {},
+    "ITSAMPLE": {},
+    "MAR": {}
+  }
 }
 ```
 
