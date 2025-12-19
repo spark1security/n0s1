@@ -542,6 +542,6 @@ echo "All scans complete. Review report files."
 
 For issues, questions, or contributions:
 - GitHub Issues: https://github.com/spark1security/n0s1/issues
-- Documentation: https://docs.google.com/document/d/1p8L2dOdCwcIphMprtnewCoKOy9VeQFcC9ZIsLUWs_xE/edit
+- Documentation: https://spark1.us/n0s1doc
 - Website: https://spark1.us/n0s1
 

@@ -673,7 +673,7 @@ See `src/n0s1/test/skd_tests.py` for comprehensive examples of all platform inte
 ## Support
 
 - **GitHub Issues**: https://github.com/spark1security/n0s1/issues
-- **Documentation**: https://docs.google.com/document/d/1p8L2dOdCwcIphMprtnewCoKOy9VeQFcC9ZIsLUWs_xE/edit
+- **Documentation**: https://spark1.us/n0s1doc
 - **Website**: https://spark1.us/n0s1
 
 ## License

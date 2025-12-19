@@ -148,7 +148,7 @@ Contact us about any matter by opening a GitHub Discussion [here](https://github
 [license]: https://github.com/spark1security/n0s1/blob/main/LICENSE
 [license-img]: https://img.shields.io/badge/license-GPLv3-blue
 [homepage]: https://spark1.us/n0s1
-[docs]: https://docs.google.com/document/d/1p8L2dOdCwcIphMprtnewCoKOy9VeQFcC9ZIsLUWs_xE/edit?usp=sharing
+[docs]: https://spark1.us/n0s1doc
 
 
 
