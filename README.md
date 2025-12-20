@@ -11,9 +11,11 @@
 
 
 # n0s1 - Secret Scanner
-n0s1 ([pronunciation](https://en.wiktionary.org/wiki/nosy#Pronunciation)) is a secret scanner for Slack, Jira, Confluence, Asana, Wrike, Linear, Zendesk, GitHub and GitLab. It scans all channels/tickets/items/issues within the chosen platform in search of any leaked secrets in the titles, bodies, messages and comments. It is open-source and it can be easily extended to support scanning many others ticketing and messaging platforms.
+n0s1 ([pronunciation](https://en.wiktionary.org/wiki/nosy#Pronunciation)) is a secret scanner for Slack, Jira, Confluence, Asana, Wrike, Linear, Zendesk, GitHub and GitLab. It scans all channels/tickets/items/issues within the target platform in search of any leaked secrets in the titles, bodies, messages and comments. It is open-source and it can be easily extended to support scanning many others ticketing and messaging platforms.
 
-These secrets are identified by comparing them against an adaptable configuration file named [regex.yaml](https://github.com/spark1security/n0s1/blob/main/src/n0s1/config/regex.yaml). Alternative TOML format is also supported: [regex.toml](https://github.com/spark1security/n0s1/blob/main/src/n0s1/config/regex.toml). The scanner specifically looks for sensitive information, which includes:
+See [USER_MANUAL.md](https://github.com/spark1security/n0s1/blob/main/USER_MANUAL.md) to learn how to run a scan.
+
+Secrets are defined by an adaptable configuration file: [regex.yaml](https://github.com/spark1security/n0s1/blob/main/src/n0s1/config/regex.yaml) or [regex.toml](https://github.com/spark1security/n0s1/blob/main/src/n0s1/config/regex.toml). The scanner loads the configuration and searches for sensitive information, which includes:
 * Github Personal Access Tokens
 * GitLab Personal Access Tokens
 * AWS Access Tokens
@@ -23,6 +25,7 @@ These secrets are identified by comparing them against an adaptable configuratio
 * npm access tokens
 
 ### Currently supported target platforms:
+* Local filesystem
 * [Slack](https://slack.com)
 * [Jira](https://www.atlassian.com/software/jira)
 * [Confluence](https://www.atlassian.com/software/confluence)
@@ -62,6 +65,33 @@ python3 -m pip install -r ../../requirements.txt
 python3 n0s1.py jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<YOUR_JIRA_API_TOKEN>"
 deactivate
 ```
+
+[Python SDK - See SDK_GUIDE.md:](https://github.com/spark1security/n0s1/blob/main/SDK_GUIDE.md)
+```bash
+python3 -m pip install n0s1
+```
+```python
+try:
+    import scanner
+except:
+    import n0s1.scanner as scanner
+
+# Create scanner instance
+scanner_instance = scanner.SecretScanner(
+    target="jira_scan",
+    server="https://yourcompany.atlassian.net",
+    email="your-email@company.com",
+    api_key="your-jira-api-token",
+    debug=True
+)
+
+# Run the scan
+result = scanner_instance.scan()
+
+# Process results
+print(f"Scan complete. Found {len(result.get('findings', {}))} potential secrets")
+```
+
 
 [GitHub Actions:](https://github.com/marketplace/actions/spark-1-n0s1)
 ```yaml
@@ -118,7 +148,7 @@ Contact us about any matter by opening a GitHub Discussion [here](https://github
 [license]: https://github.com/spark1security/n0s1/blob/main/LICENSE
 [license-img]: https://img.shields.io/badge/license-GPLv3-blue
 [homepage]: https://spark1.us/n0s1
-[docs]: https://docs.google.com/document/d/1p8L2dOdCwcIphMprtnewCoKOy9VeQFcC9ZIsLUWs_xE/edit?usp=sharing
+[docs]: https://spark1.us/n0s1doc
 
 
 
