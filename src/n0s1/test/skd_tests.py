@@ -160,7 +160,6 @@ def test_gitlab_scan():
     return result
 
 
-
 def test_wrike_scan():
     """Test Wrike scanning"""
     print("\n" + "="*60)
