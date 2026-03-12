@@ -10,6 +10,7 @@ except Exception:
 class JiraController(hollow_controller.HollowController):
     def __init__(self):
         super().__init__()
+        self._cloud_api = False
 
     def set_config(self, config=None):
         super().set_config(config)
@@ -40,7 +41,11 @@ class JiraController(hollow_controller.HollowController):
         try:
             if self._client:
                 if user := self._client.myself():
-                    self.log_message(f"Logged to {self.get_name()} as {user}")
+                    deployment_type = ""
+                    if server_info := self._client.server_info():
+                        deployment_type = server_info.get("deploymentType", "")
+                        self._cloud_api = deployment_type.lower() == "Cloud".lower()
+                    self.log_message(f"Logged to {self.get_name()} {deployment_type} as {user}")
                 else:
                     self.log_message(f"Unable to connect to {self.get_name()} instance. Check your credentials.", logging.ERROR)
                     return False
@@ -90,8 +95,10 @@ class JiraController(hollow_controller.HollowController):
 
     def _get_issues(self, project_key, limit=None):
         from jira.exceptions import JIRAError
+        start = 0
         if not limit or limit < 0:
             limit = 50
+        issue_start = start
         issue_keys = []
         if self._scan_scope:
             issue_keys = self._scan_scope.get("projects", {}).get(project_key, {})
@@ -115,7 +122,10 @@ class JiraController(hollow_controller.HollowController):
             while not issues_finished:
                 try:
                     self.connect()
-                    issues = self._client.enhanced_search_issues(ql, nextPageToken=nextPageToken, maxResults=limit)
+                    if self._cloud_api:
+                        issues = self._client.enhanced_search_issues(ql, nextPageToken=nextPageToken, maxResults=limit)
+                    else:
+                        issues = self._client.search_issues(ql, startAt=issue_start, maxResults=limit)
                 except JIRAError as e:
                     self.log_message(f"Error while searching issues on Jira project: [{project_key}]. Skipping...",
                                      logging.WARNING)
@@ -123,11 +133,15 @@ class JiraController(hollow_controller.HollowController):
                     issues = [{}]
                     break
                 except Exception as e:
-                    message = str(e) + f" client.enhanced_search_issues({ql}, nextPageToken={nextPageToken}, maxResults={limit})"
+                    if self._cloud_api:
+                        message = str(e) + f" client.enhanced_search_issues({ql}, nextPageToken={nextPageToken}, maxResults={limit})"
+                    else:
+                        message = str(e) + f" client.search_issues({ql}, startAt={issue_start}, maxResults={limit})"
                     self.log_message(message, logging.WARNING)
                     issues = [{}]
                     time.sleep(1)
                     continue
+                issue_start += limit
                 issues_finished = len(issues) <= 0
                 nextPageToken = issues.nextPageToken
                 if not nextPageToken:
