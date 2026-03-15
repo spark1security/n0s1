@@ -9,6 +9,9 @@ class HollowController:
         self._requests_counter = 0
         self._scan_scope = None
         self.log_message_callback = None
+        self._url = None
+        self._user = None
+        self._password = None
 
     def set_config(self, config=None):
         if config:
@@ -93,3 +96,61 @@ class HollowController:
             if not query:
                 query = self._scan_scope.get("cql", None)
         return query
+
+    def _get_request(self, url):
+        from requests.auth import HTTPBasicAuth
+        import requests
+        response = None
+        try:
+            headers = {
+                "Content-Type": "application/json"
+            }
+            if self._user:
+                auth = HTTPBasicAuth(self._user, self._password)
+                response = requests.request(
+                    "GET",
+                    url,
+                    headers=headers,
+                    auth=auth
+                )
+            else:
+                headers["Authorization"] = f"Bearer {self._password}"
+                response = requests.request(
+                    "GET",
+                    url,
+                    headers=headers
+                )
+        except Exception as e:
+            self.log_message(str(e))
+        return response
+
+    def _post_request(self, url, payload):
+        from requests.auth import HTTPBasicAuth
+        import requests
+        import json
+        response = None
+        try:
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+            if self._user:
+                auth = HTTPBasicAuth(self._user, self._password)
+                response = requests.request(
+                    "POST",
+                    url,
+                    headers=headers,
+                    auth=auth,
+                    data=json.dumps(payload)
+                )
+            else:
+                headers["Authorization"] = f"Bearer {self._password}"
+                response = requests.request(
+                    "POST",
+                    url,
+                    headers=headers,
+                    data=json.dumps(payload)
+                )
+        except Exception as e:
+            self.log_message(str(e))
+        return response
