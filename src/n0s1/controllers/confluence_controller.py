@@ -12,9 +12,6 @@ except Exception:
 class ConfluenceController(hollow_controller.HollowController):
     def __init__(self):
         super().__init__()
-        self._url = None
-        self._user = None
-        self._password = None
 
     def set_config(self, config=None):
         super().set_config(config)
@@ -41,36 +38,6 @@ class ConfluenceController(hollow_controller.HollowController):
 
     def get_name(self):
         return "Confluence"
-
-    def _get_request(self, url):
-        from requests.auth import HTTPBasicAuth
-        import requests
-        response = None
-        try:
-            if self._user:
-                auth = HTTPBasicAuth(self._user, self._password)
-                headers = {
-                    "Content-Type": "application/json"
-                }
-                response = requests.request(
-                    "GET",
-                    url,
-                    headers=headers,
-                    auth=auth
-                )
-            else:
-                headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {self._password}"
-                }
-                response = requests.request(
-                    "GET",
-                    url,
-                    headers=headers
-                )
-        except Exception as e:
-            self.log_message(str(e))
-        return response
 
     def get_current_user(self):
         url = f"{self._url}/rest/api/user/current"

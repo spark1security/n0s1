@@ -21,6 +21,9 @@ class JiraController(hollow_controller.HollowController):
         TIMEOUT = self._config.get("timeout", -1)
         VERIFY_SSL = not self._config.get("insecure", False)
         options = {"verify": VERIFY_SSL}
+        self._url = SERVER
+        self._user = EMAIL
+        self._password = TOKEN
         if EMAIL and len(EMAIL) > 0:
             if TIMEOUT and TIMEOUT > 0:
                 self._client = JIRA(SERVER, options=options, basic_auth=(EMAIL, TOKEN), timeout=TIMEOUT)
@@ -243,6 +246,31 @@ class JiraController(hollow_controller.HollowController):
             return False
         comment = comment.replace("#", "0")
         self.connect()
-        comment_status = self._client.add_comment(issue, body=comment)
-        status = comment_status.id
-        return bool(status and len(status) > 0 and int(status) > 0)
+
+        if not self._cloud_api:
+            comment_status = self._client.add_comment(issue, body=comment)
+            status = comment_status.id
+            return bool(status and len(status) > 0 and int(status) > 0)
+        else:
+            adf = {
+                "body": {
+                    "type": "doc",
+                    "version": 1,
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": comment
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+            url = f"{self._url}/rest/api/3/issue/{issue}/comment"
+            response = self._post_request(url, adf)
+            return response.ok
+
+        return False
