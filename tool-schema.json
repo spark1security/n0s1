@@ -1,0 +1,876 @@
+{
+  "_metadata": {
+    "tool": "n0s1",
+    "description": "Secret scanner for Slack, Jira, Confluence, Asana, Wrike, Zendesk, Linear, GitHub, GitLab, and local filesystems.",
+    "interfaces": {
+      "cli": {
+        "description": "Run n0s1 as a command-line tool. Each tool maps to a subcommand.",
+        "install": "pip install n0s1",
+        "usage_pattern": "n0s1 <command> [--param value ...]",
+        "example": "n0s1 jira_scan --server https://myco.atlassian.net --email user@example.com --api-key TOKEN"
+      },
+      "docker": {
+        "description": "Run n0s1 via the official Docker image. Parameters are identical to the CLI — only the invocation prefix differs. No install required.",
+        "image": "spark1security/n0s1",
+        "usage_pattern": "docker run spark1security/n0s1 <command> [--param value ...]",
+        "example": "docker run spark1security/n0s1 jira_scan --server https://myco.atlassian.net --email user@example.com --api-key TOKEN",
+        "file_mounts": "Use -v $(pwd)/file:/file to pass local regex, config, map, or report files into the container.",
+        "when_to_use": "Prefer Docker when no Python environment is available, in containerized CI (GitLab CI, Jenkins), or when a pinned reproducible version is needed."
+      },
+      "python_sdk": {
+        "description": "Use n0s1 as a Python library via the SecretScanner class from n0s1.scanner.",
+        "install": "pip install n0s1",
+        "import": "from n0s1 import scanner",
+        "usage_pattern": "result = scanner.SecretScanner(target='<command>', **params).scan()",
+        "return_value": "dict with keys: 'findings' (list of leak dicts), 'scan_date', and metadata.",
+        "example": "result = scanner.SecretScanner(target='jira_scan', server='https://myco.atlassian.net', email='user@example.com', api_key='TOKEN').scan()"
+      },
+      "github_actions": {
+        "description": "Use n0s1 as a GitHub Actions step. Inputs map to CLI flags (see action repo for full schema).",
+        "action": "spark1security/n0s1-action@main",
+        "usage_pattern": "uses: spark1security/n0s1-action@main\nwith:\n  scan-target: jira_scan\n  password-key: ${{ secrets.JIRA_TOKEN }}",
+        "key_difference": "CLI --api-key becomes 'password-key' input; CLI --server becomes 'platform-url' input.",
+        "schema": "https://github.com/spark1security/n0s1-action/blob/main/docs/ai.md"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "n0s1_local_scan",
+      "description": "Scan a local file or folder for leaked secrets using regex patterns.\n\nCLI usage:\n  n0s1 local_scan --path ./src\n\nPython SDK usage:\n  from n0s1 import scanner\n  result = scanner.SecretScanner(target='local_scan', scan_path='./src').scan()\n  # result['findings'] contains the list of detected leaks",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to the local file or folder to be scanned. Maps to CLI --path and SDK scan_path parameter."
+          },
+          "regex_file": {
+            "type": "string",
+            "description": "Path to a custom .yaml or .toml file with regex patterns to match against."
+          },
+          "config_file": {
+            "type": "string",
+            "description": "Path to a YAML configuration file."
+          },
+          "report_file": {
+            "type": "string",
+            "description": "Output file path where the leak report will be saved."
+          },
+          "report_format": {
+            "type": "string",
+            "enum": ["n0s1", "SARIF", "gitlab"],
+            "description": "Format of the output report."
+          },
+          "show_matched_secret_on_logs": {
+            "type": "boolean",
+            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+          },
+          "debug": {
+            "type": "boolean",
+            "description": "Enable debug mode. May further expose sensitive data."
+          },
+          "insecure": {
+            "type": "boolean",
+            "description": "Ignore SSL certificate verification."
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "HTTP request timeout in seconds."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of pages to return per HTTP request."
+          },
+          "map": {
+            "type": "integer",
+            "description": "Enable mapping mode. Defines how many levels deep to map the scan scope. Output is saved as a JSON map file."
+          },
+          "map_file": {
+            "type": "string",
+            "description": "Path to a map file (e.g. n0s1_map.json) to customize the scan scope."
+          },
+          "scope": {
+            "type": "string",
+            "description": "Define a chunk of the map file to scan. Example: '3/4' scans the third quarter."
+          }
+        }
+      }
+    },
+    {
+      "name": "n0s1_slack_scan",
+      "description": "Scan Slack messages for leaked secrets.\n\nCLI usage:\n  n0s1 slack_scan --api-key SLACK_TOKEN\n\nPython SDK usage:\n  from n0s1 import scanner\n  result = scanner.SecretScanner(target='slack_scan', api_key='SLACK_TOKEN').scan()",
+      "input_schema": {
+        "type": "object",
+        "required": ["api_key"],
+        "properties": {
+          "api_key": {
+            "type": "string",
+            "description": "Slack token with OAuth scopes: search:read, users:read, chat:write. See: https://api.slack.com/tutorials/tracks/getting-a-token"
+          },
+          "post_comment": {
+            "type": "boolean",
+            "description": "If true, posts a warning comment on messages where a secret leak is detected."
+          },
+          "skip_comment": {
+            "type": "boolean",
+            "description": "If true, skips scanning message threads; only scans top-level messages."
+          },
+          "secret_manager": {
+            "type": "string",
+            "description": "Name of a secret manager tool to recommend in warning comments (e.g. 'HashiCorp Vault')."
+          },
+          "contact_help": {
+            "type": "string",
+            "description": "Contact information to include in warning comments for remediation assistance."
+          },
+          "label": {
+            "type": "string",
+            "description": "Unique identifier added to comments so n0s1 can detect previously flagged leaks."
+          },
+          "regex_file": {
+            "type": "string",
+            "description": "Path to a custom .yaml or .toml file with regex patterns."
+          },
+          "config_file": {
+            "type": "string",
+            "description": "Path to a YAML configuration file."
+          },
+          "report_file": {
+            "type": "string",
+            "description": "Output file path where the leak report will be saved."
+          },
+          "report_format": {
+            "type": "string",
+            "enum": ["n0s1", "SARIF", "gitlab"],
+            "description": "Format of the output report."
+          },
+          "show_matched_secret_on_logs": {
+            "type": "boolean",
+            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+          },
+          "debug": {
+            "type": "boolean",
+            "description": "Enable debug mode."
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "HTTP request timeout in seconds."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of pages to return per HTTP request."
+          },
+          "map": {
+            "type": "integer",
+            "description": "Enable mapping mode. Defines how many levels deep to map the scan scope."
+          },
+          "map_file": {
+            "type": "string",
+            "description": "Path to a map file to customize the scan scope."
+          },
+          "scope": {
+            "type": "string",
+            "description": "Search query to filter the scan scope."
+          }
+        }
+      }
+    },
+    {
+      "name": "n0s1_jira_scan",
+      "description": "Scan Jira tickets (title, description, and comments) for leaked secrets.\n\nCLI usage:\n  n0s1 jira_scan --server https://myco.atlassian.net --email user@example.com --api-key TOKEN\n\nPython SDK usage:\n  from n0s1 import scanner\n  result = scanner.SecretScanner(\n      target='jira_scan',\n      server='https://myco.atlassian.net',\n      email='user@example.com',\n      api_key='TOKEN',\n      scope='jql:project=SEC'\n  ).scan()\n  findings = result['findings']",
+      "input_schema": {
+        "type": "object",
+        "required": ["server", "email", "api_key"],
+        "properties": {
+          "server": {
+            "type": "string",
+            "description": "Jira server URI (e.g. https://mycompany.atlassian.net)."
+          },
+          "email": {
+            "type": "string",
+            "description": "Jira user email address."
+          },
+          "api_key": {
+            "type": "string",
+            "description": "Jira API key."
+          },
+          "post_comment": {
+            "type": "boolean",
+            "description": "If true, posts a warning comment on tickets where a secret leak is detected."
+          },
+          "skip_comment": {
+            "type": "boolean",
+            "description": "If true, skips scanning ticket comments; only scans title and description."
+          },
+          "secret_manager": {
+            "type": "string",
+            "description": "Name of a secret manager tool to recommend in warning comments."
+          },
+          "contact_help": {
+            "type": "string",
+            "description": "Contact information to include in warning comments."
+          },
+          "label": {
+            "type": "string",
+            "description": "Unique identifier added to comments so n0s1 can detect previously flagged leaks."
+          },
+          "regex_file": {
+            "type": "string",
+            "description": "Path to a custom .yaml or .toml file with regex patterns."
+          },
+          "config_file": {
+            "type": "string",
+            "description": "Path to a YAML configuration file."
+          },
+          "report_file": {
+            "type": "string",
+            "description": "Output file path where the leak report will be saved."
+          },
+          "report_format": {
+            "type": "string",
+            "enum": ["n0s1", "SARIF", "gitlab", "sarif"],
+            "description": "Format of the output report. 'sarif' and 'SARIF' are equivalent."
+          },
+          "show_matched_secret_on_logs": {
+            "type": "boolean",
+            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+          },
+          "debug": {
+            "type": "boolean",
+            "description": "Enable debug mode."
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "HTTP request timeout in seconds."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of pages to return per HTTP request."
+          },
+          "scope": {
+            "type": "string",
+            "description": "JQL query to filter which tickets to scan (e.g. 'jql:project=SEC' or 'jql:project=MAR OR project=\"Auto Service\"')."
+          },
+          "map": {
+            "type": "integer",
+            "description": "Enable mapping mode. Defines how many levels deep to map the scan scope."
+          },
+          "map_file": {
+            "type": "string",
+            "description": "Path to a map file to customize the scan scope."
+          }
+        }
+      }
+    },
+    {
+      "name": "n0s1_confluence_scan",
+      "description": "Scan Confluence pages for leaked secrets.\n\nCLI usage:\n  n0s1 confluence_scan --server https://myco.atlassian.net --email user@example.com --api-key TOKEN\n\nPython SDK usage:\n  from n0s1 import scanner\n  result = scanner.SecretScanner(\n      target='confluence_scan',\n      server='https://myco.atlassian.net',\n      email='user@example.com',\n      api_key='TOKEN',\n      scope='cql:space=SEC and type=page'\n  ).scan()",
+      "input_schema": {
+        "type": "object",
+        "required": ["server", "email", "api_key"],
+        "properties": {
+          "server": {
+            "type": "string",
+            "description": "Confluence base URL (e.g. https://mycompany.atlassian.net)."
+          },
+          "email": {
+            "type": "string",
+            "description": "Confluence user email address."
+          },
+          "api_key": {
+            "type": "string",
+            "description": "Confluence API key. Can reuse the Jira API key for Atlassian Cloud."
+          },
+          "post_comment": {
+            "type": "boolean",
+            "description": "If true, posts a warning comment on pages where a secret leak is detected."
+          },
+          "skip_comment": {
+            "type": "boolean",
+            "description": "If true, skips scanning page comments."
+          },
+          "secret_manager": {
+            "type": "string",
+            "description": "Name of a secret manager tool to recommend in warning comments."
+          },
+          "contact_help": {
+            "type": "string",
+            "description": "Contact information to include in warning comments."
+          },
+          "label": {
+            "type": "string",
+            "description": "Unique identifier added to comments so n0s1 can detect previously flagged leaks."
+          },
+          "regex_file": {
+            "type": "string",
+            "description": "Path to a custom .yaml or .toml file with regex patterns."
+          },
+          "config_file": {
+            "type": "string",
+            "description": "Path to a YAML configuration file."
+          },
+          "report_file": {
+            "type": "string",
+            "description": "Output file path where the leak report will be saved."
+          },
+          "report_format": {
+            "type": "string",
+            "enum": ["n0s1", "SARIF", "gitlab", "sarif"],
+            "description": "Format of the output report."
+          },
+          "show_matched_secret_on_logs": {
+            "type": "boolean",
+            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+          },
+          "debug": {
+            "type": "boolean",
+            "description": "Enable debug mode."
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "HTTP request timeout in seconds."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of pages to return per HTTP request."
+          },
+          "scope": {
+            "type": "string",
+            "description": "CQL query to filter which pages to scan (e.g. 'cql:space=SEC and type=page')."
+          },
+          "map": {
+            "type": "integer",
+            "description": "Enable mapping mode."
+          },
+          "map_file": {
+            "type": "string",
+            "description": "Path to a map file to customize the scan scope."
+          }
+        }
+      }
+    },
+    {
+      "name": "n0s1_github_scan",
+      "description": "Scan GitHub repositories for leaked secrets across branches and files.\n\nCLI usage:\n  n0s1 github_scan --owner myorg --repo myrepo --api-key TOKEN\n\nPython SDK usage:\n  from n0s1 import scanner\n  result = scanner.SecretScanner(\n      target='github_scan',\n      owner='myorg',\n      repo='myrepo',\n      branch='main',\n      api_key='TOKEN'\n  ).scan()",
+      "input_schema": {
+        "type": "object",
+        "required": ["api_key"],
+        "properties": {
+          "api_key": {
+            "type": "string",
+            "description": "GitHub personal access token or app token. See: https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app"
+          },
+          "owner": {
+            "type": "string",
+            "description": "GitHub account owner or organization name (case-insensitive). If omitted, all accessible repos are scanned."
+          },
+          "repo": {
+            "type": "string",
+            "description": "Repository name without .git extension (case-insensitive). If omitted, all repos under the owner are scanned."
+          },
+          "branch": {
+            "type": "string",
+            "description": "Branch to scan. Accepts a single branch name or comma-separated list (e.g. 'main,develop'). If omitted, all accessible branches are scanned."
+          },
+          "post_comment": {
+            "type": "boolean",
+            "description": "If true, posts a warning comment where a secret leak is detected."
+          },
+          "skip_comment": {
+            "type": "boolean",
+            "description": "If true, skips scanning PR/commit comments."
+          },
+          "secret_manager": {
+            "type": "string",
+            "description": "Name of a secret manager tool to recommend in warning comments."
+          },
+          "contact_help": {
+            "type": "string",
+            "description": "Contact information to include in warning comments."
+          },
+          "label": {
+            "type": "string",
+            "description": "Unique identifier added to comments so n0s1 can detect previously flagged leaks."
+          },
+          "regex_file": {
+            "type": "string",
+            "description": "Path to a custom .yaml or .toml file with regex patterns."
+          },
+          "config_file": {
+            "type": "string",
+            "description": "Path to a YAML configuration file."
+          },
+          "report_file": {
+            "type": "string",
+            "description": "Output file path where the leak report will be saved."
+          },
+          "report_format": {
+            "type": "string",
+            "enum": ["n0s1", "SARIF", "gitlab"],
+            "description": "Format of the output report."
+          },
+          "show_matched_secret_on_logs": {
+            "type": "boolean",
+            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+          },
+          "debug": {
+            "type": "boolean",
+            "description": "Enable debug mode."
+          },
+          "insecure": {
+            "type": "boolean",
+            "description": "Ignore SSL certificate verification."
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "HTTP request timeout in seconds."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of pages to return per HTTP request."
+          },
+          "scope": {
+            "type": "string",
+            "description": "Search query to filter repos (e.g. 'search:org:myorg action in:name')."
+          },
+          "map": {
+            "type": "integer",
+            "description": "Enable mapping mode. Defines how many levels deep to map the scan scope."
+          },
+          "map_file": {
+            "type": "string",
+            "description": "Path to a map file to customize the scan scope."
+          }
+        }
+      }
+    },
+    {
+      "name": "n0s1_gitlab_scan",
+      "description": "Scan GitLab repositories for leaked secrets.\n\nCLI usage:\n  n0s1 gitlab_scan --server https://gitlab.com --owner mygroup --api-key TOKEN\n\nPython SDK usage:\n  from n0s1 import scanner\n  result = scanner.SecretScanner(\n      target='gitlab_scan',\n      server='https://gitlab.com',\n      owner='mygroup',\n      api_key='TOKEN',\n      scope='search:myproject'\n  ).scan()",
+      "input_schema": {
+        "type": "object",
+        "required": ["api_key"],
+        "properties": {
+          "api_key": {
+            "type": "string",
+            "description": "GitLab personal access token. See: https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html"
+          },
+          "server": {
+            "type": "string",
+            "description": "GitLab instance URL. Defaults to https://gitlab.com."
+          },
+          "owner": {
+            "type": "string",
+            "description": "GitLab group to scan. If omitted, all accessible projects are scanned."
+          },
+          "repo": {
+            "type": "string",
+            "description": "GitLab project ID or path with namespace (e.g. 'mygroup/myproject'). If omitted, all projects are scanned."
+          },
+          "branch": {
+            "type": "string",
+            "description": "Branch to scan. If omitted, all accessible branches are scanned."
+          },
+          "post_comment": {
+            "type": "boolean",
+            "description": "If true, posts a warning comment where a secret leak is detected."
+          },
+          "skip_comment": {
+            "type": "boolean",
+            "description": "If true, skips scanning comments."
+          },
+          "secret_manager": {
+            "type": "string",
+            "description": "Name of a secret manager tool to recommend in warning comments."
+          },
+          "contact_help": {
+            "type": "string",
+            "description": "Contact information to include in warning comments."
+          },
+          "label": {
+            "type": "string",
+            "description": "Unique identifier added to comments so n0s1 can detect previously flagged leaks."
+          },
+          "regex_file": {
+            "type": "string",
+            "description": "Path to a custom .yaml or .toml file with regex patterns."
+          },
+          "config_file": {
+            "type": "string",
+            "description": "Path to a YAML configuration file."
+          },
+          "report_file": {
+            "type": "string",
+            "description": "Output file path where the leak report will be saved."
+          },
+          "report_format": {
+            "type": "string",
+            "enum": ["n0s1", "SARIF", "gitlab"],
+            "description": "Format of the output report."
+          },
+          "show_matched_secret_on_logs": {
+            "type": "boolean",
+            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+          },
+          "debug": {
+            "type": "boolean",
+            "description": "Enable debug mode."
+          },
+          "insecure": {
+            "type": "boolean",
+            "description": "Ignore SSL certificate verification."
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "HTTP request timeout in seconds."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of pages to return per HTTP request."
+          },
+          "scope": {
+            "type": "string",
+            "description": "Search query to filter the scan scope (e.g. 'search:myproject')."
+          },
+          "map": {
+            "type": "integer",
+            "description": "Enable mapping mode. Defines how many levels deep to map the scan scope."
+          },
+          "map_file": {
+            "type": "string",
+            "description": "Path to a map file to customize the scan scope."
+          }
+        }
+      }
+    },
+    {
+      "name": "n0s1_asana_scan",
+      "description": "Scan Asana tasks for leaked secrets.\n\nCLI usage:\n  n0s1 asana_scan --api-key TOKEN\n\nPython SDK usage:\n  from n0s1 import scanner\n  result = scanner.SecretScanner(target='asana_scan', api_key='TOKEN').scan()",
+      "input_schema": {
+        "type": "object",
+        "required": ["api_key"],
+        "properties": {
+          "api_key": {
+            "type": "string",
+            "description": "Asana personal access token. See: https://developers.asana.com/docs/personal-access-token#generating-a-pat"
+          },
+          "post_comment": {
+            "type": "boolean",
+            "description": "If true, posts a warning comment on tasks where a secret leak is detected."
+          },
+          "skip_comment": {
+            "type": "boolean",
+            "description": "If true, skips scanning task comments."
+          },
+          "secret_manager": {
+            "type": "string",
+            "description": "Name of a secret manager tool to recommend in warning comments."
+          },
+          "contact_help": {
+            "type": "string",
+            "description": "Contact information to include in warning comments."
+          },
+          "label": {
+            "type": "string",
+            "description": "Unique identifier added to comments so n0s1 can detect previously flagged leaks."
+          },
+          "regex_file": {
+            "type": "string",
+            "description": "Path to a custom .yaml or .toml file with regex patterns."
+          },
+          "config_file": {
+            "type": "string",
+            "description": "Path to a YAML configuration file."
+          },
+          "report_file": {
+            "type": "string",
+            "description": "Output file path where the leak report will be saved."
+          },
+          "report_format": {
+            "type": "string",
+            "enum": ["n0s1", "SARIF", "gitlab"],
+            "description": "Format of the output report."
+          },
+          "show_matched_secret_on_logs": {
+            "type": "boolean",
+            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+          },
+          "debug": {
+            "type": "boolean",
+            "description": "Enable debug mode."
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "HTTP request timeout in seconds."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of pages to return per HTTP request."
+          },
+          "scope": {
+            "type": "string",
+            "description": "Search query to filter the scan scope."
+          },
+          "map": {
+            "type": "integer",
+            "description": "Enable mapping mode."
+          },
+          "map_file": {
+            "type": "string",
+            "description": "Path to a map file to customize the scan scope."
+          }
+        }
+      }
+    },
+    {
+      "name": "n0s1_wrike_scan",
+      "description": "Scan Wrike tasks for leaked secrets.\n\nCLI usage:\n  n0s1 wrike_scan --api-key TOKEN\n\nPython SDK usage:\n  from n0s1 import scanner\n  result = scanner.SecretScanner(target='wrike_scan', api_key='TOKEN').scan()",
+      "input_schema": {
+        "type": "object",
+        "required": ["api_key"],
+        "properties": {
+          "api_key": {
+            "type": "string",
+            "description": "Wrike permanent token. See: https://help.wrike.com/hc/en-us/articles/210409445-Wrike-API"
+          },
+          "post_comment": {
+            "type": "boolean",
+            "description": "If true, posts a warning comment on tasks where a secret leak is detected."
+          },
+          "skip_comment": {
+            "type": "boolean",
+            "description": "If true, skips scanning task comments."
+          },
+          "secret_manager": {
+            "type": "string",
+            "description": "Name of a secret manager tool to recommend in warning comments."
+          },
+          "contact_help": {
+            "type": "string",
+            "description": "Contact information to include in warning comments."
+          },
+          "label": {
+            "type": "string",
+            "description": "Unique identifier added to comments so n0s1 can detect previously flagged leaks."
+          },
+          "regex_file": {
+            "type": "string",
+            "description": "Path to a custom .yaml or .toml file with regex patterns."
+          },
+          "config_file": {
+            "type": "string",
+            "description": "Path to a YAML configuration file."
+          },
+          "report_file": {
+            "type": "string",
+            "description": "Output file path where the leak report will be saved."
+          },
+          "report_format": {
+            "type": "string",
+            "enum": ["n0s1", "SARIF", "gitlab"],
+            "description": "Format of the output report."
+          },
+          "show_matched_secret_on_logs": {
+            "type": "boolean",
+            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+          },
+          "debug": {
+            "type": "boolean",
+            "description": "Enable debug mode."
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "HTTP request timeout in seconds."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of pages to return per HTTP request."
+          },
+          "scope": {
+            "type": "string",
+            "description": "Search query to filter the scan scope."
+          },
+          "map": {
+            "type": "integer",
+            "description": "Enable mapping mode."
+          },
+          "map_file": {
+            "type": "string",
+            "description": "Path to a map file to customize the scan scope."
+          }
+        }
+      }
+    },
+    {
+      "name": "n0s1_linear_scan",
+      "description": "Scan Linear issues for leaked secrets.\n\nCLI usage:\n  n0s1 linear_scan --api-key TOKEN\n\nPython SDK usage:\n  from n0s1 import scanner\n  result = scanner.SecretScanner(target='linear_scan', api_key='TOKEN').scan()",
+      "input_schema": {
+        "type": "object",
+        "required": ["api_key"],
+        "properties": {
+          "api_key": {
+            "type": "string",
+            "description": "Linear personal API key. See: https://developers.linear.app/docs/graphql/working-with-the-graphql-api#personal-api-keys"
+          },
+          "post_comment": {
+            "type": "boolean",
+            "description": "If true, posts a warning comment on issues where a secret leak is detected."
+          },
+          "skip_comment": {
+            "type": "boolean",
+            "description": "If true, skips scanning issue comments."
+          },
+          "secret_manager": {
+            "type": "string",
+            "description": "Name of a secret manager tool to recommend in warning comments."
+          },
+          "contact_help": {
+            "type": "string",
+            "description": "Contact information to include in warning comments."
+          },
+          "label": {
+            "type": "string",
+            "description": "Unique identifier added to comments so n0s1 can detect previously flagged leaks."
+          },
+          "regex_file": {
+            "type": "string",
+            "description": "Path to a custom .yaml or .toml file with regex patterns."
+          },
+          "config_file": {
+            "type": "string",
+            "description": "Path to a YAML configuration file."
+          },
+          "report_file": {
+            "type": "string",
+            "description": "Output file path where the leak report will be saved."
+          },
+          "report_format": {
+            "type": "string",
+            "enum": ["n0s1", "SARIF", "gitlab"],
+            "description": "Format of the output report."
+          },
+          "show_matched_secret_on_logs": {
+            "type": "boolean",
+            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+          },
+          "debug": {
+            "type": "boolean",
+            "description": "Enable debug mode."
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "HTTP request timeout in seconds."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of pages to return per HTTP request."
+          },
+          "scope": {
+            "type": "string",
+            "description": "Search query to filter the scan scope."
+          },
+          "map": {
+            "type": "integer",
+            "description": "Enable mapping mode."
+          },
+          "map_file": {
+            "type": "string",
+            "description": "Path to a map file to customize the scan scope."
+          }
+        }
+      }
+    },
+    {
+      "name": "n0s1_zendesk_scan",
+      "description": "Scan Zendesk tickets for leaked secrets.\n\nCLI usage:\n  n0s1 zendesk_scan --server myco --email user@example.com --api-key TOKEN\n\nPython SDK usage:\n  from n0s1 import scanner\n  result = scanner.SecretScanner(\n      target='zendesk_scan',\n      server='myco',\n      email='user@example.com',\n      api_key='TOKEN'\n  ).scan()",
+      "input_schema": {
+        "type": "object",
+        "required": ["server", "email", "api_key"],
+        "properties": {
+          "server": {
+            "type": "string",
+            "description": "Zendesk subdomain (e.g. 'mycompany' for mycompany.zendesk.com)."
+          },
+          "email": {
+            "type": "string",
+            "description": "Zendesk user email address."
+          },
+          "api_key": {
+            "type": "string",
+            "description": "Zendesk API key. See: https://developer.zendesk.com/api-reference/integration-services/connections/api_key_connections"
+          },
+          "post_comment": {
+            "type": "boolean",
+            "description": "If true, posts a warning comment on tickets where a secret leak is detected."
+          },
+          "skip_comment": {
+            "type": "boolean",
+            "description": "If true, skips scanning ticket comments."
+          },
+          "secret_manager": {
+            "type": "string",
+            "description": "Name of a secret manager tool to recommend in warning comments."
+          },
+          "contact_help": {
+            "type": "string",
+            "description": "Contact information to include in warning comments."
+          },
+          "label": {
+            "type": "string",
+            "description": "Unique identifier added to comments so n0s1 can detect previously flagged leaks."
+          },
+          "regex_file": {
+            "type": "string",
+            "description": "Path to a custom .yaml or .toml file with regex patterns."
+          },
+          "config_file": {
+            "type": "string",
+            "description": "Path to a YAML configuration file."
+          },
+          "report_file": {
+            "type": "string",
+            "description": "Output file path where the leak report will be saved."
+          },
+          "report_format": {
+            "type": "string",
+            "enum": ["n0s1", "SARIF", "gitlab"],
+            "description": "Format of the output report."
+          },
+          "show_matched_secret_on_logs": {
+            "type": "boolean",
+            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+          },
+          "debug": {
+            "type": "boolean",
+            "description": "Enable debug mode."
+          },
+          "insecure": {
+            "type": "boolean",
+            "description": "Ignore SSL certificate verification."
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "HTTP request timeout in seconds."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of pages to return per HTTP request."
+          },
+          "scope": {
+            "type": "string",
+            "description": "Search query to filter the scan scope."
+          },
+          "map": {
+            "type": "integer",
+            "description": "Enable mapping mode."
+          },
+          "map_file": {
+            "type": "string",
+            "description": "Path to a map file to customize the scan scope."
+          }
+        }
+      }
+    }
+  ]
+}
