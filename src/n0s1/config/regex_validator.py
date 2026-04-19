@@ -51,10 +51,12 @@ def main():
     errors = test_rules(data)
 
     if errors:
-        print(f"\n❌ Total of [{len(errors)}]/[{total_rules}] errors found:\n")
+        message = f"\n❌ Total of [{len(errors)}]/[{total_rules}] errors found!\n"
+        print(message)
         for err in errors:
             print(err)
             print("-" * 60)
+        print(message)
         sys.exit(1)
     else:
         print("\n✅ All regex examples matched successfully!")

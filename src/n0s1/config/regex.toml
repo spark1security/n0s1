@@ -693,6 +693,18 @@ regexes = [
 ]
 
 [[rules]]
+# demo of this regex not matching passwords in urls that contain env vars:
+# https://regex101.com/r/rT9Lv9/6
+id = "Password in URL"
+description = "Password in URL"
+regex = '''[a-zA-Z]{3,10}:\/\/[^$][^:@\/\n]{3,20}:[^${][^:@\n\/]{3,40}@.{1,100}'''
+example = '''https://user123:passWORD123@example.com'''
+[rules.allowlist]
+regexes = [
+  '''({*root}*|{*admin}*|{*postgres}*|{*guest}*|{*user(name)*}*|\*\*\*\*\*):({*root}*|{*admin}*|{*postgres}*|{*guest}*|{*user(name)*}*|{*pass(word)*}*|\*\*\*\*\*)''',
+]
+
+[[rules]]
 id = "github-app-token"
 description = "Identified a GitHub App Token, which may compromise GitHub application integrations and source code security."
 regex = '''(?:ghu|ghs)_[0-9a-zA-Z]{36}'''

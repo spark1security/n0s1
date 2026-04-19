@@ -873,6 +873,14 @@ rules:
           - AIzaSyBcE-OOIbhjyR83gm4r2MFCu4MJmprNXsw
           - AIzaSyB8qGxt4ec15vitgn44duC5ucxaOi4FmqE
           - AIzaSyA8vmApnrHNFE0bApF4hoZ11srVL_n0nvY
+  - id: Password in URL
+    description: Password in URL
+    regex: '[a-zA-Z]{3,10}:\/\/[^$][^:@\/\n]{3,20}:[^${][^:@\n\/]{3,40}@.{1,100}'
+    example: 'https://user123:passWORD123@example.com'
+    allowlist:
+      regexes:
+        - >-
+          ({*root}*|{*admin}*|{*postgres}*|{*guest}*|{*user(name)*}*|\*\*\*\*\*):({*root}*|{*admin}*|{*postgres}*|{*guest}*|{*user(name)*}*|{*pass(word)*}*|\*\*\*\*\*)
   - id: github-app-token
     description: >-
       Identified a GitHub App Token, which may compromise GitHub application
