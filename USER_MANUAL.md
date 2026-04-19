@@ -73,6 +73,11 @@ These options work with all scan commands and should be specified **before** the
 - ⚠️ **DANGER**: This may expose secrets in your logs - use with extreme caution
 - Default: shows sanitized versions only
 
+**`--private`**
+- Enable private mode to disable all interaction with the n0s1 backend service
+- ⚠️ Authentication required for Professional mode is turned off when Private mode is enabled
+- Only Community mode is supported in this configuration
+
 **`--debug`**
 - Enable debug mode for verbose logging
 - ⚠️ May expose sensitive data in logs
