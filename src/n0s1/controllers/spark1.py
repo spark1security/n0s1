@@ -62,3 +62,20 @@ class Spark1(http_client.HttpClient):
             return False
         return False
 
+    def ai_assessment(self, report=None):
+        if report is None:
+            return None
+        auth_url = self.base_url + "/api/v1/analyses"
+        try:
+            r = self._post_request(auth_url, json=report)
+            if r.status_code == 200:
+                ai_report = r.json()
+                if ai_report:
+                    for id in ai_report.get("findings", {}):
+                        ai_data = ai_report.get("findings", {})[id].get("ai_report", {})
+                        if ai_data:
+                            return ai_report
+        except Exception as ex:
+            logging.info(str(ex))
+        return None
+

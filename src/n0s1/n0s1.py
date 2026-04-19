@@ -77,6 +77,12 @@ def init_argparse() -> argparse.ArgumentParser:
         help="By default, only a sanitized version of the leak is shown on logs. This flag makes the actual leaked secret to be displayed on logs. Be extra careful when enabling this flag because you might make the leak worst by sending sensitive info to logs.",
     )
     parent_parser.add_argument(
+        "--private",
+        dest="private",
+        action="store_true",
+        help="Private mode disables all interaction with the n0s1 backend service. Note: only Community mode is supported in this configuration. Authentication required for Professional mode is turned off when Private mode is enabled.",
+    )
+    parent_parser.add_argument(
         "--debug",
         dest="debug",
         action="store_true",
@@ -369,6 +375,7 @@ def main():
         parser.print_help()
         return
 
+    secret_scanner.set(private=args.private)
     secret_scanner.set(debug=args.debug)
     secret_scanner.set(regex_file=args.regex_file)
     secret_scanner.set(config_file=args.config_file)
