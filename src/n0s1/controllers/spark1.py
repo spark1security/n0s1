@@ -62,7 +62,7 @@ class Spark1(http_client.HttpClient):
             return False
         return False
 
-    def ai_assessment(self, report=None):
+    def ai_analysis(self, report=None):
         if report is None:
             return None
         auth_url = self.base_url + "/api/v1/analyses"

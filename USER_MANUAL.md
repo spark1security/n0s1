@@ -73,6 +73,12 @@ These options work with all scan commands and should be specified **before** the
 - ⚠️ **DANGER**: This may expose secrets in your logs - use with extreme caution
 - Default: shows sanitized versions only
 
+ai_analysis_default_value
+**`--ai-analysis`**
+- Send scan results to an AI agent to validate leaked credentials. The agent will update the report with each credential’s status: live (authentication succeeded), unable to test, or invalid.
+- ⚠️ The leaked credentials identified by the scanner will be tested live. If you are not authorized to test the credentials, do not enable this mode
+- Only supported when using Professional mode 
+- 
 **`--private`**
 - Enable private mode to disable all interaction with the n0s1 backend service
 - ⚠️ Authentication required for Professional mode is turned off when Private mode is enabled

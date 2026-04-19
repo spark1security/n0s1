@@ -47,6 +47,7 @@ report_format_default_value = "n0s1"
 post_comment_default_value = False
 skip_comment_default_value = False
 show_matched_secret_on_logs_default_value = False
+ai_analysis_default_value = False
 private_default_value = False
 debug_default_value = False
 secret_manager_default_value = "a secret manager tool"
@@ -71,7 +72,7 @@ class SecretScanner():
                  report_file=report_file_default_value, report_format=report_format_default_value,
                  post_comment=post_comment_default_value, skip_comment=skip_comment_default_value,
                  show_matched_secret_on_logs=show_matched_secret_on_logs_default_value,
-                 private=private_default_value, debug=debug_default_value,
+                 ai_analysis=ai_analysis_default_value, private=private_default_value, debug=debug_default_value,
                  secret_manager=secret_manager_default_value, contact_help=contact_help_default_value,
                  label=label_default_value, timeout=timeout_default_value, limit=limit_default_value,
                  insecure=insecure_default_value, map=map_default_value, map_file=map_file_default_value,
@@ -89,6 +90,7 @@ class SecretScanner():
         self.post_comment = None
         self.skip_comment = None
         self.show_matched_secret_on_logs = None
+        self.ai_analysis = None
         self.private = None
         self.debug = None
         self.secret_manager = None
@@ -122,11 +124,11 @@ class SecretScanner():
                        "scan_date": {"timestamp": datetime_now_obj.timestamp(), "date_utc": date_utc},
                        "regex_config": {}, "findings": {}}
 
-        self.set(target=target, regex_file=regex_file, config_file=config_file, report_file=report_file, report_format=report_format, post_comment=post_comment, skip_comment=skip_comment, show_matched_secret_on_logs=show_matched_secret_on_logs, private=private, debug=debug, secret_manager=secret_manager, contact_help=contact_help, label=label, timeout=timeout, limit=limit, insecure=insecure, map=map, map_file=map_file, scope=scope, api_key=api_key, server=server, email=email, owner=owner, repo=repo, branch=branch, scan_path=scan_path)
+        self.set(target=target, regex_file=regex_file, config_file=config_file, report_file=report_file, report_format=report_format, post_comment=post_comment, skip_comment=skip_comment, show_matched_secret_on_logs=show_matched_secret_on_logs, ai_analysis=ai_analysis, private=private, debug=debug, secret_manager=secret_manager, contact_help=contact_help, label=label, timeout=timeout, limit=limit, insecure=insecure, map=map, map_file=map_file, scope=scope, api_key=api_key, server=server, email=email, owner=owner, repo=repo, branch=branch, scan_path=scan_path)
 
 
     def set(self, target=None, regex_file=None, config_file=None, report_file=None, report_format=None, post_comment=None,
-            skip_comment=None, show_matched_secret_on_logs=None, private=None, debug=None, secret_manager=None,
+            skip_comment=None, show_matched_secret_on_logs=None, ai_analysis=None, private=None, debug=None, secret_manager=None,
             contact_help=None, label=None, timeout=None, limit=None, insecure=None, map=None, map_file=None, scope=None,
             api_key=None, server=None, email=None, owner=None, repo=None, branch=None, scan_path=None):
         global DEBUG
@@ -149,6 +151,8 @@ class SecretScanner():
             self.skip_comment = skip_comment
         if show_matched_secret_on_logs is not None:
             self.show_matched_secret_on_logs = show_matched_secret_on_logs
+        if ai_analysis is not None:
+            self.ai_analysis = ai_analysis
         if private is not None:
             self.private = private
         if debug is not None:
@@ -192,9 +196,9 @@ class SecretScanner():
         DEBUG = self.debug
 
         self.scan_arguments = {"scan_comment": not self.skip_comment, "post_comment": self.post_comment, "secret_manager": self.secret_manager,
-                          "contact_help": self.contact_help, "label": self.label, "report_format": self.report_format, "private": self.private,
-                          "debug": self.debug, "show_matched_secret_on_logs": self.show_matched_secret_on_logs, "scan_target": self.target,
-                          "timeout": self.timeout, "limit": self.limit, "scan_scope": self.get_scope_config()}
+                          "contact_help": self.contact_help, "label": self.label, "report_format": self.report_format, "ai_analysis": self.ai_analysis,
+                          "private": self.private, "debug": self.debug, "show_matched_secret_on_logs": self.show_matched_secret_on_logs,
+                          "scan_target": self.target, "timeout": self.timeout, "limit": self.limit, "scan_scope": self.get_scope_config()}
         self.report_json["tool"]["scan_arguments"] = self.scan_arguments
 
     def _setup_target(self):
@@ -586,8 +590,8 @@ class SecretScanner():
                     for item_data in data:
                         if item_data and item_data.lower().find(label.lower()) == -1:
                             self.scan_text_and_report_leaks(item_data, name, self.regex_config, self.scan_arguments, ticket)
-        if n0s1_pro:
-            ai_analyzed_report = n0s1_pro.ai_assessment(self.report_json)
+        if n0s1_pro and self.ai_analysis:
+            ai_analyzed_report = n0s1_pro.ai_analysis(self.report_json)
             if ai_analyzed_report:
                 return ai_analyzed_report
 

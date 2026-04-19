@@ -114,6 +114,7 @@ scanner.SecretScanner(
     post_comment=False,             # Auto-post warning comments
     skip_comment=False,             # Skip scanning comments
     show_matched_secret_on_logs=False,  # Show actual secrets in logs
+    ai_analysis=False,              # Enable AI secret leak analysis
     private=False,                  # Enable private mode
     debug=False,                    # Enable debug mode
     
@@ -630,6 +631,7 @@ The `scan()` method returns a dictionary with the following structure:
 | `post_comment`                | bool | False | Auto-post comments          |
 | `skip_comment`                | bool | False | Skip comment scanning       |
 | `show_matched_secret_on_logs` | bool | False | Show secrets in logs        |
+| `ai_analysis`                 | bool | False | AI secret leak analysis     |
 | `private`                     | bool | False | Private mode                |
 | `debug`                       | bool | False | Debug mode                  |
 | `secret_manager`              | str | None | Suggested secret manager    |

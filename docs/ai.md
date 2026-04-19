@@ -109,6 +109,7 @@ scanner.SecretScanner(
     post_comment=False,        # bool: post warning comment on tickets with leaks
     skip_comment=False,        # bool: skip scanning ticket/issue comments
     show_matched_secret_on_logs=False,  # bool: log the actual secret (risk: exposure)
+    ai_analysis=False,         # bool: Allow AI agent to verify leaks
     private=False,             # bool: disable backend interaction
     debug=False,               # bool: verbose debug logging
     insecure=False,            # bool: skip SSL certificate verification
@@ -261,6 +262,7 @@ n0s1 local_scan --path ./src --regex-file ./custom.yaml
 | `--post-comment`                | `post_comment`                | boolean flag (no value) |
 | `--skip-comment`                | `skip_comment`                | boolean flag (no value) |
 | `--show-matched-secret-on-logs` | `show_matched_secret_on_logs` | boolean flag |
+| `--ai-analysis`                 | `ai_analysis`                 | boolean flag |
 | `--private`                     | `private`                     | boolean flag |
 | `--debug`                       | `debug`                       | boolean flag |
 | `--insecure`                    | `insecure`                    | boolean flag |

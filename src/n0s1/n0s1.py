@@ -77,6 +77,12 @@ def init_argparse() -> argparse.ArgumentParser:
         help="By default, only a sanitized version of the leak is shown on logs. This flag makes the actual leaked secret to be displayed on logs. Be extra careful when enabling this flag because you might make the leak worst by sending sensitive info to logs.",
     )
     parent_parser.add_argument(
+        "--ai-analysis",
+        dest="ai_analysis",
+        action="store_true",
+        help="Send scan results to an AI agent to validate leaked credentials. The agent will update the report with each credential’s status: live (authentication succeeded), unable to test, or invalid.",
+    )
+    parent_parser.add_argument(
         "--private",
         dest="private",
         action="store_true",
@@ -375,6 +381,7 @@ def main():
         parser.print_help()
         return
 
+    secret_scanner.set(ai_analysis=args.ai_analysis)
     secret_scanner.set(private=args.private)
     secret_scanner.set(debug=args.debug)
     secret_scanner.set(regex_file=args.regex_file)
