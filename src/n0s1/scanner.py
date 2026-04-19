@@ -654,6 +654,18 @@ def match_regex(regex_config, text):
                 regex_str = regex_str.replace(modifier, "")
                 regex_str = modifier + regex_str
         if m := _safe_re_search(regex_str, text):
+            pattern_allowed = False
+            allowlists = c.get("allowlists", [])
+            for allowlist in allowlists:
+                for allowlist_str in allowlist.get("regexes", []):
+                    for modifier in modifiers:
+                        if allowlist_str.find(modifier) > 0:
+                            allowlist_str = allowlist_str.replace(modifier, "")
+                            allowlist_str = modifier + allowlist_str
+                    if _safe_re_search(allowlist_str, text):
+                        pattern_allowed = True
+            if pattern_allowed:
+                continue
             begin = m.regs[0][0]
             end = m.regs[0][1]
             matched_text = text[begin:end]
