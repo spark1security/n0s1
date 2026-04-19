@@ -61,6 +61,7 @@ rules:
     entropy: 3.8
     keywords:
       - a3-
+    example: A3-ABCDEF-GHIJKLMNOPQ-RSTUV-WXYZ0-12345
   - id: 1password-service-account-token
     description: >-
       Uncovered a possible 1Password service account token, potentially
@@ -69,6 +70,8 @@ rules:
     entropy: 4
     keywords:
       - ops_
+    example: >-
+      ops_eyJhbGciOiJFZERTQSIsImtpZCI6InByb2R1Y3Rpb24ifQ.eyJzdWIiOiJ1c2VyXzAxSFhZWlFQMkdWTjNKS1E2V0g4RjRNWFMiLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MTczMDAwMDAwMCwianRpIjoiMDFIWFlaTVE0RzJWTjNKS1E2V0g4RjRNWFMiLCJ2IjoiMSJ9.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnop
   - id: adafruit-api-key
     description: >-
       Identified a potential Adafruit API Key, which could lead to unauthorized
@@ -78,6 +81,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9_-]{32})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - adafruit
+    example: adafruit_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: adobe-client-id
     description: >-
       Detected a pattern that resembles an Adobe OAuth Web Client ID, posing a
@@ -88,6 +92,7 @@ rules:
     entropy: 2
     keywords:
       - adobe
+    example: adobe_client_id = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: adobe-client-secret
     description: >-
       Discovered a potential Adobe Client Secret, which, if exposed, could allow
@@ -96,6 +101,7 @@ rules:
     entropy: 2
     keywords:
       - p8e-
+    example: p8e-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6
   - id: age-secret-key
     description: >-
       Discovered a potential Age encryption tool secret key, risking data
@@ -103,6 +109,8 @@ rules:
     regex: 'AGE-SECRET-KEY-1[QPZRY9X8GF2TVDW0S3JN54KHCE6MUA7L]{58}'
     keywords:
       - age-secret-key-1
+    example: >-
+      AGE-SECRET-KEY-1QPZRY9X8GF2TVDW0S3JN54KHCE6MUA7LQPZRY9X8GF2TVDW0S3JN54KHCE6
   - id: airtable-api-key
     description: >-
       Uncovered a possible Airtable API Key, potentially compromising database
@@ -112,6 +120,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{17})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - airtable
+    example: airtable_api_key = "f3a8b2c1d5e6a7b"
   - id: airtable-personnal-access-token
     description: >-
       Uncovered a possible Airtable Personal AccessToken, potentially
@@ -119,6 +128,8 @@ rules:
     regex: '\b(pat[[:alnum:]]{14}\.[a-f0-9]{64})\b'
     keywords:
       - airtable
+    example: >-
+      patABC123DEFGhi56.f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4
   - id: algolia-api-key
     description: >-
       Identified an Algolia API Key, which could result in unauthorized search
@@ -128,6 +139,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{32})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - algolia
+    example: algolia_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: alibaba-access-key-id
     description: >-
       Detected an Alibaba Cloud AccessKey ID, posing a risk of unauthorized
@@ -136,6 +148,7 @@ rules:
     entropy: 2
     keywords:
       - ltai
+    example: LTAIf3a8b2c1d5e6a7b8c9d0e1f2
   - id: alibaba-secret-key
     description: >-
       Discovered a potential Alibaba Cloud Secret Key, potentially allowing
@@ -146,6 +159,7 @@ rules:
     entropy: 2
     keywords:
       - alibaba
+    example: alibaba_secret = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5"
   - id: anthropic-admin-api-key
     description: >-
       Detected an Anthropic Admin API Key, risking unauthorized access to
@@ -153,6 +167,8 @@ rules:
     regex: '\b(sk-ant-admin01-[a-zA-Z0-9_\-]{93}AA)(?:[\x60''"\s;]|\\[nr]|$)'
     keywords:
       - sk-ant-admin01
+    example: >-
+      sk-ant-admin01-A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4eAA
   - id: anthropic-api-key
     description: >-
       Identified an Anthropic API Key, which may compromise AI assistant
@@ -160,6 +176,8 @@ rules:
     regex: '\b(sk-ant-api03-[a-zA-Z0-9_\-]{93}AA)(?:[\x60''"\s;]|\\[nr]|$)'
     keywords:
       - sk-ant-api03
+    example: >-
+      sk-ant-api03-A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4eAA
   - id: artifactory-api-key
     description: >-
       Detected an Artifactory api key, posing a risk unauthorized access to the
@@ -168,6 +186,8 @@ rules:
     entropy: 4.5
     keywords:
       - akcp
+    example: >-
+      AKCpA1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A
   - id: artifactory-reference-token
     description: >-
       Detected an Artifactory reference token, posing a risk of impersonation
@@ -176,6 +196,7 @@ rules:
     entropy: 4.5
     keywords:
       - cmvmd
+    example: cmVmdA1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4
   - id: asana-client-id
     description: >-
       Discovered a potential Asana Client ID, risking unauthorized access to
@@ -185,6 +206,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([0-9]{16})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - asana
+    example: asana_client_id = "1234567890123456"
   - id: asana-client-secret
     description: >-
       Identified an Asana Client Secret, which could lead to compromised project
@@ -194,6 +216,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{32})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - asana
+    example: asana_client_secret = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: atlassian-api-token
     description: >-
       Detected an Atlassian API token, posing a threat to project management and
@@ -207,6 +230,8 @@ rules:
       - confluence
       - jira
       - atatt3
+    example: >-
+      ATATT3xFfGF0A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f
   - id: authress-service-client-access-key
     description: >-
       Uncovered a possible Authress Service Client Access Key, which may
@@ -219,6 +244,7 @@ rules:
       - ext_
       - scauth_
       - authress_
+    example: sc_abc12.ab12.acc_1234567890abcd.YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=
   - id: aws-access-token
     description: >-
       Identified a pattern that may indicate AWS credentials, risking
@@ -231,6 +257,7 @@ rules:
       - asia
       - abia
       - acca
+    example: AKIAZ3MHBFVX7KPLQRST
     allowlists:
       - regexes:
           - .+EXAMPLE$
@@ -242,6 +269,8 @@ rules:
     entropy: 3
     keywords:
       - absk
+    example: >-
+      ABSKf3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3=
   - id: aws-amazon-bedrock-api-key-short-lived
     description: >-
       Identified a pattern that may indicate short-lived Amazon Bedrock API
@@ -250,6 +279,7 @@ rules:
     entropy: 3
     keywords:
       - bedrock-api-key-
+    example: bedrock-api-key-YmVkcm9jay5hbWF6b25hd3MuY29t
   - id: azure-ad-client-secret
     description: Azure AD Client Secret
     regex: >-
@@ -257,6 +287,7 @@ rules:
     entropy: 3
     keywords:
       - q~
+    example: ' abc1Q~AbCdEfGhIjKlMnOpQrStUvWxYz123 '
   - id: beamer-api-token
     description: >-
       Detected a Beamer API token, potentially compromising content management
@@ -266,6 +297,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(b_[a-z0-9=_\-]{44})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - beamer
+    example: beamer_token = "b_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7"
   - id: bitbucket-client-id
     description: >-
       Discovered a potential Bitbucket Client ID, risking unauthorized
@@ -275,6 +307,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{32})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - bitbucket
+    example: bitbucket_client_id = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: bitbucket-client-secret
     description: >-
       Discovered a potential Bitbucket Client Secret, posing a risk of
@@ -284,6 +317,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9=_\-]{64})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - bitbucket
+    example: >-
+      bitbucket_client_secret =
+      "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5"
   - id: bittrex-access-key
     description: >-
       Identified a Bittrex Access Key, which could lead to unauthorized access
@@ -293,6 +329,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{32})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - bittrex
+    example: bittrex_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: bittrex-secret-key
     description: >-
       Detected a Bittrex Secret Key, potentially compromising cryptocurrency
@@ -302,6 +339,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{32})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - bittrex
+    example: bittrex_secret_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: cisco-meraki-api-key
     description: >-
       Cisco Meraki is a cloud-managed IT solution that provides networking,
@@ -312,6 +350,7 @@ rules:
     entropy: 3
     keywords:
       - meraki
+    example: meraki_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1"
   - id: clickhouse-cloud-api-secret-key
     description: >-
       Identified a pattern that may indicate clickhouse cloud API secret key,
@@ -321,6 +360,7 @@ rules:
     entropy: 3
     keywords:
       - 4b1d
+    example: 4b1dF3a8b2c1D5e6A7b8C9d0E1f2A3b4C5d6F7a8
   - id: clojars-api-token
     description: >-
       Uncovered a possible Clojars API token, risking unauthorized access to
@@ -329,6 +369,7 @@ rules:
     entropy: 2
     keywords:
       - clojars_
+    example: CLOJARS_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4
   - id: cloudflare-api-key
     description: >-
       Detected a Cloudflare API Key, potentially compromising cloud application
@@ -339,6 +380,7 @@ rules:
     entropy: 2
     keywords:
       - cloudflare
+    example: cloudflare_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1"
   - id: cloudflare-global-api-key
     description: >-
       Detected a Cloudflare Global API Key, potentially compromising cloud
@@ -349,6 +391,7 @@ rules:
     entropy: 2
     keywords:
       - cloudflare
+    example: cloudflare_global_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b"
   - id: cloudflare-origin-ca-key
     description: >-
       Detected a Cloudflare Origin CA Key, potentially compromising cloud
@@ -358,6 +401,8 @@ rules:
     keywords:
       - cloudflare
       - v1.0-
+    example: >-
+      v1.0-f3a8b2c1d5e6a7b8c9d0e1f2-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6
   - id: codecov-access-token
     description: >-
       Found a pattern resembling a Codecov Access Token, posing a risk of
@@ -367,6 +412,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{32})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - codecov
+    example: codecov_token = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: cohere-api-token
     description: >-
       Identified a Cohere Token, posing a risk of unauthorized access to AI
@@ -378,6 +424,7 @@ rules:
     keywords:
       - cohere
       - co_api_key
+    example: cohere_api_key = "F3a8B2c1D5e6A7b8C9d0E1f2A3b4C5d6F3a8B2c1"
   - id: coinbase-access-token
     description: >-
       Detected a Coinbase Access Token, posing a risk of unauthorized access to
@@ -387,6 +434,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9_-]{64})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - coinbase
+    example: >-
+      coinbase_api_key =
+      "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5"
   - id: confluent-access-token
     description: >-
       Identified a Confluent Access Token, which could compromise access to
@@ -396,6 +446,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{16})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - confluent
+    example: confluent_api_key = "f3a8b2c1d5e6a7b8"
   - id: confluent-secret-key
     description: >-
       Found a Confluent Secret Key, potentially risking unauthorized operations
@@ -405,6 +456,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{64})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - confluent
+    example: >-
+      confluent_secret_key =
+      "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5"
   - id: contentful-delivery-api-token
     description: >-
       Discovered a Contentful delivery API token, posing a risk to content
@@ -414,6 +468,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9=_\-]{43})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - contentful
+    example: contentful_delivery_token = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d"
   - id: curl-auth-header
     description: >-
       Discovered a potential authorization token provided in a curl command
@@ -430,6 +485,9 @@ rules:
     entropy: 2.75
     keywords:
       - curl
+    example: >-
+      curl https://api.example.com/v1/data -H "Authorization: Bearer
+      eyJhbGciOiJIUzI1NiJ9.f3a8b2c1d5e6a7b8.SflKxwRJSMeKKF2QT4fw"
   - id: curl-auth-user
     description: >-
       Discovered a potential basic authorization token provided in a curl
@@ -448,6 +506,7 @@ rules:
           - '[''"]?[^:]+[''"]?:[''"]?\$(?:\d|\w+|\{(?:\d|\w+)})[''"]?'
           - '\$\([^)]+\):\$\([^)]+\)'
           - '[''"]?\$?{{[^}]+}}[''"]?:[''"]?\$?{{[^}]+}}[''"]?'
+        example: 'curl https://api.example.com/v1/data -u "john.doe:Tr0ub4dor&3"'
   - id: databricks-api-token
     description: >-
       Uncovered a Databricks API token, which may compromise big data analytics
@@ -456,6 +515,7 @@ rules:
     entropy: 3
     keywords:
       - dapi
+    example: dapif3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6-3
   - id: datadog-access-token
     description: >-
       Detected a Datadog Access Token, potentially risking monitoring and
@@ -465,6 +525,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{40})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - datadog
+    example: datadog_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1"
   - id: defined-networking-api-token
     description: >-
       Identified a Defined Networking API token, which could lead to
@@ -474,6 +535,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(dnkey-[a-z0-9=_\-]{26}-[a-z0-9=_\-]{52})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - dnkey
+    example: >-
+      dnkey_api_key =
+      "dnkey-f3a8b2c1d5e6a7b8c9d0e1f2a3b4-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0"
   - id: digitalocean-access-token
     description: >-
       Found a DigitalOcean OAuth Access Token, risking unauthorized cloud
@@ -482,6 +546,7 @@ rules:
     entropy: 3
     keywords:
       - doo_v1_
+    example: doo_v1_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6
   - id: digitalocean-pat
     description: >-
       Discovered a DigitalOcean Personal Access Token, posing a threat to cloud
@@ -490,6 +555,7 @@ rules:
     entropy: 3
     keywords:
       - dop_v1_
+    example: dop_v1_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6
   - id: digitalocean-refresh-token
     description: >-
       Uncovered a DigitalOcean OAuth Refresh Token, which could allow prolonged
@@ -497,6 +563,7 @@ rules:
     regex: '(?i)\b(dor_v1_[a-f0-9]{64})(?:[\x60''"\s;]|\\[nr]|$)'
     keywords:
       - dor_v1_
+    example: dor_v1_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6
   - id: discord-api-token
     description: >-
       Detected a Discord API key, potentially compromising communication
@@ -506,6 +573,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-f0-9]{64})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - discord
+    example: >-
+      discord_bot_token =
+      "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5"
   - id: discord-client-id
     description: >-
       Identified a Discord client ID, which may lead to unauthorized
@@ -516,6 +586,7 @@ rules:
     entropy: 2
     keywords:
       - discord
+    example: discord_client_id = "123456789012345678"
   - id: discord-client-secret
     description: >-
       Discovered a potential Discord client secret, risking compromised Discord
@@ -526,6 +597,7 @@ rules:
     entropy: 2
     keywords:
       - discord
+    example: discord_client_secret = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: doppler-api-token
     description: >-
       Discovered a Doppler API token, posing a risk to environment and secrets
@@ -534,6 +606,7 @@ rules:
     entropy: 2
     keywords:
       - dp.pt.
+    example: dp.pt.f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d
   - id: droneci-access-token
     description: >-
       Detected a Droneci Access Token, potentially compromising continuous
@@ -543,6 +616,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{32})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - droneci
+    example: droneci_token = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: dropbox-api-token
     description: >-
       Identified a Dropbox API secret, which could lead to unauthorized file
@@ -552,6 +626,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{15})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - dropbox
+    example: dropbox_api_key = "f3a8b2c1d5e6a7b"
   - id: dropbox-long-lived-api-token
     description: >-
       Found a Dropbox long-lived API token, risking prolonged unauthorized
@@ -561,6 +636,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{11}(AAAAAAAAAA)[a-z0-9\-_=]{43})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - dropbox
+    example: >-
+      dropbox_token =
+      "a1b2c3d4e5fAAAAAAAAAAAAa1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d"
   - id: dropbox-short-lived-api-token
     description: >-
       Discovered a Dropbox short-lived API token, posing a risk of temporary but
@@ -570,6 +648,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(sl\.[a-z0-9\-=_]{135})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - dropbox
+    example: >-
+      dropbox_token =
+      "sl.f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5"
   - id: duffel-api-token
     description: >-
       Uncovered a Duffel API token, which may compromise travel platform
@@ -578,6 +659,7 @@ rules:
     entropy: 2
     keywords:
       - duffel_
+    example: duffel_live_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d
   - id: dynatrace-api-token
     description: >-
       Detected a Dynatrace API token, potentially risking application
@@ -586,6 +668,8 @@ rules:
     entropy: 4
     keywords:
       - dt0c01.
+    example: >-
+      dt0c01.f3a8b2c1d5e6a7b8c9d0e1f2.f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6
   - id: easypost-api-token
     description: >-
       Identified an EasyPost API token, which could lead to unauthorized postal
@@ -594,6 +678,7 @@ rules:
     entropy: 2
     keywords:
       - ezak
+    example: EZAKf3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0
   - id: easypost-test-api-token
     description: >-
       Detected an EasyPost test API token, risking exposure of test environments
@@ -602,6 +687,7 @@ rules:
     entropy: 2
     keywords:
       - eztk
+    example: EZTKf3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0
   - id: etsy-access-token
     description: >-
       Found an Etsy Access Token, potentially compromising Etsy shop management
@@ -612,6 +698,7 @@ rules:
     entropy: 3
     keywords:
       - etsy
+    example: etsy_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2"
   - id: facebook-access-token
     description: >-
       Discovered a Facebook Access Token, posing a risk of unauthorized access
@@ -620,6 +707,7 @@ rules:
     entropy: 3
     keywords:
       - facebook
+    example: 1234567890123456|f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2
   - id: facebook-page-access-token
     description: >-
       Discovered a Facebook Page Access Token, posing a risk of unauthorized
@@ -629,6 +717,8 @@ rules:
     keywords:
       - eaam
       - eaac
+    example: >-
+      EAAMf3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6
   - id: facebook-secret
     description: >-
       Discovered a Facebook Application secret, posing a risk of unauthorized
@@ -639,6 +729,7 @@ rules:
     entropy: 3
     keywords:
       - facebook
+    example: facebook_app_secret = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: fastly-api-token
     description: >-
       Uncovered a Fastly API key, which may compromise CDN and edge cloud
@@ -648,6 +739,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9=_\-]{32})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - fastly
+    example: fastly_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: finicity-api-token
     description: >-
       Detected a Finicity API token, potentially risking financial data access
@@ -657,6 +749,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-f0-9]{32})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - finicity
+    example: finicity_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: finicity-client-secret
     description: >-
       Identified a Finicity Client Secret, which could lead to compromised
@@ -666,6 +759,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{20})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - finicity
+    example: finicity_client_secret = "f3a8b2c1d5e6a7b8c9d0"
   - id: finnhub-access-token
     description: >-
       Found a Finnhub Access Token, risking unauthorized access to financial
@@ -675,6 +769,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{20})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - finnhub
+    example: finnhub_api_key = "f3a8b2c1d5e6a7b8c9d0"
   - id: flickr-access-token
     description: >-
       Discovered a Flickr Access Token, posing a risk of unauthorized photo
@@ -684,6 +779,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{32})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - flickr
+    example: flickr_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: flutterwave-encryption-key
     description: >-
       Uncovered a Flutterwave Encryption Key, which may compromise payment
@@ -692,6 +788,7 @@ rules:
     entropy: 2
     keywords:
       - flwseck_test
+    example: FLWSECK_TEST-f3a8b2c1d5e6
   - id: flutterwave-public-key
     description: >-
       Detected a Finicity Public Key, potentially exposing public cryptographic
@@ -700,6 +797,7 @@ rules:
     entropy: 2
     keywords:
       - flwpubk_test
+    example: FLWPUBK_TEST-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6-X
   - id: flutterwave-secret-key
     description: >-
       Identified a Flutterwave Secret Key, risking unauthorized financial
@@ -708,6 +806,7 @@ rules:
     entropy: 2
     keywords:
       - flwseck_test
+    example: FLWSECK_TEST-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6-X
   - id: flyio-access-token
     description: Uncovered a Fly.io API key
     regex: >-
@@ -717,6 +816,7 @@ rules:
       - fo1_
       - fm1
       - fm2_
+    example: fo1_F3a8b2c1D5e6A7b8C9d0E1f2A3b4C5d6F3a8b2c1D
   - id: frameio-api-token
     description: >-
       Found a Frame.io API token, potentially compromising video collaboration
@@ -724,6 +824,7 @@ rules:
     regex: 'fio-u-(?i)[a-z0-9\-_=]{64}'
     keywords:
       - fio-u-
+    example: fio-u-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6
   - id: freemius-secret-key
     description: >-
       Detected a Freemius secret key, potentially exposing sensitive
@@ -732,6 +833,7 @@ rules:
     path: (?i)\.php$
     keywords:
       - secret_key
+    example: '"secret_key" => "sk_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c" '
   - id: freshbooks-access-token
     description: >-
       Discovered a Freshbooks Access Token, posing a risk to accounting software
@@ -741,6 +843,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{64})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - freshbooks
+    example: >-
+      freshbooks_token =
+      "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5"
   - id: gcp-api-key
     description: >-
       Uncovered a GCP API key, which could lead to unauthorized access to Google
@@ -749,6 +854,7 @@ rules:
     entropy: 4
     keywords:
       - aiza
+    example: AIzaSyXk9p7QmRt4Nv2Lw8Jh3Fg5Dc1Bs6Ae0Yz
     allowlists:
       - regexes:
           - AIzaSyabcdefghijklmnopqrstuvwxyz1234567
@@ -776,6 +882,7 @@ rules:
     keywords:
       - ghu_
       - ghs_
+    example: ghs_f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8
     allowlists:
       - paths:
           - '(?:^|/)@octokit/auth-token/README\.md$'
@@ -787,6 +894,8 @@ rules:
     entropy: 3
     keywords:
       - github_pat_
+    example: >-
+      github_pat_f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1
   - id: github-oauth
     description: >-
       Discovered a GitHub OAuth Access Token, posing a risk of compromised
@@ -795,6 +904,7 @@ rules:
     entropy: 3
     keywords:
       - gho_
+    example: gho_f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8
   - id: github-pat
     description: >-
       Uncovered a GitHub Personal Access Token, potentially leading to
@@ -803,6 +913,7 @@ rules:
     entropy: 3
     keywords:
       - ghp_
+    example: ghp_f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8
     allowlists:
       - paths:
           - '(?:^|/)@octokit/auth-token/README\.md$'
@@ -814,6 +925,7 @@ rules:
     entropy: 3
     keywords:
       - ghr_
+    example: ghr_f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8
   - id: gitlab-cicd-job-token
     description: >-
       Identified a GitLab CI/CD Job Token, potential access to projects and some
@@ -822,6 +934,7 @@ rules:
     entropy: 3
     keywords:
       - glcbt-
+    example: glcbt-01A_F3a8b2C1d5E6a7B8c9D0
   - id: gitlab-deploy-token
     description: >-
       Identified a GitLab Deploy Token, risking access to repositories, packages
@@ -830,6 +943,7 @@ rules:
     entropy: 3
     keywords:
       - gldt-
+    example: gldt-F3a8b2C1d5E6a7B8c9D0e1F2
   - id: gitlab-feature-flag-client-token
     description: >-
       Identified a GitLab feature flag client token, risks exposing user lists
@@ -838,12 +952,14 @@ rules:
     entropy: 3
     keywords:
       - glffct-
+    example: glffct-F3a8b2C1d5E6a7B8c9D0e1F2
   - id: gitlab-feed-token
     description: 'Identified a GitLab feed token, risking exposure of user data.'
     regex: 'glft-[0-9a-zA-Z_\-]{20}'
     entropy: 3
     keywords:
       - glft-
+    example: glft-F3a8b2C1d5E6a7B8c9D0e1F2
   - id: gitlab-incoming-mail-token
     description: >-
       Identified a GitLab incoming mail token, risking manipulation of data sent
@@ -852,6 +968,7 @@ rules:
     entropy: 3
     keywords:
       - glimt-
+    example: glimt-F3a8b2C1d5E6a7B8c9D0e1F2a3B4c
   - id: gitlab-kubernetes-agent-token
     description: >-
       Identified a GitLab Kubernetes Agent token, risking access to repos and
@@ -860,6 +977,7 @@ rules:
     entropy: 3
     keywords:
       - glagent-
+    example: glagent-F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0
   - id: gitlab-oauth-app-secret
     description: >-
       Identified a GitLab OIDC Application Secret, risking access to apps using
@@ -868,6 +986,7 @@ rules:
     entropy: 3
     keywords:
       - gloas-
+    example: gloas-F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8
   - id: gitlab-pat
     description: >-
       Identified a GitLab Personal Access Token, risking unauthorized access to
@@ -876,6 +995,7 @@ rules:
     entropy: 3
     keywords:
       - glpat-
+    example: glpat-F3a8b2C1d5E6a7B8c9D0
   - id: gitlab-pat-routable
     description: >-
       Identified a GitLab Personal Access Token (routable), risking unauthorized
@@ -884,6 +1004,7 @@ rules:
     entropy: 4
     keywords:
       - glpat-
+    example: glpat-F3a8b2C1d5E6a7B8c9D0e1F2a3B4c.ab1234567
   - id: gitlab-ptt
     description: >-
       Found a GitLab Pipeline Trigger Token, potentially compromising continuous
@@ -892,6 +1013,7 @@ rules:
     entropy: 3
     keywords:
       - glptt-
+    example: glptt-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1
   - id: gitlab-rrt
     description: >-
       Discovered a GitLab Runner Registration Token, posing a risk to CI/CD
@@ -900,6 +1022,7 @@ rules:
     entropy: 3
     keywords:
       - gr1348941
+    example: GR1348941F3a8b2C1d5E6a7B8c9D0e1F2
   - id: gitlab-runner-authentication-token
     description: >-
       Discovered a GitLab Runner Authentication Token, posing a risk to CI/CD
@@ -908,6 +1031,7 @@ rules:
     entropy: 3
     keywords:
       - glrt-
+    example: glrt-F3a8b2C1d5E6a7B8c9D0e1F2
   - id: gitlab-runner-authentication-token-routable
     description: >-
       Discovered a GitLab Runner Authentication Token (Routable), posing a risk
@@ -916,6 +1040,7 @@ rules:
     entropy: 4
     keywords:
       - glrt-
+    example: glrt-t1_F3a8b2C1d5E6a7B8c9D0e1F2a3B4c.ab1234567
   - id: gitlab-scim-token
     description: >-
       Discovered a GitLab SCIM Token, posing a risk to unauthorized access for a
@@ -924,6 +1049,7 @@ rules:
     entropy: 3
     keywords:
       - glsoat-
+    example: glsoat-F3a8b2C1d5E6a7B8c9D0e1F2
   - id: gitlab-session-cookie
     description: >-
       Discovered a GitLab Session Cookie, posing a risk to unauthorized access
@@ -932,6 +1058,7 @@ rules:
     entropy: 3
     keywords:
       - _gitlab_session=
+    example: _gitlab_session=f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6
   - id: gitter-access-token
     description: >-
       Uncovered a Gitter Access Token, which may lead to unauthorized access to
@@ -941,6 +1068,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9_-]{40})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - gitter
+    example: gitter_token = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1"
   - id: gocardless-api-token
     description: >-
       Detected a GoCardless API token, potentially risking unauthorized direct
@@ -951,6 +1079,7 @@ rules:
     keywords:
       - live_
       - gocardless
+    example: gocardless_token = "live_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1"
   - id: grafana-api-key
     description: >-
       Identified a Grafana API key, which could compromise monitoring dashboards
@@ -959,6 +1088,8 @@ rules:
     entropy: 3
     keywords:
       - eyjrijoi
+    example: >-
+      eyJrIjoiF3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0e1F2==
   - id: grafana-cloud-api-token
     description: >-
       Found a Grafana cloud API token, risking unauthorized access to
@@ -967,6 +1098,7 @@ rules:
     entropy: 3
     keywords:
       - glc_
+    example: glc_F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1=
   - id: grafana-service-account-token
     description: >-
       Discovered a Grafana service account token, posing a risk of compromised
@@ -975,6 +1107,7 @@ rules:
     entropy: 3
     keywords:
       - glsa_
+    example: glsa_F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6_f3a8b2c1
   - id: harness-api-key
     description: >-
       Identified a Harness Access Token (PAT or SAT), risking unauthorized
@@ -983,6 +1116,7 @@ rules:
     keywords:
       - pat.
       - sat.
+    example: pat.F3a8b2C1d5E6a7B8c9D0e1F2.f3a8b2c1d5e6a7b8c9d0e1f2.f3a8b2c1d5e6a7b8c9d0
   - id: hashicorp-tf-api-token
     description: >-
       Uncovered a HashiCorp Terraform user/org API token, which may lead to
@@ -991,6 +1125,8 @@ rules:
     entropy: 3.5
     keywords:
       - atlasv1
+    example: >-
+      f3a8b2c1d5e6a7.atlasv1.f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6
   - id: hashicorp-tf-password
     description: >-
       Identified a HashiCorp Terraform password field, risking unauthorized
@@ -1003,6 +1139,7 @@ rules:
     keywords:
       - administrator_login_password
       - password
+    example: administrator_login_password = "tr0ub4dor3"
   - id: heroku-api-key
     description: >-
       Detected a Heroku API Key, potentially compromising cloud application
@@ -1012,6 +1149,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - heroku
+    example: heroku_api_key = "f3a8b2c1-d5e6-a7b8-c9d0-e1f2a3b4c5d6"
   - id: heroku-api-key-v2
     description: >-
       Detected a Heroku API Key, potentially compromising cloud application
@@ -1020,6 +1158,8 @@ rules:
     entropy: 4
     keywords:
       - hrku-aa
+    example: >-
+      HRKU-AAF3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8
   - id: hubspot-api-key
     description: >-
       Found a HubSpot API Token, posing a risk to CRM data integrity and
@@ -1029,6 +1169,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - hubspot
+    example: hubspot_api_key = "F3A8B2C1-D5E6-A7B8-C9D0-E1F2A3B4C5D6"
   - id: huggingface-access-token
     description: >-
       Discovered a Hugging Face Access token, which could lead to unauthorized
@@ -1037,6 +1178,7 @@ rules:
     entropy: 2
     keywords:
       - hf_
+    example: hf_abcdefghijklmnopqrstuvwxyzabcdefgh
   - id: huggingface-organization-api-token
     description: >-
       Uncovered a Hugging Face Organization API token, potentially compromising
@@ -1045,6 +1187,7 @@ rules:
     entropy: 2
     keywords:
       - api_org_
+    example: api_org_abcdefghijklmnopqrstuvwxyzabcdefgh
   - id: infracost-api-token
     description: >-
       Detected an Infracost API Token, risking unauthorized access to cloud cost
@@ -1053,6 +1196,7 @@ rules:
     entropy: 3
     keywords:
       - ico-
+    example: ico-F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6
   - id: intercom-api-key
     description: >-
       Identified an Intercom API Token, which could compromise customer
@@ -1062,6 +1206,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9=_\-]{60})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - intercom
+    example: >-
+      intercom_token =
+      "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4"
   - id: intra42-client-secret
     description: >-
       Found a Intra42 client secret, which could lead to unauthorized access to
@@ -1072,6 +1219,7 @@ rules:
       - intra
       - s-s4t2ud-
       - s-s4t2af-
+    example: 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
   - id: jfrog-api-key
     description: >-
       Found a JFrog API Key, posing a risk of unauthorized access to software
@@ -1084,6 +1232,9 @@ rules:
       - artifactory
       - bintray
       - xray
+    example: >-
+      jfrog_api_key =
+      "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b"
   - id: jfrog-identity-token
     description: >-
       Discovered a JFrog Identity Token, potentially compromising access to
@@ -1096,6 +1247,9 @@ rules:
       - artifactory
       - bintray
       - xray
+    example: >-
+      artifactory_token =
+      "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5"
   - id: jwt
     description: >-
       Uncovered a JSON Web Token, which may lead to unauthorized access to web
@@ -1105,6 +1259,8 @@ rules:
     entropy: 3
     keywords:
       - ey
+    example: >-
+      eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMTIzIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNzE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
   - id: jwt-base64
     description: >-
       Detected a Base64-encoded JSON Web Token, posing a risk of exposing
@@ -1114,6 +1270,8 @@ rules:
     entropy: 2
     keywords:
       - zxlk
+    example: >-
+      ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnpkV0lpT2lKMWMyVnlNVEl6SXN3aWFYTnpJam9pWVhCcExtVjRZVzF3YkdVdVkyOXRJbjAuU2ZsS3h3UkpTTWVLS0YyUVQ0ZndwTWVKZjM2UE9rNnlKVl9hZFFzc3c1Yw==
   - id: kraken-access-token
     description: >-
       Identified a Kraken Access Token, potentially compromising cryptocurrency
@@ -1123,6 +1281,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9\/=_\+\-]{80,90})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - kraken
+    example: >-
+      kraken_api_key =
+      "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7"
   - id: kubernetes-secret-yaml
     description: >-
       Possible Kubernetes Secret detected, posing a risk of leaking
@@ -1137,6 +1298,10 @@ rules:
     path: (?i)\.ya?ml$
     keywords:
       - secret
+    example: |-
+      kind: Secret
+      data:
+        token: ZjNhOGIyYzFkNWU2YTdiOGM5ZDA=
     allowlists:
       - regexes:
           - >-
@@ -1155,6 +1320,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-f0-9]{24})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - kucoin
+    example: kucoin_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2"
   - id: kucoin-secret-key
     description: >-
       Discovered a Kucoin Secret Key, which could lead to compromised
@@ -1164,6 +1330,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - kucoin
+    example: kucoin_secret_key = "f3a8b2c1-d5e6-a7b8-c9d0-e1f2a3b4c5d6"
   - id: launchdarkly-access-token
     description: >-
       Uncovered a Launchdarkly Access Token, potentially compromising feature
@@ -1173,6 +1340,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9=_\-]{40})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - launchdarkly
+    example: launchdarkly_token = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1"
   - id: linear-api-key
     description: >-
       Detected a Linear API Token, posing a risk to project management tools and
@@ -1181,6 +1349,7 @@ rules:
     entropy: 2
     keywords:
       - lin_api_
+    example: lin_api_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1
   - id: linear-client-secret
     description: >-
       Identified a Linear Client Secret, which may compromise secure
@@ -1191,6 +1360,7 @@ rules:
     entropy: 2
     keywords:
       - linear
+    example: linear_client_secret = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: linkedin-client-id
     description: >-
       Found a LinkedIn Client ID, risking unauthorized access to LinkedIn
@@ -1203,6 +1373,7 @@ rules:
       - linkedin
       - linked_in
       - linked-in
+    example: linkedin_client_id = "f3a8b2c1d5e6a7"
   - id: linkedin-client-secret
     description: >-
       Discovered a LinkedIn Client secret, potentially compromising LinkedIn
@@ -1215,6 +1386,7 @@ rules:
       - linkedin
       - linked_in
       - linked-in
+    example: linkedin_client_secret = "f3a8b2c1d5e6a7b8"
   - id: lob-api-key
     description: >-
       Uncovered a Lob API Key, which could lead to unauthorized access to
@@ -1225,6 +1397,7 @@ rules:
     keywords:
       - test_
       - live_
+    example: lob_api_key = "live_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b"
   - id: lob-pub-api-key
     description: >-
       Detected a Lob Publishable API Key, posing a risk of exposing mail and
@@ -1236,6 +1409,7 @@ rules:
       - test_pub
       - live_pub
       - _pub
+    example: lob_pub_key = "live_pub_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d"
   - id: looker-client-id
     description: >-
       Found a Looker Client ID, risking unauthorized access to a Looker account
@@ -1245,6 +1419,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{20})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - looker
+    example: looker_client_id = "f3a8b2c1d5e6a7b8c9d0"
   - id: looker-client-secret
     description: >-
       Found a Looker Client Secret, risking unauthorized access to a Looker
@@ -1254,6 +1429,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{24})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - looker
+    example: looker_client_secret = "f3a8b2c1d5e6a7b8c9d0e1f2"
   - id: mailchimp-api-key
     description: >-
       Identified a Mailchimp API key, potentially compromising email marketing
@@ -1263,6 +1439,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-f0-9]{32}-us\d\d)(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - mailchimp
+    example: mailchimp_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6-us12"
   - id: mailgun-private-api-token
     description: >-
       Found a Mailgun private API token, risking unauthorized email service
@@ -1272,6 +1449,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(key-[a-f0-9]{32})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - mailgun
+    example: mailgun_api_key = "key-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: mailgun-pub-key
     description: >-
       Discovered a Mailgun public validation key, which could expose email
@@ -1281,6 +1459,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(pubkey-[a-f0-9]{32})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - mailgun
+    example: mailgun_pub_key = "pubkey-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: mailgun-signing-key
     description: >-
       Uncovered a Mailgun webhook signing key, potentially compromising email
@@ -1290,6 +1469,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-h0-9]{32}-[a-h0-9]{8}-[a-h0-9]{8})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - mailgun
+    example: mailgun_webhook_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6-f3a8b2c1-d5e6a7b8"
   - id: mapbox-api-token
     description: >-
       Detected a MapBox API token, posing a risk to geospatial services and
@@ -1299,6 +1479,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(pk\.[a-z0-9]{60}\.[a-z0-9]{22})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - mapbox
+    example: >-
+      mapbox_token =
+      "pk.f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6.f3a8b2c1d5e6a7b8c9d0e1"
   - id: mattermost-access-token
     description: >-
       Identified a Mattermost Access Token, which may compromise team
@@ -1308,12 +1491,14 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{26})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - mattermost
+    example: mattermost_token = "f3a8b2c1d5e6a7b8c9d0e1f2a3"
   - id: maxmind-license-key
     description: Discovered a potential MaxMind license key.
     regex: '\b([A-Za-z0-9]{6}_[A-Za-z0-9]{29}_mmk)(?:[\x60''"\s;]|\\[nr]|$)'
     entropy: 4
     keywords:
       - _mmk
+    example: F3a8b2_C1d5e6A7b8c9D0e1f2A3b4c5D6e7f8A_mmk
   - id: messagebird-api-token
     description: >-
       Found a MessageBird API token, risking unauthorized access to
@@ -1325,6 +1510,7 @@ rules:
       - messagebird
       - message-bird
       - message_bird
+    example: messagebird_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2a"
   - id: messagebird-client-id
     description: >-
       Discovered a MessageBird client ID, potentially compromising API
@@ -1336,6 +1522,7 @@ rules:
       - messagebird
       - message-bird
       - message_bird
+    example: messagebird_client_id = "f3a8b2c1-d5e6-a7b8-c9d0-e1f2a3b4c5d6"
   - id: microsoft-teams-webhook
     description: >-
       Uncovered a Microsoft Teams Webhook, which could lead to unauthorized
@@ -1346,6 +1533,8 @@ rules:
       - webhook.office.com
       - webhookb2
       - incomingwebhook
+    example: >-
+      https://myorg.webhook.office.com/webhookb2/f3a8b2c1-d5e6-a7b8-c9d0-e1f2a3b4c5d6@f3a8b2c1-d5e6-a7b8-c9d0-e1f2a3b4c5d6/IncomingWebhook/f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6/f3a8b2c1-d5e6-a7b8-c9d0-e1f2a3b4c5d6
   - id: netlify-access-token
     description: >-
       Detected a Netlify Access Token, potentially compromising web hosting
@@ -1355,6 +1544,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9=_\-]{40,46})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - netlify
+    example: netlify_token = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1"
   - id: new-relic-browser-api-token
     description: >-
       Identified a New Relic ingest browser API token, risking unauthorized
@@ -1364,6 +1554,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(NRJS-[a-f0-9]{19})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - nrjs-
+    example: newrelic_browser_key = "NRJS-f3a8b2c1d5e6a7b8c9d"
   - id: new-relic-insert-key
     description: >-
       Discovered a New Relic insight insert key, compromising data injection
@@ -1373,6 +1564,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(NRII-[a-z0-9-]{32})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - nrii-
+    example: newrelic_insert_key = "NRII-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: new-relic-user-api-id
     description: >-
       Found a New Relic user API ID, posing a risk to application monitoring
@@ -1384,6 +1576,9 @@ rules:
       - new-relic
       - newrelic
       - new_relic
+    example: >-
+      newrelic_api_id =
+      "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5"
   - id: new-relic-user-api-key
     description: >-
       Discovered a New Relic user API Key, which could lead to compromised
@@ -1393,12 +1588,14 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(NRAK-[a-z0-9]{27})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - nrak
+    example: newrelic_api_key = "NRAK-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c"
   - id: notion-api-token
     description: Notion API token
     regex: '\b(ntn_[0-9]{11}[A-Za-z0-9]{32}[A-Za-z0-9]{3})(?:[\x60''"\s;]|\\[nr]|$)'
     entropy: 4
     keywords:
       - ntn_
+    example: ntn_12345678901F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6abc
   - id: npm-access-token
     description: >-
       Uncovered an npm access token, potentially compromising package management
@@ -1407,6 +1604,7 @@ rules:
     entropy: 2
     keywords:
       - npm_
+    example: npm_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8
   - id: nuget-config-password
     description: >-
       Identified a password within a Nuget config file, potentially compromising
@@ -1416,6 +1614,7 @@ rules:
     entropy: 1
     keywords:
       - <add key=
+    example: <add key="ClearTextPassword" value="Tr0ub4dor&3!" />
     allowlists:
       - regexes:
           - 33f!!lloppa
@@ -1432,6 +1631,7 @@ rules:
       - nytimes
       - new-york-times
       - newyorktimes
+    example: nytimes_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: octopus-deploy-api-key
     description: >-
       Discovered a potential Octopus Deploy API key, risking application
@@ -1440,6 +1640,7 @@ rules:
     entropy: 3
     keywords:
       - api-
+    example: API-F3A8B2C1D5E6A7B8C9D0E1F2A3B4
   - id: okta-access-token
     description: >-
       Identified an Okta Access Token, which may compromise identity management
@@ -1450,6 +1651,7 @@ rules:
     entropy: 4
     keywords:
       - okta
+    example: okta_api_token = "00f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1"
   - id: openai-api-key
     description: >-
       Found an OpenAI API Key, posing a risk of unauthorized access to AI
@@ -1459,6 +1661,7 @@ rules:
     entropy: 3
     keywords:
       - t3blbkfj
+    example: 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
   - id: openshift-user-token
     description: >-
       Found an OpenShift user token, potentially compromising an
@@ -1467,6 +1670,7 @@ rules:
     entropy: 3.5
     keywords:
       - sha256~
+    example: sha256~F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E
   - id: perplexity-api-key
     description: >-
       Detected a Perplexity API key, which could lead to unauthorized access to
@@ -1475,6 +1679,7 @@ rules:
     entropy: 4
     keywords:
       - pplx-
+    example: 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
   - id: plaid-api-token
     description: >-
       Discovered a Plaid API Token, potentially compromising financial data
@@ -1484,6 +1689,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(access-(?:sandbox|development|production)-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - plaid
+    example: >-
+      plaid_access_token =
+      "access-production-f3a8b2c1-d5e6-a7b8-c9d0-e1f2a3b4c5d6"
   - id: plaid-client-id
     description: >-
       Uncovered a Plaid Client ID, which could lead to unauthorized financial
@@ -1494,6 +1702,7 @@ rules:
     entropy: 3.5
     keywords:
       - plaid
+    example: plaid_client_id = "f3a8b2c1d5e6a7b8c9d0e1f2"
   - id: plaid-secret-key
     description: >-
       Detected a Plaid Secret key, risking unauthorized access to financial
@@ -1504,6 +1713,7 @@ rules:
     entropy: 3.5
     keywords:
       - plaid
+    example: plaid_secret = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5"
   - id: planetscale-api-token
     description: >-
       Identified a PlanetScale API token, potentially compromising database
@@ -1512,6 +1722,7 @@ rules:
     entropy: 3
     keywords:
       - pscale_tkn_
+    example: pscale_tkn_F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5
   - id: planetscale-oauth-token
     description: >-
       Found a PlanetScale OAuth token, posing a risk to database access control
@@ -1520,6 +1731,7 @@ rules:
     entropy: 3
     keywords:
       - pscale_oauth_
+    example: pscale_oauth_F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5
   - id: planetscale-password
     description: >-
       Discovered a PlanetScale password, which could lead to unauthorized
@@ -1528,6 +1740,7 @@ rules:
     entropy: 3
     keywords:
       - pscale_pw_
+    example: pscale_pw_F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5
   - id: postman-api-token
     description: >-
       Uncovered a Postman API token, potentially compromising API testing and
@@ -1536,6 +1749,7 @@ rules:
     entropy: 3
     keywords:
       - pmak-
+    example: PMAK-f3a8b2c1d5e6a7b8c9d0e1f2-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8
   - id: prefect-api-token
     description: >-
       Detected a Prefect API token, risking unauthorized access to workflow
@@ -1544,6 +1758,7 @@ rules:
     entropy: 2
     keywords:
       - pnu_
+    example: pnu_F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8
   - id: private-key
     description: >-
       Identified a Private Key, which may compromise cryptographic security and
@@ -1553,6 +1768,11 @@ rules:
       BLOCK)?-----[\s\S-]{64,}?KEY(?: BLOCK)?-----
     keywords:
       - '-----begin'
+    example: |-
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEowIBAAKCAQEA2a2rwplBQLzHPZe5RJr9vNGFCMnJSTpU7iLVMaXBkFoMp7
+      qR8v4nHZRmfPuPQz0wKX1VKc3sZk4F8v0kMhJT6aLqX9b2dUCwY5o3N8pRaEz
+      -----END RSA PRIVATE KEY-----
   - id: privateai-api-token
     description: >-
       Identified a PrivateAI Token, posing a risk of unauthorized access to AI
@@ -1565,6 +1785,7 @@ rules:
       - privateai
       - private_ai
       - private-ai
+    example: privateai_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6"
   - id: pulumi-api-token
     description: >-
       Found a Pulumi API token, posing a risk to infrastructure as code services
@@ -1573,6 +1794,7 @@ rules:
     entropy: 2
     keywords:
       - pul-
+    example: pul-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1
   - id: pypi-upload-token
     description: >-
       Discovered a PyPI upload token, potentially compromising Python package
@@ -1581,6 +1803,8 @@ rules:
     entropy: 3
     keywords:
       - pypi-ageichlwas5vcmc
+    example: >-
+      pypi-AgEIcHlwaS5vcmcF3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0e1F2
   - id: rapidapi-access-token
     description: >-
       Uncovered a RapidAPI Access Token, which could lead to unauthorized access
@@ -1590,6 +1814,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9_-]{50})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - rapidapi
+    example: rapidapi_key = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c"
   - id: readme-api-token
     description: >-
       Detected a Readme API token, risking unauthorized documentation management
@@ -1598,6 +1823,8 @@ rules:
     entropy: 2
     keywords:
       - rdme_
+    example: >-
+      rdme_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1
   - id: rubygems-api-token
     description: >-
       Identified a Rubygem API token, potentially compromising Ruby library
@@ -1606,6 +1833,7 @@ rules:
     entropy: 2
     keywords:
       - rubygems_
+    example: rubygems_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8
   - id: scalingo-api-token
     description: >-
       Found a Scalingo API token, posing a risk to cloud platform services and
@@ -1614,6 +1842,7 @@ rules:
     entropy: 2
     keywords:
       - tk-us-
+    example: tk-us-F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0
   - id: sendbird-access-id
     description: >-
       Discovered a Sendbird Access ID, which could compromise chat and messaging
@@ -1623,6 +1852,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - sendbird
+    example: sendbird_app_id = "f3a8b2c1-d5e6-a7b8-c9d0-e1f2a3b4c5d6"
   - id: sendbird-access-token
     description: >-
       Uncovered a Sendbird Access Token, potentially risking unauthorized access
@@ -1632,6 +1862,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-f0-9]{40})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - sendbird
+    example: sendbird_api_token = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1"
   - id: sendgrid-api-token
     description: >-
       Detected a SendGrid API token, posing a risk of unauthorized email service
@@ -1640,6 +1871,7 @@ rules:
     entropy: 2
     keywords:
       - sg.
+    example: SG.f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6
   - id: sendinblue-api-token
     description: >-
       Identified a Sendinblue API token, which may compromise email marketing
@@ -1648,6 +1880,8 @@ rules:
     entropy: 2
     keywords:
       - xkeysib-
+    example: >-
+      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
   - id: sentry-access-token
     description: >-
       Found a Sentry.io Access Token (old format), risking unauthorized access
@@ -1658,6 +1892,9 @@ rules:
     entropy: 3
     keywords:
       - sentry
+    example: >-
+      sentry_auth_token =
+      "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5"
   - id: sentry-org-token
     description: >-
       Found a Sentry.io Organization Token, risking unauthorized access to error
@@ -1667,6 +1904,8 @@ rules:
     entropy: 4.5
     keywords:
       - sntrys_eyjpyxqio
+    example: >-
+      sntrys_eyJpYXQiOF3a8b2c1d5e6a7b8LCJyZWdpb25fdXJsF3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6==_F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0e1F2
   - id: sentry-user-token
     description: >-
       Found a Sentry.io User Token, risking unauthorized access to error
@@ -1675,24 +1914,28 @@ rules:
     entropy: 3.5
     keywords:
       - sntryu_
+    example: sntryu_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5
   - id: settlemint-application-access-token
     description: Found a Settlemint Application Access Token.
     regex: '\b(sm_aat_[a-zA-Z0-9]{16})(?:[\x60''"\s;]|\\[nr]|$)'
     entropy: 3
     keywords:
       - sm_aat
+    example: sm_aat_F3a8b2C1d5E6a7B8
   - id: settlemint-personal-access-token
     description: Found a Settlemint Personal Access Token.
     regex: '\b(sm_pat_[a-zA-Z0-9]{16})(?:[\x60''"\s;]|\\[nr]|$)'
     entropy: 3
     keywords:
       - sm_pat
+    example: sm_pat_F3a8b2C1d5E6a7B8
   - id: settlemint-service-access-token
     description: Found a Settlemint Service Access Token.
     regex: '\b(sm_sat_[a-zA-Z0-9]{16})(?:[\x60''"\s;]|\\[nr]|$)'
     entropy: 3
     keywords:
       - sm_sat
+    example: sm_sat_F3a8b2C1d5E6a7B8
   - id: shippo-api-token
     description: >-
       Discovered a Shippo API token, potentially compromising shipping services
@@ -1701,6 +1944,7 @@ rules:
     entropy: 2
     keywords:
       - shippo_
+    example: shippo_live_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1
   - id: shopify-access-token
     description: >-
       Uncovered a Shopify access token, which could lead to unauthorized
@@ -1709,6 +1953,7 @@ rules:
     entropy: 2
     keywords:
       - shpat_
+    example: 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
   - id: shopify-custom-access-token
     description: >-
       Detected a Shopify custom access token, potentially compromising custom
@@ -1717,6 +1962,7 @@ rules:
     entropy: 2
     keywords:
       - shpca_
+    example: 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
   - id: shopify-private-app-access-token
     description: >-
       Identified a Shopify private app access token, risking unauthorized access
@@ -1725,6 +1971,7 @@ rules:
     entropy: 2
     keywords:
       - shppa_
+    example: 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
   - id: shopify-shared-secret
     description: >-
       Found a Shopify shared secret, posing a risk to application authentication
@@ -1733,6 +1980,7 @@ rules:
     entropy: 2
     keywords:
       - shpss_
+    example: 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
   - id: sidekiq-secret
     description: >-
       Discovered a Sidekiq Secret, which could lead to compromised background
@@ -1743,6 +1991,7 @@ rules:
     keywords:
       - bundle_enterprise__contribsys__com
       - bundle_gems__contribsys__com
+    example: 'BUNDLE_ENTERPRISE__CONTRIBSYS__COM = "f3a8b2c1:d5e6a7b8"'
   - id: sidekiq-sensitive-url
     description: >-
       Uncovered a Sidekiq Sensitive URL, potentially exposing internal job
@@ -1752,6 +2001,7 @@ rules:
     keywords:
       - gems.contribsys.com
       - enterprise.contribsys.com
+    example: 'https://f3a8b2c1:d5e6a7b8@gems.contribsys.com/'
   - id: slack-app-token
     description: >-
       Detected a Slack App-level token, risking unauthorized access to Slack
@@ -1760,6 +2010,7 @@ rules:
     entropy: 2
     keywords:
       - xapp
+    example: xapp-1-A1B2C3D4E5F6-2-f3a8b2c1d5e6a7b8c9d0e1f2
   - id: slack-bot-token
     description: >-
       Identified a Slack Bot token, which may compromise bot integrations and
@@ -1768,6 +2019,7 @@ rules:
     entropy: 3
     keywords:
       - xoxb
+    example: xoxb-1234567890-1234567890-F3a8b2C1d5E6a7B8c9D0e1F2
   - id: slack-config-access-token
     description: >-
       Found a Slack Configuration access token, posing a risk to workspace
@@ -1777,6 +2029,8 @@ rules:
     keywords:
       - xoxe.xoxb-
       - xoxe.xoxp-
+    example: >-
+      xoxe.xoxb-1-F3A8B2C1D5E6A7B8C9D0E1F2A3B4C5D6F3A8B2C1D5E6A7B8C9D0E1F2A3B4C5D6F3A8B2C1D5E6A7B8C9D0E1F2A3B4C5D6F3A8B2C1D5E6A7B8C9D0E1F2A3B4C5D6F3A8B2C1D5E
   - id: slack-config-refresh-token
     description: >-
       Discovered a Slack Configuration refresh token, potentially allowing
@@ -1785,6 +2039,8 @@ rules:
     entropy: 2
     keywords:
       - xoxe-
+    example: >-
+      xoxe-1-F3A8B2C1D5E6A7B8C9D0E1F2A3B4C5D6F3A8B2C1D5E6A7B8C9D0E1F2A3B4C5D6F3A8B2C1D5E6A7B8C9D0E1F2A3B4C5D6F3A8B2C1D5E6A7B8C9D0E1F2A3B4C5D6
   - id: slack-legacy-bot-token
     description: >-
       Uncovered a Slack Legacy bot token, which could lead to compromised legacy
@@ -1793,6 +2049,7 @@ rules:
     entropy: 2
     keywords:
       - xoxb
+    example: xoxb-12345678-F3a8b2C1d5E6a7B8c9D0e1F2
   - id: slack-legacy-token
     description: >-
       Detected a Slack Legacy token, risking unauthorized access to older Slack
@@ -1802,6 +2059,7 @@ rules:
     keywords:
       - xoxo
       - xoxs
+    example: xoxo-1234567890-1234567890-1234567890-f3a8b2c1d5e6
   - id: slack-legacy-workspace-token
     description: >-
       Identified a Slack Legacy Workspace token, potentially compromising access
@@ -1811,6 +2069,7 @@ rules:
     keywords:
       - xoxa
       - xoxr
+    example: xoxa-1-F3a8b2C1d5E6a7B8c9D0e1F2
   - id: slack-user-token
     description: >-
       Found a Slack User token, posing a risk of unauthorized user impersonation
@@ -1820,6 +2079,7 @@ rules:
     keywords:
       - xoxp-
       - xoxe-
+    example: xoxp-1234567890-1234567890-1234567890-F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6
   - id: slack-webhook-url
     description: >-
       Discovered a Slack Webhook, which could lead to unauthorized message
@@ -1828,6 +2088,8 @@ rules:
       (?:https?://)?hooks.slack.com/(?:services|workflows|triggers)/[A-Za-z0-9+/]{43,56}
     keywords:
       - hooks.slack.com
+    example: >-
+      https://hooks.slack.com/services/T1ABCDEF0/B1ABCDEF0/f3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6
   - id: snyk-api-token
     description: >-
       Uncovered a Snyk API token, potentially compromising software
@@ -1837,6 +2099,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - snyk
+    example: snyk_api_token = "f3a8b2c1-d5e6-a7b8-c9d0-e1f2a3b4c5d6"
   - id: sonar-api-token
     description: >-
       Uncovered a Sonar API token, potentially compromising software
@@ -1847,6 +2110,7 @@ rules:
     secretGroup: 2
     keywords:
       - sonar
+    example: sonar_token = "squ_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1"
   - id: sourcegraph-access-token
     description: Sourcegraph is a code search and navigation engine.
     regex: >-
@@ -1855,6 +2119,7 @@ rules:
     keywords:
       - sgp_
       - sourcegraph
+    example: sgp_f3a8b2c1d5e6a7b8_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1
   - id: square-access-token
     description: >-
       Detected a Square Access Token, risking unauthorized payment processing
@@ -1864,6 +2129,7 @@ rules:
     keywords:
       - sq0atp-
       - eaaa
+    example: EAAAAf3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6
   - id: squarespace-access-token
     description: >-
       Identified a Squarespace Access Token, which may compromise website
@@ -1873,6 +2139,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - squarespace
+    example: squarespace_api_key = "f3a8b2c1-d5e6-a7b8-c9d0-e1f2a3b4c5d6"
   - id: stripe-access-token
     description: >-
       Found a Stripe Access Token, posing a risk to payment processing services
@@ -1887,6 +2154,7 @@ rules:
       - rk_test
       - rk_live
       - rk_prod
+    example: sk_live_F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6
   - id: sumologic-access-id
     description: >-
       Discovered a SumoLogic Access ID, potentially compromising log management
@@ -1897,6 +2165,7 @@ rules:
     entropy: 3
     keywords:
       - sumo
+    example: sumo_access_id = "suF3a8b2C1d5E6a7B8"
   - id: sumologic-access-token
     description: >-
       Uncovered a SumoLogic Access Token, which could lead to unauthorized
@@ -1907,6 +2176,9 @@ rules:
     entropy: 3
     keywords:
       - sumo
+    example: >-
+      sumo_access_token =
+      "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5"
   - id: telegram-bot-api-token
     description: >-
       Detected a Telegram Bot API Token, risking unauthorized bot operations and
@@ -1916,6 +2188,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([0-9]{5,16}:(?-i:A)[a-z0-9_\-]{34})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - telegr
+    example: 'telegram_bot_token = "1234567890:Af3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3"'
   - id: travisci-access-token
     description: >-
       Identified a Travis CI Access Token, potentially compromising continuous
@@ -1925,6 +2198,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{22})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - travis
+    example: travis_api_token = "f3a8b2c1d5e6a7b8c9d0e1"
   - id: twilio-api-key
     description: >-
       Found a Twilio API Key, posing a risk to communication services and
@@ -1933,6 +2207,7 @@ rules:
     entropy: 3
     keywords:
       - sk
+    example: SKf3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8
   - id: twitch-api-token
     description: >-
       Discovered a Twitch API token, which could compromise streaming services
@@ -1942,6 +2217,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{30})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - twitch
+    example: twitch_client_secret = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5"
   - id: twitter-access-secret
     description: >-
       Uncovered a Twitter Access Secret, potentially risking unauthorized
@@ -1951,6 +2227,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{45})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - twitter
+    example: twitter_access_secret = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a"
   - id: twitter-access-token
     description: >-
       Detected a Twitter Access Token, posing a risk of unauthorized account
@@ -1960,6 +2237,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([0-9]{15,25}-[a-zA-Z0-9]{20,40})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - twitter
+    example: twitter_access_token = "1234567890123456-F3a8b2C1d5E6a7B8c9D0e1F2a3B4"
   - id: twitter-api-key
     description: >-
       Identified a Twitter API Key, which may compromise Twitter application
@@ -1969,6 +2247,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{25})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - twitter
+    example: twitter_api_key = "f3a8b2c1d5e6a7b8c9d0e1f2a"
   - id: twitter-api-secret
     description: >-
       Found a Twitter API Secret, risking the security of Twitter app
@@ -1978,6 +2257,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{50})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - twitter
+    example: twitter_api_secret = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c"
   - id: twitter-bearer-token
     description: >-
       Discovered a Twitter Bearer Token, potentially compromising API access and
@@ -1987,6 +2267,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(A{22}[a-zA-Z0-9%]{80,100})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - twitter
+    example: >-
+      twitter_bearer_token =
+      "AAAAAAAAAAAAAAAAAAAAAAAAf3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1"
   - id: typeform-api-token
     description: >-
       Uncovered a Typeform API token, which could lead to unauthorized survey
@@ -1996,6 +2279,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(tfp_[a-z0-9\-_\.=]{59})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - tfp_
+    example: >-
+      typeform_token =
+      "tfp_f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d"
   - id: vault-batch-token
     description: >-
       Detected a Vault Batch Token, risking unauthorized access to secret
@@ -2004,6 +2290,8 @@ rules:
     entropy: 4
     keywords:
       - hvb.
+    example: >-
+      hvb.F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1
   - id: vault-service-token
     description: >-
       Identified a Vault Service Token, potentially compromising infrastructure
@@ -2013,6 +2301,8 @@ rules:
     keywords:
       - hvs.
       - s.
+    example: >-
+      hvs.F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0
     allowlists:
       - regexes:
           - 's\.[A-Za-z]{24}'
@@ -2025,6 +2315,9 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(t1\.[A-Z0-9a-z_-]+[=]{0,2}\.[A-Z0-9a-z_-]{86}[=]{0,2})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - yandex
+    example: >-
+      yandex_token =
+      "t1.F3a8B2c1D5e6.F3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6a7B8c9D0e1F2"
   - id: yandex-api-key
     description: >-
       Discovered a Yandex API Key, which could lead to unauthorized access to
@@ -2034,6 +2327,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(AQVN[A-Za-z0-9_\-]{35,38})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - yandex
+    example: yandex_api_key = "AQVNf3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E"
   - id: yandex-aws-access-token
     description: >-
       Uncovered a Yandex AWS Access Token, potentially compromising cloud
@@ -2043,6 +2337,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}(YC[a-zA-Z0-9_\-]{38})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - yandex
+    example: yandex_aws_token = "YCf3a8b2C1d5E6a7B8c9D0e1F2a3B4c5D6f3A8b2C1d5E6"
   - id: zendesk-secret-key
     description: >-
       Detected a Zendesk Secret Key, risking unauthorized access to customer
@@ -2052,3 +2347,4 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{40})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - zendesk
+    example: zendesk_api_token = "f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1"
