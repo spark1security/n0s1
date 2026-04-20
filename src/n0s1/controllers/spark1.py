@@ -1,5 +1,6 @@
 import logging
 import socket
+import requests
 
 try:
     import clients.http_client as http_client
@@ -17,6 +18,43 @@ def _get_local_ip():
     finally:
         s.close()
     return local_ip
+
+
+def _inject_cred(req_validator, cred):
+    req_validator_sensitive = req_validator
+    # TODO: inject real credentials into req_validator_sensitive
+    return req_validator_sensitive
+
+def _execute_request(req: dict, timeout: int = 15) -> dict:
+    try:
+        kwargs = {
+            "method": req.get("method", None),
+            "url": req.get("url", None),
+            "headers": req.get("headers", {}),
+            "params": req.get("params", {}),
+            "timeout": timeout,
+            "allow_redirects": True,
+        }
+        if req.auth:
+            kwargs["auth"] = req.get("auth", None)
+        req_body = req.get("body", None)
+        if req_body:
+            if isinstance(req_body, dict):
+                kwargs["json"] = req_body
+            else:
+                kwargs["data"] = req_body
+        resp = requests.request(**kwargs)
+
+        return {
+            "status_code": resp.status_code,
+            "headers": resp.headers,
+            "body": resp.text[:2000],
+            "error": None,
+        }
+    except requests.exceptions.Timeout:
+        return {"status_code": None, "headers": {}, "body": "", "error": "request timed out"}
+    except Exception as exc:
+        return {"status_code": None, "headers": {}, "body": "", "error": str(exc)}
 
 
 class Spark1(http_client.HttpClient):
@@ -62,20 +100,38 @@ class Spark1(http_client.HttpClient):
             return False
         return False
 
-    def ai_analysis(self, report=None):
+    def ai_analysis(self, report=None, sensitive_report=None):
         if report is None:
             return None
         auth_url = self.base_url + "/api/v1/analyses"
+        updated_report = None
         try:
             r = self._post_request(auth_url, json=report)
             if r.status_code == 200:
-                ai_report = r.json()
-                if ai_report:
-                    for id in ai_report.get("findings", {}):
-                        ai_data = ai_report.get("findings", {})[id].get("ai_report", {})
-                        if ai_data:
-                            return ai_report
+                updated_report = r.json()
+                for id in updated_report.get("findings", {}):
+                    req_validator = updated_report.get("findings", {})[id].get("ai_report", {}).get("request_validator", {})
+
+                    url = req_validator.get("url", None)
+                    method = req_validator.get("method", None)
+                    if url and method:
+                        cred = sensitive_report.get("findings", {})[id].get("sensitive_secret", None)
+                        if cred:
+                            req_validator = _inject_cred(req_validator, cred)
+                            resp = _execute_request(req_validator)
+                            updated_report["findings"][id]["ai_report"]["response_validator"] = resp
         except Exception as ex:
             logging.info(str(ex))
+
+        try:
+            if updated_report:
+                r = self._post_request(auth_url, json=updated_report)
+                if r.status_code == 200:
+                    analyzed_report = r.json()
+                    return self.ai_analysis(analyzed_report, sensitive_report)
+
+        except Exception as ex:
+            logging.info(str(ex))
+
         return None
 

@@ -116,6 +116,7 @@ class SecretScanner():
         self.scan_arguments = None
         self.scope_config = None
         self.report_json = None
+        self.report_sensitive_json = None
 
         datetime_now_obj = datetime.now(timezone.utc)
         date_utc = datetime_now_obj.strftime("%Y-%m-%dT%H:%M:%S")
@@ -447,6 +448,10 @@ class SecretScanner():
 
         if finding_id not in self.report_json["findings"]:
             self.report_json["findings"][finding_id] = new_finding
+            if not self.report_sensitive_json:
+                self.report_sensitive_json = {"findings": {}}
+            self.report_sensitive_json["findings"][finding_id] = json.loads(json.dumps(new_finding))
+            self.report_sensitive_json["findings"][finding_id]["sensitive_secret"] = sanitized_secret = scan_text_result.get("secret", "")
         if post_comment:
             comment_template = self.cfg.get("comment_params", {}).get("message_template", "")
             bot_name = self.cfg.get("comment_params", {}).get("bot_name", "bot")
@@ -591,9 +596,9 @@ class SecretScanner():
                         if item_data and item_data.lower().find(label.lower()) == -1:
                             self.scan_text_and_report_leaks(item_data, name, self.regex_config, self.scan_arguments, ticket)
         if n0s1_pro and self.ai_analysis:
-            ai_analyzed_report = n0s1_pro.ai_analysis(self.report_json)
+            ai_analyzed_report = n0s1_pro.ai_analysis(self.report_json, self.report_sensitive_json)
             if ai_analyzed_report:
-                return ai_analyzed_report
+                self.report_json = ai_analyzed_report
 
         return self.report_json
 
