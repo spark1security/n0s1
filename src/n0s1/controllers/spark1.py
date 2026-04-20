@@ -1,6 +1,7 @@
 import logging
 import socket
 import requests
+import json
 
 try:
     import clients.http_client as http_client
@@ -82,9 +83,12 @@ def _execute_request(req: dict, timeout: int = 15) -> dict:
                 kwargs["data"] = req_body
         resp = requests.request(**kwargs)
 
+        data = dict(resp.headers)
+        resp_headers = json.loads(json.dumps(data))
+
         return {
             "status_code": resp.status_code,
-            "headers": resp.headers,
+            "headers": resp_headers,
             "body": resp.text[:2000],
             "error": None,
         }
