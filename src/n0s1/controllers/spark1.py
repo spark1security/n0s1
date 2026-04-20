@@ -21,8 +21,45 @@ def _get_local_ip():
 
 
 def _inject_cred(req_validator, cred):
-    req_validator_sensitive = req_validator
-    # TODO: inject real credentials into req_validator_sensitive
+    import copy
+    req_validator_sensitive = copy.deepcopy(req_validator)
+
+    # Basic auth tuple: replace second element (password/token)
+    auth = req_validator_sensitive.get("auth")
+    if auth and isinstance(auth, (tuple, list)) and len(auth) == 2:
+        req_validator_sensitive["auth"] = (auth[0], cred)
+        return req_validator_sensitive
+
+    headers = req_validator_sensitive.get("headers", {})
+    auth_header = headers.get("Authorization", "")
+
+    # Bearer / Token header
+    for scheme in ("Bearer", "Token", "Basic"):
+        if auth_header.lower().startswith(scheme.lower() + " "):
+            headers["Authorization"] = f"{scheme} {cred}"
+            return req_validator_sensitive
+
+    # Replace any bare Authorization header value
+    if auth_header:
+        headers["Authorization"] = cred
+        return req_validator_sensitive
+
+    # Common API-key headers
+    for key in ("X-API-Key", "X-Auth-Token", "X-Access-Token", "Api-Key", "api-key"):
+        if key in headers:
+            headers[key] = cred
+            return req_validator_sensitive
+
+    # Query-param tokens
+    params = req_validator_sensitive.get("params", {})
+    for key in ("api_key", "token", "access_token", "apikey", "key"):
+        if key in params:
+            params[key] = cred
+            return req_validator_sensitive
+
+    # Fallback: set Authorization header as a bearer token
+    headers["Authorization"] = f"Bearer {cred}"
+    req_validator_sensitive["headers"] = headers
     return req_validator_sensitive
 
 def _execute_request(req: dict, timeout: int = 15) -> dict:
@@ -35,7 +72,7 @@ def _execute_request(req: dict, timeout: int = 15) -> dict:
             "timeout": timeout,
             "allow_redirects": True,
         }
-        if req.auth:
+        if req.get("auth"):
             kwargs["auth"] = req.get("auth", None)
         req_body = req.get("body", None)
         if req_body:
