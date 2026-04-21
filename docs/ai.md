@@ -108,7 +108,7 @@ scanner.SecretScanner(
     # Behavior flags
     post_comment=False,        # bool: post warning comment on tickets with leaks
     skip_comment=False,        # bool: skip scanning ticket/issue comments
-    show_matched_secret_on_logs=False,  # bool: log the actual secret (risk: exposure)
+    show_matched_secret_on_logs=False,  # bool: log the actual secret and add it to the report
     ai_analysis=False,         # bool: Allow AI agent to verify leaks
     private=False,             # bool: disable backend interaction
     debug=False,               # bool: verbose debug logging
