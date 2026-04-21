@@ -94,7 +94,7 @@ scanner.SecretScanner(
     scan_path=None,            # str: filesystem path (local_scan only)
 
     # Detection
-    regex_file=None,           # str: path to .yaml or .toml with custom regex patterns
+    regex_file=None,           # str: path to .yaml with custom regex patterns
                                #      default: built-in config/regex.yaml
 
     # Configuration
