@@ -420,7 +420,10 @@ class SecretScanner():
 
         self.log_message("\nPotential secret leak regex match!")
         self.log_message(finding_info)
+
+        reported_secret = sanitized_secret
         if show_matched_secret_on_logs:
+            reported_secret = snippet_text
             self.log_message(
                 f"\n##################### Secret  #####################\n{snippet_text}\n##################### Secret  #####################")
 
@@ -438,7 +441,7 @@ class SecretScanner():
         self.log_message("\n\n")
         finding_id = f"{url}_{sanitized_secret}"
         finding_id = _sha1_hash(finding_id)
-        new_finding = {"id": finding_id, "url": url, "secret": sanitized_secret,
+        new_finding = {"id": finding_id, "url": url, "secret": reported_secret,
                        "details": {"matched_regex_config": scan_text_result["matched_regex_config"],
                                    "platform": platform,
                                    "ticket_field": field}}
@@ -451,7 +454,7 @@ class SecretScanner():
             if not self.report_sensitive_json:
                 self.report_sensitive_json = {"findings": {}}
             self.report_sensitive_json["findings"][finding_id] = json.loads(json.dumps(new_finding))
-            self.report_sensitive_json["findings"][finding_id]["sensitive_secret"] = sanitized_secret = scan_text_result.get("secret", "")
+            self.report_sensitive_json["findings"][finding_id]["sensitive_secret"] = scan_text_result.get("secret", "")
         if post_comment:
             comment_template = self.cfg.get("comment_params", {}).get("message_template", "")
             bot_name = self.cfg.get("comment_params", {}).get("bot_name", "bot")

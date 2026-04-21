@@ -64,7 +64,7 @@
           },
           "show_matched_secret_on_logs": {
             "type": "boolean",
-            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+            "description": "If true, shows the actual leaked secret in reports and logs. Use with caution."
           },
           "debug": {
             "type": "boolean",
@@ -147,7 +147,7 @@
           },
           "show_matched_secret_on_logs": {
             "type": "boolean",
-            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+            "description": "If true, shows the actual leaked secret in reports and logs. Use with caution."
           },
           "debug": {
             "type": "boolean",
@@ -234,7 +234,7 @@
           },
           "show_matched_secret_on_logs": {
             "type": "boolean",
-            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+            "description": "If true, shows the actual leaked secret in reports and logs. Use with caution."
           },
           "debug": {
             "type": "boolean",
@@ -321,7 +321,7 @@
           },
           "show_matched_secret_on_logs": {
             "type": "boolean",
-            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+            "description": "If true, shows the actual leaked secret in reports and logs. Use with caution."
           },
           "debug": {
             "type": "boolean",
@@ -412,7 +412,7 @@
           },
           "show_matched_secret_on_logs": {
             "type": "boolean",
-            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+            "description": "If true, shows the actual leaked secret in reports and logs. Use with caution."
           },
           "debug": {
             "type": "boolean",
@@ -511,7 +511,7 @@
           },
           "show_matched_secret_on_logs": {
             "type": "boolean",
-            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+            "description": "If true, shows the actual leaked secret in reports and logs. Use with caution."
           },
           "debug": {
             "type": "boolean",
@@ -594,7 +594,7 @@
           },
           "show_matched_secret_on_logs": {
             "type": "boolean",
-            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+            "description": "If true, shows the actual leaked secret in reports and logs. Use with caution."
           },
           "debug": {
             "type": "boolean",
@@ -673,7 +673,7 @@
           },
           "show_matched_secret_on_logs": {
             "type": "boolean",
-            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+            "description": "If true, shows the actual leaked secret in reports and logs. Use with caution."
           },
           "debug": {
             "type": "boolean",
@@ -752,7 +752,7 @@
           },
           "show_matched_secret_on_logs": {
             "type": "boolean",
-            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+            "description": "If true, shows the actual leaked secret in reports and logs. Use with caution."
           },
           "debug": {
             "type": "boolean",
@@ -839,7 +839,7 @@
           },
           "show_matched_secret_on_logs": {
             "type": "boolean",
-            "description": "If true, shows the actual leaked secret in logs. Use with caution."
+            "description": "If true, shows the actual leaked secret in reports and logs. Use with caution."
           },
           "debug": {
             "type": "boolean",

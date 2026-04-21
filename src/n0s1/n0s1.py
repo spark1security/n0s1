@@ -74,7 +74,7 @@ def init_argparse() -> argparse.ArgumentParser:
         "--show-matched-secret-on-logs",
         dest="show_matched_secret_on_logs",
         action="store_true",
-        help="By default, only a sanitized version of the leak is shown on logs. This flag makes the actual leaked secret to be displayed on logs. Be extra careful when enabling this flag because you might make the leak worst by sending sensitive info to logs.",
+        help="By default, only a sanitized version of the leak is shown on reports and logs. This flag makes the actual leaked secret to be displayed on reports and logs. Be extra careful when enabling this flag because you might make the leak worst by sending sensitive info to reports and logs.",
     )
     parent_parser.add_argument(
         "--ai-analysis",
