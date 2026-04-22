@@ -401,6 +401,7 @@ class SecretScanner():
     def report_leaked_secret(self, scan_text_result):
         snippet_text = scan_text_result.get("snippet_text", "")
         sanitized_secret = scan_text_result.get("sanitized_secret", "")
+        mocked_secret = scan_text_result.get("mocked_secret", "")
         matched = scan_text_result.get("matched_regex_config", {})
         regex_id = matched.get("id", "")
         regex_description = matched.get("description", "")
@@ -441,10 +442,10 @@ class SecretScanner():
         self.log_message("\n\n")
         finding_id = f"{url}_{sanitized_secret}"
         finding_id = _sha1_hash(finding_id)
-        new_finding = {"id": finding_id, "url": url, "secret": reported_secret,
+        new_finding = {"id": finding_id, "url": url, "secret": reported_secret, "mocked_secret": mocked_secret,
                        "details": {"matched_regex_config": scan_text_result["matched_regex_config"],
-                                   "platform": platform,
-                                   "ticket_field": field}}
+                                   "platform": platform, "ticket_field": field}
+                       }
 
         if url_with_line_number:
             new_finding["url"] = leak_url
@@ -637,12 +638,19 @@ def log_message(message, level=logging.INFO):
             f.write(f"{message}\n")
 
 
-def _sanitize_text(text, begin, end):
+def _sanitize_text(text, begin, end, mock_text=None):
+    chunk = 20
+    if mock_text:
+        chunk *= 100
     text_len = len(text)
-    s_begin = max(begin - 20, 0)
-    s_end = min(end + 20, text_len)
-    sanitized_text = f"{text[s_begin:begin]}<REDACTED>{text[end:s_end]}"
+    s_begin = max(begin - chunk, 0)
+    s_end = min(end + chunk, text_len)
     snippet_text = text[s_begin:s_end]
+    if mock_text:
+        sanitized_text = f"{text[s_begin:begin]}{mock_text}{text[end:s_end]}"
+    else:
+        sanitized_text = f"{text[s_begin:begin]}<REDACTED>{text[end:s_end]}"
+
     return sanitized_text, snippet_text
 
 
@@ -675,21 +683,37 @@ def _safe_re_search(regex_str, text):
 def match_regex(regex_config, text):
     for c in regex_config["rules"]:
         regex_str = c["regex"]
+        mock_secret = c.get("example", "<REDACTED>")
         modifiers = ["(?i)", "(?m)", "(?s)", "(?x)", "(?g)", "(?u)", "(?A)", "(?L)", "(?U)", ]
         for modifier in modifiers:
             if regex_str.find(modifier) > 0:
                 regex_str = regex_str.replace(modifier, "")
                 regex_str = modifier + regex_str
         if m := _safe_re_search(regex_str, text):
+            pattern_allowed = False
+            allowlists = c.get("allowlists", [])
+            for allowlist in allowlists:
+                for allowlist_str in allowlist.get("regexes", []):
+                    for modifier in modifiers:
+                        if allowlist_str.find(modifier) > 0:
+                            allowlist_str = allowlist_str.replace(modifier, "")
+                            allowlist_str = modifier + allowlist_str
+                    if _safe_re_search(allowlist_str, text):
+                        pattern_allowed = True
+            if pattern_allowed:
+                continue
             begin = m.regs[0][0]
             end = m.regs[0][1]
             matched_text = text[begin:end]
+            mocked_text = text.replace(matched_text, mock_secret)
+            if len(mocked_text) > 10000 or mocked_text.lower().find(matched_text.lower()) >= 0:
+                mocked_text, snippet_text = _sanitize_text(text, begin, end, mock_secret)
             sanitized_text, snippet_text = _sanitize_text(text, begin, end)
             tmp = text[:begin]
             lines = tmp.split("\n")
             line_number = len(lines)
-            return c, matched_text, sanitized_text, snippet_text, line_number
-    return None, None, None, None, None
+            return c, matched_text, sanitized_text, mocked_text, snippet_text, line_number
+    return None, None, None, None, None, None
 
 
 def scan_text(regex_config, text):
@@ -697,9 +721,9 @@ def scan_text(regex_config, text):
     match = False
     scan_text_result = {}
     try:
-        matched_regex_config, secret, sanitized_secret, snippet_text, line_number = match_regex(regex_config, str(text))
+        matched_regex_config, secret, sanitized_secret, mocked_secret, snippet_text, line_number = match_regex(regex_config, str(text))
         scan_text_result = {"matched_regex_config": matched_regex_config, "secret": secret, "sanitized_secret": sanitized_secret,
-                            "snippet_text": snippet_text, "line_number": line_number}
+                            "mocked_secret": mocked_secret, "snippet_text": snippet_text, "line_number": line_number}
         if matched_regex_config:
             match = True
     except Exception as e:
