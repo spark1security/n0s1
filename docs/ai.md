@@ -108,7 +108,9 @@ scanner.SecretScanner(
     # Behavior flags
     post_comment=False,        # bool: post warning comment on tickets with leaks
     skip_comment=False,        # bool: skip scanning ticket/issue comments
-    show_matched_secret_on_logs=False,  # bool: log the actual secret (risk: exposure)
+    show_matched_secret_on_logs=False,  # bool: log the actual secret and add it to the report
+    ai_analysis=False,         # bool: Allow AI agent to verify leaks
+    private=False,             # bool: disable backend interaction
     debug=False,               # bool: verbose debug logging
     insecure=False,            # bool: skip SSL certificate verification
 
@@ -244,32 +246,34 @@ n0s1 local_scan --path ./src --regex-file ./custom.yaml
 
 ### CLI flag → SDK parameter mapping
 
-| CLI flag | SDK parameter | Notes |
-|---|---|---|
-| `--api-key` | `api_key` | |
-| `--server` | `server` | |
-| `--email` | `email` | |
-| `--owner` | `owner` | |
-| `--repo` | `repo` | |
-| `--branch` | `branch` | |
-| `--path` | `scan_path` | local_scan only |
-| `--regex-file` | `regex_file` | |
-| `--config-file` | `config_file` | |
-| `--report-file` | `report_file` | |
-| `--report-format` | `report_format` | |
-| `--post-comment` | `post_comment` | boolean flag (no value) |
-| `--skip-comment` | `skip_comment` | boolean flag (no value) |
+| CLI flag                        | SDK parameter                 | Notes |
+|---------------------------------|-------------------------------|---|
+| `--api-key`                     | `api_key`                     | |
+| `--server`                      | `server`                      | |
+| `--email`                       | `email`                       | |
+| `--owner`                       | `owner`                       | |
+| `--repo`                        | `repo`                        | |
+| `--branch`                      | `branch`                      | |
+| `--path`                        | `scan_path`                   | local_scan only |
+| `--regex-file`                  | `regex_file`                  | |
+| `--config-file`                 | `config_file`                 | |
+| `--report-file`                 | `report_file`                 | |
+| `--report-format`               | `report_format`               | |
+| `--post-comment`                | `post_comment`                | boolean flag (no value) |
+| `--skip-comment`                | `skip_comment`                | boolean flag (no value) |
 | `--show-matched-secret-on-logs` | `show_matched_secret_on_logs` | boolean flag |
-| `--debug` | `debug` | boolean flag |
-| `--insecure` | `insecure` | boolean flag |
-| `--secret-manager` | `secret_manager` | |
-| `--contact-help` | `contact_help` | |
-| `--label` | `label` | |
-| `--timeout` | `timeout` | int as string in CLI |
-| `--limit` | `limit` | int as string in CLI |
-| `--scope` | `scope` | |
-| `--map` | `map` | int as string in CLI |
-| `--map-file` | `map_file` | |
+| `--ai-analysis`                 | `ai_analysis`                 | boolean flag |
+| `--private`                     | `private`                     | boolean flag |
+| `--debug`                       | `debug`                       | boolean flag |
+| `--insecure`                    | `insecure`                    | boolean flag |
+| `--secret-manager`              | `secret_manager`              | |
+| `--contact-help`                | `contact_help`                | |
+| `--label`                       | `label`                       | |
+| `--timeout`                     | `timeout`                     | int as string in CLI |
+| `--limit`                       | `limit`                       | int as string in CLI |
+| `--scope`                       | `scope`                       | |
+| `--map`                         | `map`                         | int as string in CLI |
+| `--map-file`                    | `map_file`                    | |
 
 ---
 

@@ -113,7 +113,9 @@ scanner.SecretScanner(
     # Scanning behavior
     post_comment=False,             # Auto-post warning comments
     skip_comment=False,             # Skip scanning comments
-    show_matched_secret_on_logs=False,  # Show actual secrets in logs
+    show_matched_secret_on_logs=False,  # Show actual secrets in reports and logs
+    ai_analysis=False,              # Enable AI secret leak analysis
+    private=False,                  # Enable private mode
     debug=False,                    # Enable debug mode
     
     # Customization
@@ -194,7 +196,8 @@ scanner_instance = scanner.SecretScanner(
     target="local_scan",
     scan_path="/path/to/project",
     report_file="local_scan_results.json",
-    debug=True
+    debug=True,
+    private=True
 )
 result = scanner_instance.scan()
 ```
@@ -611,33 +614,35 @@ The `scan()` method returns a dictionary with the following structure:
 
 ### Configuration Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `target` | str | None | Platform to scan (required) |
-| `api_key` | str | None | API token/key |
-| `server` | str | None | Server URL |
-| `email` | str | None | User email |
-| `owner` | str | None | GitHub/GitLab owner |
-| `repo` | str | None | Repository name |
-| `branch` | str | None | Branch name |
-| `scan_path` | str | None | Local path |
-| `regex_file` | str | Default | Custom regex file |
-| `config_file` | str | Default | Config YAML file |
-| `report_file` | str | "n0s1_report.json" | Output file |
-| `report_format` | str | "n0s1" | Report format |
-| `post_comment` | bool | False | Auto-post comments |
-| `skip_comment` | bool | False | Skip comment scanning |
-| `show_matched_secret_on_logs` | bool | False | Show secrets in logs |
-| `debug` | bool | False | Debug mode |
-| `secret_manager` | str | None | Suggested secret manager |
-| `contact_help` | str | None | Help contact |
-| `label` | str | None | Bot identifier |
-| `timeout` | int | None | HTTP timeout (seconds) |
-| `limit` | int | None | Page limit |
-| `insecure` | bool | False | Ignore SSL |
-| `map` | str | None | Mapping depth |
-| `map_file` | str | None | Map file path |
-| `scope` | str | None | Search scope/query |
+| Parameter                     | Type | Default | Description                      |
+|-------------------------------|------|---------|----------------------------------|
+| `target`                      | str | None | Platform to scan (required)      |
+| `api_key`                     | str | None | API token/key                    |
+| `server`                      | str | None | Server URL                       |
+| `email`                       | str | None | User email                       |
+| `owner`                       | str | None | GitHub/GitLab owner              |
+| `repo`                        | str | None | Repository name                  |
+| `branch`                      | str | None | Branch name                      |
+| `scan_path`                   | str | None | Local path                       |
+| `regex_file`                  | str | Default | Custom regex file                |
+| `config_file`                 | str | Default | Config YAML file                 |
+| `report_file`                 | str | "n0s1_report.json" | Output file                      |
+| `report_format`               | str | "n0s1" | Report format                    |
+| `post_comment`                | bool | False | Auto-post comments               |
+| `skip_comment`                | bool | False | Skip comment scanning            |
+| `show_matched_secret_on_logs` | bool | False | Show secrets in reports and logs |
+| `ai_analysis`                 | bool | False | AI secret leak analysis          |
+| `private`                     | bool | False | Private mode                     |
+| `debug`                       | bool | False | Debug mode                       |
+| `secret_manager`              | str | None | Suggested secret manager         |
+| `contact_help`                | str | None | Help contact                     |
+| `label`                       | str | None | Bot identifier                   |
+| `timeout`                     | int | None | HTTP timeout (seconds)           |
+| `limit`                       | int | None | Page limit                       |
+| `insecure`                    | bool | False | Ignore SSL                       |
+| `map`                         | str | None | Mapping depth                    |
+| `map_file`                    | str | None | Map file path                    |
+| `scope`                       | str | None | Search scope/query               |
 
 ## Best Practices
 

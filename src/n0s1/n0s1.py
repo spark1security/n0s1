@@ -74,7 +74,19 @@ def init_argparse() -> argparse.ArgumentParser:
         "--show-matched-secret-on-logs",
         dest="show_matched_secret_on_logs",
         action="store_true",
-        help="By default, only a sanitized version of the leak is shown on logs. This flag makes the actual leaked secret to be displayed on logs. Be extra careful when enabling this flag because you might make the leak worst by sending sensitive info to logs.",
+        help="By default, only a sanitized version of the leak is shown on reports and logs. This flag makes the actual leaked secret to be displayed on reports and logs. Be extra careful when enabling this flag because you might make the leak worst by sending sensitive info to reports and logs.",
+    )
+    parent_parser.add_argument(
+        "--ai-analysis",
+        dest="ai_analysis",
+        action="store_true",
+        help="Send scan results to an AI agent to validate leaked credentials. The agent will update the report with each credential’s status: live (authentication succeeded), unable to test, or invalid.",
+    )
+    parent_parser.add_argument(
+        "--private",
+        dest="private",
+        action="store_true",
+        help="Private mode disables all interaction with the n0s1 backend service. Note: only Community mode is supported in this configuration. Authentication required for Professional mode is turned off when Private mode is enabled.",
     )
     parent_parser.add_argument(
         "--debug",
@@ -369,6 +381,8 @@ def main():
         parser.print_help()
         return
 
+    secret_scanner.set(ai_analysis=args.ai_analysis)
+    secret_scanner.set(private=args.private)
     secret_scanner.set(debug=args.debug)
     secret_scanner.set(regex_file=args.regex_file)
     secret_scanner.set(config_file=args.config_file)
