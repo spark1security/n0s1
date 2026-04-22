@@ -61,6 +61,7 @@ path = "src/n0s1/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/n0s1"]
+exclude = ["src/n0s1/n0s1_python"]
 
 [tool.hatch.build.targets.sdist]
 include = [
