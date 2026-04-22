@@ -15,7 +15,7 @@ n0s1 ([pronunciation](https://en.wiktionary.org/wiki/nosy#Pronunciation)) is a s
 
 See [USER_MANUAL.md](https://github.com/spark1security/n0s1/blob/main/USER_MANUAL.md) to learn how to run a scan.
 
-Secrets are defined by an adaptable configuration file: [regex.yaml](https://github.com/spark1security/n0s1/blob/main/src/n0s1/config/regex.yaml) or [regex.toml](https://github.com/spark1security/n0s1/blob/main/src/n0s1/config/regex.toml). The scanner loads the configuration and searches for sensitive information, which includes:
+Secrets are defined by an adaptable configuration file: [regex.yaml](https://github.com/spark1security/n0s1/blob/main/src/n0s1/config/regex.yaml). The scanner loads the configuration and searches for sensitive information, which includes:
 * Github Personal Access Tokens
 * GitLab Personal Access Tokens
 * AWS Access Tokens
@@ -53,6 +53,12 @@ n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<Y
 [Docker:](https://hub.docker.com/r/spark1security/n0s1)
 ```bash
 docker run spark1security/n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<YOUR_JIRA_API_TOKEN>"
+```
+
+[MCP:](https://pypi.org/project/n0s1-mcp/)
+```bash
+claude mcp add --scope user n0s1 -- uvx n0s1-mcp
+claude "Scan my Jira project IT for leaked secrets"
 ```
 
 [From source:](https://github.com/spark1security/n0s1#quick-start)
@@ -131,7 +137,7 @@ jira-scan:
 | Resource | Description |
 |---|---|
 | [`tool-schema.json`](tool-schema.json) | Tool-use / function-calling schema (Anthropic & OpenAI compatible). Load this to give an AI agent the ability to invoke n0s1 as structured tool calls. |
-| [`docs/ai.md`](docs/ai.md) | AI-optimized reference covering all interfaces: CLI, Docker, Python SDK, and GitHub Actions. |
+| [`docs/ai.md`](docs/ai.md) | AI-optimized reference covering all interfaces: CLI, Docker, Python SDK, GitHub Actions, and MCP server. |
 
 ## Want more? Check out Spark 1
 
