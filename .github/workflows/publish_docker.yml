@@ -1,0 +1,43 @@
+name: Publish to Docker Registry
+
+on:
+  workflow_run:
+    workflows: ["Publish to PyPI"]
+    types: [completed]
+
+jobs:
+  build-and-publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
+        env:
+          TAG: ${{ github.event.workflow_run.head_branch }}
+
+      - name: Wait for PyPI to propagate
+        run: sleep 120
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: marcelo@spark1.us
+          password: ${{ secrets.DOCKER_PW }}
+
+      - name: Build image
+        run: docker build --platform linux/amd64 . -t spark1security/n0s1:${{ steps.version.outputs.VERSION }} --no-cache
+
+      - name: Tag as latest
+        run: docker image tag spark1security/n0s1:${{ steps.version.outputs.VERSION }} spark1security/n0s1:latest
+
+      - name: Push versioned image
+        run: docker push spark1security/n0s1:${{ steps.version.outputs.VERSION }}
+
+      - name: Push latest image
+        run: docker push spark1security/n0s1:latest
