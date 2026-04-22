@@ -137,7 +137,7 @@ jira-scan:
 | Resource | Description |
 |---|---|
 | [`tool-schema.json`](tool-schema.json) | Tool-use / function-calling schema (Anthropic & OpenAI compatible). Load this to give an AI agent the ability to invoke n0s1 as structured tool calls. |
-| [`docs/ai.md`](docs/ai.md) | AI-optimized reference covering all interfaces: CLI, Docker, Python SDK, and GitHub Actions. |
+| [`docs/ai.md`](docs/ai.md) | AI-optimized reference covering all interfaces: CLI, Docker, Python SDK, GitHub Actions, and MCP server. |
 
 ## Want more? Check out Spark 1
 

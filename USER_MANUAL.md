@@ -8,6 +8,7 @@ Complete guide for using the n0s1 secret scanner tool.
 - [Global Options](#global-options)
 - [Platform Commands](#platform-commands)
 - [Advanced Features](#advanced-features)
+  - [MCP Server](#mcp-server)
 - [Examples](#examples)
 
 ## Overview
@@ -22,6 +23,8 @@ To display version information:
 ```bash
 n0s1 --version
 ```
+
+n0s1 is also available as an **MCP server** for Claude Code and Claude Desktop users, letting you trigger scans directly from a conversation without touching the CLI. See [MCP Server](#mcp-server) in Advanced Features.
 
 ## Basic Usage
 
@@ -437,6 +440,24 @@ This will:
 - Include contact information for help
 - Suggest using the specified secret manager
 - Use the label to avoid duplicate comments
+
+### MCP Server
+
+If you use Claude Code or Claude Desktop, you can register n0s1 as an MCP server and run scans directly from the chat interface — no CLI commands needed.
+
+**Register once:**
+```bash
+claude mcp add --scope user n0s1 -- uvx n0s1-mcp
+```
+
+After registration, you can ask Claude things like:
+- *"Scan my Jira project SEC for leaked secrets"*
+- *"Check my GitHub org myorg for exposed credentials"*
+- *"Scan the ./src directory for secrets"*
+
+Claude will call the appropriate n0s1 tool, pass your credentials, and summarize the findings inline.
+
+Use `--scope project` instead of `--scope user` to limit the server to the current project only.
 
 ### CI/CD Integration
 
