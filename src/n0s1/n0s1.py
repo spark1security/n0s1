@@ -32,7 +32,7 @@ def init_argparse() -> argparse.ArgumentParser:
         nargs="?",
         default=scanner.regex_file_default_value,
         type=str,
-        help="Custom .yaml or .toml with a list of regexes to be matched."
+        help="Custom .yaml with a list of regexes to be matched."
     )
     parent_parser.add_argument(
         "--config-file",

@@ -27,6 +27,7 @@ n0s1 exposes the same functionality through four interfaces. Choose based on con
 | Containerized / no install | Docker | `docker run spark1security/n0s1 <command> [--flag value]` |
 | Python script / agent code | Python SDK | `scanner.SecretScanner(target=..., **params).scan()` |
 | GitHub Actions workflow | GitHub Action | `uses: spark1security/n0s1-action@main` |
+| Claude Code / any MCP host | MCP server | `claude mcp add --scope user n0s1 -- uvx n0s1-mcp` |
 
 CLI and Docker share **identical parameters** — Docker is just a containerized CLI. The SDK uses `snake_case` equivalents of the CLI flags.
 
@@ -94,7 +95,7 @@ scanner.SecretScanner(
     scan_path=None,            # str: filesystem path (local_scan only)
 
     # Detection
-    regex_file=None,           # str: path to .yaml or .toml with custom regex patterns
+    regex_file=None,           # str: path to .yaml with custom regex patterns
                                #      default: built-in config/regex.yaml
 
     # Configuration
@@ -545,6 +546,62 @@ jobs:
 All other inputs (`regex-file`, `config-file`, `report-file`, `secret-manager`, `contact-help`, `label`, `timeout`, `limit`, `insecure`, `map`, `map-file`, `scope`, `owner`, `repo`, `branch`) match their CLI equivalents exactly.
 
 **Required inputs**: `scan-target`, `password-key`
+
+---
+
+## MCP Server
+
+n0s1 is available as an MCP (Model Context Protocol) server, letting any MCP-compatible host (Claude Code, Claude Desktop, etc.) invoke scans as native tool calls — no CLI knowledge required.
+
+### Register with Claude Code
+
+```bash
+claude mcp add --scope user n0s1 -- uvx n0s1-mcp
+```
+
+This registers the server at user scope so it is available across all projects. Replace `--scope user` with `--scope project` to restrict it to the current project.
+
+### Available tools
+
+| Tool | Platform | Required parameters |
+|---|---|---|
+| `scan_jira` | Jira | `server`, `email`, `api_key` |
+| `scan_confluence` | Confluence | `server`, `email`, `api_key` |
+| `scan_github` | GitHub | `api_key`, `owner` |
+| `scan_gitlab` | GitLab | `api_key`, `owner` |
+| `scan_slack` | Slack | `api_key` |
+| `scan_asana` | Asana | `api_key` |
+| `scan_wrike` | Wrike | `api_key` |
+| `scan_linear` | Linear | `api_key` |
+| `scan_zendesk` | Zendesk | `server`, `email`, `api_key` |
+| `scan_local` | Local filesystem | `scan_path` |
+
+### Common parameters (all tools)
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `report_format` | `"n0s1"` \| `"sarif"` \| `"gitlab"` | `"n0s1"` | Output format |
+| `show_matched_secret_on_logs` | bool | `false` | Include raw secret values in output |
+
+### Per-tool optional parameters
+
+| Tool | Optional parameters |
+|---|---|
+| `scan_jira` | `scope` (JQL, e.g. `jql:project=SEC`), `post_comment` |
+| `scan_confluence` | `scope` (CQL, e.g. `cql:space=SEC and type=page`) |
+| `scan_github` | `repo`, `branch`, `scope` (GitHub search syntax) |
+| `scan_gitlab` | `server` (default: `https://gitlab.com`), `repo`, `branch` |
+| `scan_asana` | `scope` (workspace or project filter) |
+| `scan_wrike` | `scope` (folder or space filter) |
+| `scan_local` | `regex_file` (path to custom YAML pattern file) |
+
+### When to use MCP over other interfaces
+
+- You are already inside an MCP-enabled host (Claude Code, Claude Desktop) and want to trigger scans without leaving the conversation.
+- You want the host model to decide which platforms to scan and interpret results directly.
+- You are building an agentic workflow where scan results feed into downstream tool calls in the same session.
+
+For scripted or automated use (CI, cron jobs, batch pipelines) prefer the CLI or Python SDK — they give finer-grained control over output files, parallelism, and error handling.
 
 ---
 
