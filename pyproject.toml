@@ -1,0 +1,71 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "n0s1"
+dynamic = ["version"]
+description = "Secret Scanner for Slack, Jira, Confluence, Asana, Wrike, Linear, Zendesk, GitHub and GitLab. Prevent credential leaks with n0s1."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Spark 1", email = "contact@spark1.us" }]
+keywords = ["security", "cybersecurity", "scanner", "secret scanner", "secret leak", "data leak", "Slack", "Jira", "Confluence", "Asana", "Wrike", "Linear", "Zendesk", "GitHub", "GitLab", "security scanner", "data loss prevention"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Operating System :: OS Independent",
+    "Topic :: Security",
+    "Topic :: Software Development",
+    "Topic :: System :: Monitoring",
+    "Topic :: Utilities",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "requests",
+    "toml",
+    "jira",
+    "pyyaml",
+    "atlassian-python-api",
+    "asana==3.2.2",
+    "zenpy",
+    "PyGithub",
+    "python-gitlab",
+    "WrikePy",
+    "BeautifulSoup4",
+    "slack_sdk",
+    "langchain-text-splitters",
+]
+
+[project.optional-dependencies]
+dev = ["check-manifest"]
+test = ["coverage"]
+
+[project.scripts]
+n0s1 = "n0s1.n0s1:main"
+
+[project.urls]
+Homepage = "https://spark1.us/n0s1"
+"Bug Reports" = "https://github.com/spark1security/n0s1/issues"
+Funding = "https://gofund.me/c6a0520c"
+Source = "https://github.com/spark1security/n0s1"
+
+[tool.hatch.version]
+path = "src/n0s1/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/n0s1"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/",
+    "requirements.txt",
+    "README.md",
+    "LICENSE",
+]
