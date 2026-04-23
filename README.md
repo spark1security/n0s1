@@ -64,11 +64,11 @@ claude "Scan my Jira project IT for leaked secrets"
 [From source:](https://github.com/spark1security/n0s1#quick-start)
 ```bash
 git clone https://github.com/spark1security/n0s1.git
-cd n0s1/src/n0s1
+cd n0s1
 python3 -m venv n0s1_python
 source n0s1_python/bin/activate
-python3 -m pip install -r ../../requirements.txt
-python3 n0s1.py jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<YOUR_JIRA_API_TOKEN>"
+pip install -e .
+n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<YOUR_JIRA_API_TOKEN>"
 deactivate
 ```
 
