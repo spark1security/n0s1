@@ -217,20 +217,31 @@ def scan_jira(
     project_key: Optional[str] = None,
     since: Optional[str] = None,
     *,
+    scope: Optional[str] = None,
+    api_key: Optional[str] = None,
+    email: Optional[str] = None,
+    report_format: str = "n0s1",
+    show_matched_secret_on_logs: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Jira workspace for leaked secrets.
 
-    Credentials are read from JIRA_TOKEN and JIRA_EMAIL env vars.
+    Credentials are read from JIRA_TOKEN and JIRA_EMAIL env vars, or may be
+    passed directly via api_key / email for backwards compatibility.
     """
-    scope = _jira_scope(project_key, since)
+    effective_scope = scope or _jira_scope(project_key, since)
     kwargs: dict = {
         "server": workspace_url,
-        "show_matched_secret_on_logs": False,
+        "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
+        "report_format": report_format,
     }
-    if scope:
-        kwargs["scope"] = scope
+    if effective_scope:
+        kwargs["scope"] = effective_scope
+    if api_key:
+        kwargs["api_key"] = api_key
+    if email:
+        kwargs["email"] = email
     return _run_platform_scan(
         "jira_scan",
         kwargs,
@@ -245,21 +256,32 @@ def scan_confluence(
     space_key: Optional[str] = None,
     since: Optional[str] = None,
     *,
+    scope: Optional[str] = None,
+    api_key: Optional[str] = None,
+    email: Optional[str] = None,
+    report_format: str = "n0s1",
+    show_matched_secret_on_logs: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Confluence workspace for leaked secrets.
 
     Credentials are read from CONFLUENCE_TOKEN / JIRA_TOKEN and
-    CONFLUENCE_EMAIL / JIRA_EMAIL env vars.
+    CONFLUENCE_EMAIL / JIRA_EMAIL env vars, or may be passed directly
+    via api_key / email for backwards compatibility.
     """
-    scope = _confluence_scope(space_key, since)
+    effective_scope = scope or _confluence_scope(space_key, since)
     kwargs: dict = {
         "server": workspace_url,
-        "show_matched_secret_on_logs": False,
+        "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
+        "report_format": report_format,
     }
-    if scope:
-        kwargs["scope"] = scope
+    if effective_scope:
+        kwargs["scope"] = effective_scope
+    if api_key:
+        kwargs["api_key"] = api_key
+    if email:
+        kwargs["email"] = email
     return _run_platform_scan(
         "confluence_scan",
         kwargs,
@@ -270,24 +292,31 @@ def scan_confluence(
 
 
 def scan_slack(
-    workspace_url: str,
+    workspace_url: Optional[str] = None,
     channel: Optional[str] = None,
     since: Optional[str] = None,
     *,
+    api_key: Optional[str] = None,
+    report_format: str = "n0s1",
+    show_matched_secret_on_logs: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Slack workspace for leaked secrets.
 
-    Credentials are read from the SLACK_TOKEN env var.
-    workspace_url is recorded for traceability; Slack auth is token-based.
+    Credentials are read from the SLACK_TOKEN env var, or may be passed
+    directly via api_key for backwards compatibility.
+    workspace_url is optional and recorded for traceability only.
     """
     scope = _search_scope(channel)
     kwargs: dict = {
-        "show_matched_secret_on_logs": False,
+        "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
+        "report_format": report_format,
     }
     if scope:
         kwargs["scope"] = scope
+    if api_key:
+        kwargs["api_key"] = api_key
     return _run_platform_scan(
         "slack_scan",
         kwargs,
@@ -298,23 +327,31 @@ def scan_slack(
 
 
 def scan_asana(
-    workspace_url: str,
+    workspace_url: Optional[str] = None,
     project: Optional[str] = None,
     since: Optional[str] = None,
     *,
+    scope: Optional[str] = None,
+    api_key: Optional[str] = None,
+    report_format: str = "n0s1",
+    show_matched_secret_on_logs: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan an Asana workspace for leaked secrets.
 
-    Credentials are read from the ASANA_TOKEN env var.
+    Credentials are read from the ASANA_TOKEN env var, or may be passed
+    directly via api_key for backwards compatibility.
     """
-    scope = _search_scope(project)
+    effective_scope = scope or _search_scope(project)
     kwargs: dict = {
-        "show_matched_secret_on_logs": False,
+        "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
+        "report_format": report_format,
     }
-    if scope:
-        kwargs["scope"] = scope
+    if effective_scope:
+        kwargs["scope"] = effective_scope
+    if api_key:
+        kwargs["api_key"] = api_key
     return _run_platform_scan(
         "asana_scan",
         kwargs,
@@ -325,23 +362,30 @@ def scan_asana(
 
 
 def scan_linear(
-    workspace_url: str,
+    workspace_url: Optional[str] = None,
     team: Optional[str] = None,
     since: Optional[str] = None,
     *,
+    api_key: Optional[str] = None,
+    report_format: str = "n0s1",
+    show_matched_secret_on_logs: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Linear workspace for leaked secrets.
 
-    Credentials are read from the LINEAR_TOKEN env var.
+    Credentials are read from the LINEAR_TOKEN env var, or may be passed
+    directly via api_key for backwards compatibility.
     """
     scope = _search_scope(team)
     kwargs: dict = {
-        "show_matched_secret_on_logs": False,
+        "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
+        "report_format": report_format,
     }
     if scope:
         kwargs["scope"] = scope
+    if api_key:
+        kwargs["api_key"] = api_key
     return _run_platform_scan(
         "linear_scan",
         kwargs,
@@ -355,18 +399,28 @@ def scan_zendesk(
     workspace_url: str,
     since: Optional[str] = None,
     *,
+    api_key: Optional[str] = None,
+    email: Optional[str] = None,
+    report_format: str = "n0s1",
+    show_matched_secret_on_logs: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Zendesk workspace for leaked secrets.
 
     Credentials are read from ZENDESK_TOKEN, ZENDESK_EMAIL, and
     ZENDESK_SERVER env vars.  workspace_url overrides ZENDESK_SERVER.
+    api_key / email may be passed directly for backwards compatibility.
     """
     kwargs: dict = {
         "server": workspace_url,
-        "show_matched_secret_on_logs": False,
+        "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
+        "report_format": report_format,
     }
+    if api_key:
+        kwargs["api_key"] = api_key
+    if email:
+        kwargs["email"] = email
     return _run_platform_scan(
         "zendesk_scan",
         kwargs,
@@ -377,19 +431,29 @@ def scan_zendesk(
 
 
 def scan_wrike(
-    workspace_url: str,
+    workspace_url: Optional[str] = None,
     since: Optional[str] = None,
     *,
+    scope: Optional[str] = None,
+    api_key: Optional[str] = None,
+    report_format: str = "n0s1",
+    show_matched_secret_on_logs: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Wrike workspace for leaked secrets.
 
-    Credentials are read from the WRIKE_TOKEN env var.
+    Credentials are read from the WRIKE_TOKEN env var, or may be passed
+    directly via api_key for backwards compatibility.
     """
     kwargs: dict = {
-        "show_matched_secret_on_logs": False,
+        "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
+        "report_format": report_format,
     }
+    if scope:
+        kwargs["scope"] = scope
+    if api_key:
+        kwargs["api_key"] = api_key
     return _run_platform_scan(
         "wrike_scan",
         kwargs,
@@ -403,24 +467,39 @@ def scan_github(
     repo: str,
     since: Optional[str] = None,
     *,
+    branch: Optional[str] = None,
+    scope: Optional[str] = None,
+    api_key: Optional[str] = None,
+    report_format: str = "n0s1",
+    show_matched_secret_on_logs: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a GitHub repository for leaked secrets.
 
     Args:
-        repo: "owner/repo" or just "repo" if owner is set via GITHUB_ORG.
+        repo: "owner/repo" or just "owner" to scan all repos for that owner.
+        branch: specific branch to scan (optional).
+        scope: raw search query e.g. "search:org:myorg" (optional).
 
-    Credentials are read from the GITHUB_TOKEN env var.
+    Credentials are read from the GITHUB_TOKEN env var, or may be passed
+    directly via api_key for backwards compatibility.
     """
     parts = repo.split("/", 1)
-    owner = parts[0] if len(parts) > 1 else ""
-    repo_name = parts[1] if len(parts) > 1 else repo
+    owner = parts[0] if len(parts) > 1 else repo
+    repo_name = parts[1] if len(parts) > 1 else ""
     kwargs: dict = {
         "owner": owner,
         "repo": repo_name,
-        "show_matched_secret_on_logs": False,
+        "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
+        "report_format": report_format,
     }
+    if branch:
+        kwargs["branch"] = branch
+    if scope:
+        kwargs["scope"] = scope
+    if api_key:
+        kwargs["api_key"] = api_key
     return _run_platform_scan(
         "github_scan",
         kwargs,
@@ -434,25 +513,43 @@ def scan_gitlab(
     repo: str,
     since: Optional[str] = None,
     *,
+    server: Optional[str] = None,
+    branch: Optional[str] = None,
+    scope: Optional[str] = None,
+    api_key: Optional[str] = None,
+    report_format: str = "n0s1",
+    show_matched_secret_on_logs: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a GitLab project for leaked secrets.
 
     Args:
-        repo: "group/project" or just "project".
+        repo: "group/project" or just "group" to scan all projects.
+        server: GitLab server URL (default: https://gitlab.com).
+        branch: specific branch to scan (optional).
 
     Credentials are read from GITLAB_TOKEN env var;
     server defaults to GITLAB_URL or https://gitlab.com.
+    api_key may be passed directly for backwards compatibility.
     """
     parts = repo.split("/", 1)
-    owner = parts[0] if len(parts) > 1 else ""
-    project = parts[1] if len(parts) > 1 else repo
+    owner = parts[0] if len(parts) > 1 else repo
+    project = parts[1] if len(parts) > 1 else ""
     kwargs: dict = {
         "owner": owner,
         "repo": project,
-        "show_matched_secret_on_logs": False,
+        "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
+        "report_format": report_format,
     }
+    if server:
+        kwargs["server"] = server
+    if branch:
+        kwargs["branch"] = branch
+    if scope:
+        kwargs["scope"] = scope
+    if api_key:
+        kwargs["api_key"] = api_key
     return _run_platform_scan(
         "gitlab_scan",
         kwargs,

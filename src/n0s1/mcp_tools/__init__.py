@@ -5,6 +5,7 @@ HTTP+SSE (n0s1_api_backend) transports register, without depending on
 either transport or the MCP SDK.
 """
 from n0s1.mcp_tools.context import ToolContext
+from n0s1.mcp_tools.redaction import redact_match
 from n0s1.mcp_tools.schemas import (
     Finding,
     FindingsPage,
@@ -27,6 +28,7 @@ from n0s1.mcp_tools.tools import (
     scan_wrike,
     scan_zendesk,
 )
+from n0s1.mcp_tools.usage import usage_block
 
 __all__ = [
     # Context
@@ -39,6 +41,9 @@ __all__ = [
     "Severity",
     "Status",
     "Usage",
+    # Helpers (for transport-layer local tools such as scan_local)
+    "redact_match",
+    "usage_block",
     # Tools
     "scan_jira",
     "scan_confluence",
