@@ -41,6 +41,8 @@ dependencies = [
     "BeautifulSoup4",
     "slack_sdk",
     "langchain-text-splitters",
+    "pydantic>=2",
+    "tiktoken>=0.7",
 ]
 
 [project.optional-dependencies]

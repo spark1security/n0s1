@@ -2,10 +2,10 @@ import logging
 import os
 import sys
 
-try:
-    import scanner
-except:
-    import n0s1.scanner as scanner
+# Allow running from repo root without installing the package
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
+import n0s1.scanner as scanner
 
 
 def test_local_scan():
@@ -215,7 +215,6 @@ def test_jira_scan():
     server = os.getenv("JIRA_SERVER", "https://spark1us.atlassian.net")
     scope = os.getenv("JIRA_SCOPE", "jql:project=MAR OR project=\"Auto Service\"")
 
-
     if not api_key:
         print("SKIPPED: JIRA_TOKEN environment variable not set")
         return None
@@ -286,12 +285,11 @@ def run_all_tests():
     for test_name, test_func in tests:
         try:
             result = test_func()
-            results[test_name] = f"PASSED | Total findings: [{len(result.get("findings", []))}]" if result is not None else "SKIPPED"
+            results[test_name] = f"PASSED | Total findings: [{len(result.get('findings', []))}]" if result is not None else "SKIPPED"
         except Exception as e:
             print(f"ERROR in {test_name}: {str(e)}")
             results[test_name] = f"FAILED: {str(e)}"
 
-    # Print summary
     print("\n" + "="*60)
     print("TEST SUMMARY")
     print("="*60)
@@ -329,9 +327,6 @@ def run_single_test(platform):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     if len(sys.argv) > 1:
-        # Run specific test
-        platform = sys.argv[1]
-        run_single_test(platform)
+        run_single_test(sys.argv[1])
     else:
-        # Run all tests
         run_all_tests()
