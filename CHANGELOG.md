@@ -2,7 +2,7 @@
 
 All notable changes to n0s1 will be documented here.
 
-## [Unreleased]
+## [v1.2.0]
 
 ### Added
 
