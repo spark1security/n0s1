@@ -9,6 +9,7 @@ Complete guide for using n0s1 as a Python SDK/library in your applications.
 - [SecretScanner Class](#secretscanner-class)
 - [Platform-Specific Examples](#platform-specific-examples)
 - [Advanced Usage](#advanced-usage)
+- [MCP Tools Package](#mcp-tools-package)
 - [API Reference](#api-reference)
 
 ## Installation
@@ -571,6 +572,153 @@ except Exception as e:
     print(f"Unexpected error: {e}")
     logging.exception("Full traceback:")
 ```
+
+## MCP Tools Package
+
+`n0s1.mcp_tools` is a transport-agnostic Python library that wraps `SecretScanner` with structured Pydantic response schemas. It is the implementation layer behind the `n0s1-mcp` stdio server, and can be embedded directly in any custom MCP transport without importing stdio or HTTP modules.
+
+### Installation
+
+`n0s1.mcp_tools` is included with the standard `n0s1` package:
+
+```bash
+pip install n0s1
+```
+
+Token-usage estimation requires `tiktoken` (optional — falls back to a word-count heuristic if absent):
+
+```bash
+pip install n0s1 tiktoken
+```
+
+### Basic usage
+
+```python
+from n0s1.mcp_tools import scan_jira, get_scan_findings, ToolContext
+
+ctx = ToolContext()  # runner="DOCKER" by default
+result = scan_jira(workspace_url="https://myco.atlassian.net", project_key="SEC", ctx=ctx)
+
+print(result.status)                     # "complete" | "failed"
+print(result.summary.total_findings)     # int
+for finding in result.findings:
+    print(finding.type, finding.redacted_match)
+```
+
+### Available tool functions
+
+| Function | Required args | Reads credentials from |
+|---|---|---|
+| `scan_jira` | `workspace_url` | `JIRA_TOKEN`, `JIRA_EMAIL` |
+| `scan_confluence` | `workspace_url` | `JIRA_TOKEN`, `JIRA_EMAIL` |
+| `scan_github` | `repo` (`"owner/repo"` or `"owner"`) | `GITHUB_TOKEN` |
+| `scan_gitlab` | `repo` (`"group/project"` or `"group"`) | `GITLAB_TOKEN` |
+| `scan_slack` | _(none)_ | `SLACK_TOKEN` |
+| `scan_asana` | _(none)_ | `ASANA_TOKEN` |
+| `scan_wrike` | _(none)_ | `WRIKE_TOKEN` |
+| `scan_linear` | _(none)_ | `LINEAR_TOKEN` |
+| `scan_zendesk` | `workspace_url` | `ZENDESK_TOKEN`, `ZENDESK_EMAIL` |
+| `get_scan_status` | `report_uuid` | _(none)_ |
+| `get_scan_findings` | `report_uuid` | _(none)_ |
+
+All `scan_*` functions accept `api_key` / `email` as keyword overrides. Every function also takes `ctx: ToolContext` as a required keyword argument.
+
+### ToolContext
+
+`ToolContext` is a dataclass injected by the transport layer. For standalone use, the defaults are sufficient:
+
+```python
+from n0s1.mcp_tools import ToolContext
+
+ctx = ToolContext(
+    user_id=None,           # SaaS user id (unused in local/stdio transport)
+    token_id=None,          # API token row id (unused in local/stdio transport)
+    runner="DOCKER",        # execution environment
+    on_scan_event=None,     # optional callback fired after each scan_* call
+)
+```
+
+The `on_scan_event` callback receives a dict with `report_uuid`, `tool_name`, `tokens_in_estimate`, `tokens_out_actual`, and `tokens_saved_estimate`.
+
+### Response schemas
+
+Every `scan_*` call returns a `ScanResult`:
+
+```python
+from n0s1.mcp_tools.schemas import ScanResult, Finding, ScanSummary, Usage, Severity
+
+result: ScanResult
+result.report_uuid          # str — use with get_scan_status / get_scan_findings
+result.status               # "pending" | "running" | "complete" | "failed"
+result.summary.total_findings   # int
+result.summary.by_severity      # Dict[Severity, int]
+result.summary.by_type          # Dict[str, int]
+result.findings             # List[Finding] | None
+result.usage.tokens_saved_estimate  # int
+result.usage.savings_pct    # float
+```
+
+Each `Finding`:
+
+```python
+finding.file            # str — URL or path where the secret was found
+finding.line            # int | None — line number if available
+finding.type            # str — regex rule id (e.g. "aws-access-key")
+finding.severity        # Severity enum: info | low | medium | high | critical
+finding.redacted_match  # str — e.g. "AKIA****MPLE" or "<REDACTED:kind>"
+```
+
+`get_scan_findings` returns a `FindingsPage` with pagination:
+
+```python
+page = get_scan_findings(result.report_uuid, ctx=ctx)
+page.findings       # List[Finding] — up to 50 per page
+page.next_cursor    # str | None — pass as page= for the next page
+page.total          # int — total across all pages
+
+# Iterate all pages
+cursor = None
+while True:
+    page = get_scan_findings(result.report_uuid, page=cursor, ctx=ctx)
+    for finding in page.findings:
+        print(finding.type, finding.redacted_match)
+    if page.next_cursor is None:
+        break
+    cursor = page.next_cursor
+```
+
+Filter by severity:
+
+```python
+from n0s1.mcp_tools.schemas import Severity
+
+page = get_scan_findings(result.report_uuid, severity=Severity.high, ctx=ctx)
+```
+
+### Redaction
+
+Secret values are never stored in `Finding` objects. The `redact_match` helper is exposed for transport-layer use:
+
+```python
+from n0s1.mcp_tools.redaction import redact_match
+
+redact_match("AKIAIOSFODNN7EXAMPLE", "aws-access-key")  # "AKIA****MPLE"
+redact_match("-----BEGIN RSA PRIVATE KEY-----", "rsa-key")  # "<REDACTED:rsa-key>"
+```
+
+Rules: alphanumeric strings ≥ 16 characters show first 4 + `****` + last 4; everything else becomes `<REDACTED:kind>`.
+
+### Submodule reference
+
+| Submodule | Contents |
+|---|---|
+| `n0s1.mcp_tools.tools` | 11 tool functions |
+| `n0s1.mcp_tools.schemas` | Pydantic models: `ScanResult`, `Finding`, `FindingsPage`, `ScanSummary`, `Status`, `Usage`, `Severity` |
+| `n0s1.mcp_tools.context` | `ToolContext` dataclass |
+| `n0s1.mcp_tools.redaction` | `redact_match(raw, kind)` |
+| `n0s1.mcp_tools.usage` | `usage_block(input_data, output_payload)`, `estimate_tokens(text)` |
+
+---
 
 ## API Reference
 

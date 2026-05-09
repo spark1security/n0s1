@@ -553,6 +553,10 @@ All other inputs (`regex-file`, `config-file`, `report-file`, `secret-manager`, 
 
 n0s1 is available as an MCP (Model Context Protocol) server, letting any MCP-compatible host (Claude Code, Claude Desktop, etc.) invoke scans as native tool calls — no CLI knowledge required.
 
+The MCP implementation is split into two layers:
+- **`n0s1.mcp_tools`** — transport-agnostic Python package with all 11 tool functions and Pydantic response schemas. Can be embedded directly in any Python MCP transport.
+- **`n0s1-mcp`** — stdio transport that exposes the tools to Claude Code / Claude Desktop.
+
 ### Register with Claude Code
 
 ```bash
@@ -561,39 +565,135 @@ claude mcp add --scope user n0s1 -- uvx n0s1-mcp
 
 This registers the server at user scope so it is available across all projects. Replace `--scope user` with `--scope project` to restrict it to the current project.
 
+### Credentials
+
+Tools read credentials from environment variables by default. Passing `api_key` / `email` directly is supported for backwards compatibility but env vars are preferred.
+
+| Env var | Used by |
+|---|---|
+| `JIRA_TOKEN` | `scan_jira`, `scan_confluence` |
+| `JIRA_EMAIL` | `scan_jira`, `scan_confluence` |
+| `SLACK_TOKEN` | `scan_slack` |
+| `GITHUB_TOKEN` | `scan_github` |
+| `GITLAB_TOKEN` | `scan_gitlab` |
+| `ASANA_TOKEN` | `scan_asana` |
+| `WRIKE_TOKEN` | `scan_wrike` |
+| `LINEAR_TOKEN` | `scan_linear` |
+| `ZENDESK_TOKEN` | `scan_zendesk` |
+| `ZENDESK_EMAIL` | `scan_zendesk` |
+
 ### Available tools
 
-| Tool | Platform | Required parameters |
+| Tool | Required parameters | Description |
 |---|---|---|
-| `scan_jira` | Jira | `server`, `email`, `api_key` |
-| `scan_confluence` | Confluence | `server`, `email`, `api_key` |
-| `scan_github` | GitHub | `api_key`, `owner` |
-| `scan_gitlab` | GitLab | `api_key`, `owner` |
-| `scan_slack` | Slack | `api_key` |
-| `scan_asana` | Asana | `api_key` |
-| `scan_wrike` | Wrike | `api_key` |
-| `scan_linear` | Linear | `api_key` |
-| `scan_zendesk` | Zendesk | `server`, `email`, `api_key` |
-| `scan_local` | Local filesystem | `scan_path` |
+| `scan_jira` | `workspace_url` | Scan a Jira workspace for leaked secrets |
+| `scan_confluence` | `workspace_url` | Scan a Confluence workspace for leaked secrets |
+| `scan_github` | `repo` (`"owner/repo"` or `"owner"`) | Scan a GitHub repository or all repos for an org |
+| `scan_gitlab` | `repo` (`"group/project"` or `"group"`) | Scan a GitLab project or all projects in a group |
+| `scan_slack` | _(none — uses `SLACK_TOKEN`)_ | Scan a Slack workspace for leaked secrets |
+| `scan_asana` | _(none — uses `ASANA_TOKEN`)_ | Scan an Asana workspace for leaked secrets |
+| `scan_wrike` | _(none — uses `WRIKE_TOKEN`)_ | Scan a Wrike workspace for leaked secrets |
+| `scan_linear` | _(none — uses `LINEAR_TOKEN`)_ | Scan a Linear workspace for leaked secrets |
+| `scan_zendesk` | `workspace_url` | Scan a Zendesk workspace for leaked secrets |
+| `get_scan_status` | `report_uuid` | Check the status of a previous scan |
+| `get_scan_findings` | `report_uuid` | Retrieve paginated findings for a completed scan |
 
-### Common parameters (all tools)
+### Common optional parameters (all `scan_*` tools)
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `report_format` | `"n0s1"` \| `"sarif"` \| `"gitlab"` | `"n0s1"` | Output format |
 | `show_matched_secret_on_logs` | bool | `false` | Include raw secret values in output |
+| `since` | str | — | ISO date; restrict scan to content created after this date |
+| `api_key` | str | — | Override the env-var credential |
 
 ### Per-tool optional parameters
 
 | Tool | Optional parameters |
 |---|---|
-| `scan_jira` | `scope` (JQL, e.g. `jql:project=SEC`), `post_comment` |
-| `scan_confluence` | `scope` (CQL, e.g. `cql:space=SEC and type=page`) |
-| `scan_github` | `repo`, `branch`, `scope` (GitHub search syntax) |
-| `scan_gitlab` | `server` (default: `https://gitlab.com`), `repo`, `branch` |
-| `scan_asana` | `scope` (workspace or project filter) |
-| `scan_wrike` | `scope` (folder or space filter) |
-| `scan_local` | `regex_file` (path to custom YAML pattern file) |
+| `scan_jira` | `project_key` (filter by project), `since`, `scope` (raw JQL, e.g. `jql:project=SEC AND status=Open`) |
+| `scan_confluence` | `space_key` (filter by space), `since`, `scope` (raw CQL, e.g. `cql:space=SEC and type=page`) |
+| `scan_github` | `branch`, `scope` (GitHub search syntax, e.g. `search:org:myorg`) |
+| `scan_gitlab` | `server` (default: `https://gitlab.com`), `branch`, `scope` |
+| `scan_slack` | `workspace_url` (traceability only), `channel` (filter by channel name), `since` |
+| `scan_asana` | `workspace_url` (traceability only), `project` (filter), `since`, `scope` |
+| `scan_wrike` | `workspace_url` (traceability only), `since`, `scope` |
+| `scan_linear` | `workspace_url` (traceability only), `team` (filter by team name), `since` |
+| `scan_zendesk` | `since`, `email` (override env var) |
+| `get_scan_findings` | `page` (opaque cursor from previous `FindingsPage.next_cursor`), `severity` (filter: `info`\|`low`\|`medium`\|`high`\|`critical`) |
+
+### Return value schema
+
+Every `scan_*` tool returns a `ScanResult`:
+
+```python
+{
+    "report_uuid": "3f8a...",          # use with get_scan_status / get_scan_findings
+    "status": "complete",              # "pending" | "running" | "complete" | "failed"
+    "summary": {
+        "total_findings": 3,
+        "by_severity": {"high": 3},
+        "by_type": {"aws-access-key": 2, "github-pat": 1}
+    },
+    "findings": [                      # first page of results
+        {
+            "file": "https://...",     # URL or path where the secret was found
+            "line": 42,                # line number (null if not applicable)
+            "type": "aws-access-key",  # regex rule id
+            "severity": "high",
+            "redacted_match": "AKIA****MPLE"  # first 4 + last 4 chars; or <REDACTED:kind>
+        }
+    ],
+    "usage": {
+        "tokens_in_estimate": 5000,
+        "tokens_out_actual": 200,
+        "tokens_saved_estimate": 4800,
+        "savings_pct": 96.0
+    }
+}
+```
+
+`get_scan_status` returns a lightweight `Status`:
+
+```python
+{"report_uuid": "...", "status": "complete", "progress_pct": 100.0, "error": null}
+```
+
+`get_scan_findings` returns a `FindingsPage` (paginated, 50 findings per page):
+
+```python
+{
+    "report_uuid": "...",
+    "findings": [...],
+    "next_cursor": "<opaque string>",  # null when on the last page
+    "total": 150,
+    "usage": {...}
+}
+```
+
+### Python package (`n0s1.mcp_tools`)
+
+The `mcp_tools` package is transport-agnostic and can be embedded in any Python MCP transport without importing the stdio or HTTP layers:
+
+```python
+from n0s1.mcp_tools import scan_jira, get_scan_findings, ToolContext
+
+ctx = ToolContext()  # runner="DOCKER" by default
+result = scan_jira(workspace_url="https://myco.atlassian.net", project_key="SEC", ctx=ctx)
+page = get_scan_findings(result.report_uuid, ctx=ctx)
+for finding in page.findings:
+    print(finding.type, finding.redacted_match)
+```
+
+Key submodules:
+
+| Submodule | Contents |
+|---|---|
+| `n0s1.mcp_tools.tools` | 11 tool functions |
+| `n0s1.mcp_tools.schemas` | Pydantic models: `ScanResult`, `Finding`, `FindingsPage`, `ScanSummary`, `Status`, `Usage`, `Severity` |
+| `n0s1.mcp_tools.context` | `ToolContext` dataclass (injected by transport layer) |
+| `n0s1.mcp_tools.redaction` | `redact_match(raw, kind)` — produces `AKIA****MPLE` or `<REDACTED:kind>` |
+| `n0s1.mcp_tools.usage` | `usage_block(input_data, output_payload)` — token-savings estimation via cl100k_base |
 
 ### When to use MCP over other interfaces
 
@@ -640,6 +740,12 @@ response = client.messages.create(
 | `src/n0s1/config/regex.yaml` | Default secret detection patterns |
 | `src/n0s1/config/config.yaml` | Default configuration |
 | `src/n0s1/test/skd_tests.py` | SDK usage examples for all platforms |
+| `src/n0s1/mcp_tools/__init__.py` | MCP tools package — public API surface |
+| `src/n0s1/mcp_tools/tools.py` | 11 transport-agnostic tool functions |
+| `src/n0s1/mcp_tools/schemas.py` | Pydantic models for all MCP responses |
+| `src/n0s1/mcp_tools/context.py` | `ToolContext` dataclass |
+| `src/n0s1/mcp_tools/redaction.py` | Secret redaction helpers |
+| `src/n0s1/mcp_tools/usage.py` | Token-usage estimation (cl100k_base) |
 | `tool-schema.json` | Tool-use schema for AI agents |
 | `SDK_GUIDE.md` | Human-oriented SDK documentation |
 | `USER_MANUAL.md` | Human-oriented CLI documentation |
