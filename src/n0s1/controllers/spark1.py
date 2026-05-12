@@ -125,7 +125,6 @@ class Spark1(http_client.HttpClient):
         if config is None:
             config = {}
         data = {
-            "scanner_ip": self.local_ip,
             "scan_target": config.get("scan_target", ""),
             "report_format": config.get("report_format", "")
         }
