@@ -358,7 +358,7 @@ class SecretScanner():
             with open(self.regex_file, "r") as f:
                 extension = os.path.splitext(self.regex_file)[1]
                 if extension.lower() == ".yaml".lower():
-                    self.regex_config = yaml.load(f, Loader=yaml.FullLoader)
+self.regex_config = yaml.safe_load(f, Loader=yaml.FullLoader)
                 else:
                     self.regex_config = toml.load(f)
         else:
@@ -368,7 +368,7 @@ class SecretScanner():
     def _setup_cfg(self):
         if os.path.exists(self.config_file):
             with open(self.config_file, "r") as f:
-                self.cfg = yaml.load(f, Loader=yaml.FullLoader)
+self.cfg = yaml.safe_load(f, Loader=yaml.FullLoader)
         else:
             self.log_message(f"Config file [{self.config_file}] not found!", level=logging.WARNING)
 
