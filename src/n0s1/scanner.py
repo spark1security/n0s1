@@ -599,8 +599,12 @@ class SecretScanner():
                     for item_data in data:
                         if item_data and item_data.lower().find(label.lower()) == -1:
                             self.scan_text_and_report_leaks(item_data, name, self.regex_config, self.scan_arguments, ticket)
-        if n0s1_pro and self.ai_analysis:
-            ai_analyzed_report = n0s1_pro.ai_analysis(self.report_json, self.report_sensitive_json)
+        if n0s1_pro:
+            report_url = n0s1_pro.upload_report(self.report_json)
+            message = f"Uploaded report [{report_url}]"
+            self.log_message(message)
+            if self.ai_analysis:
+                ai_analyzed_report = n0s1_pro.ai_analysis(self.report_json, self.report_sensitive_json)
             if ai_analyzed_report:
                 self.report_json = ai_analyzed_report
 

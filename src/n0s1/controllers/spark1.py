@@ -140,17 +140,33 @@ class Spark1(http_client.HttpClient):
             return False
         return False
 
+    def upload_report(self, report: dict):
+        if report is None:
+            return None
+        upload_report_url = self.base_url + "/api/v1/reports"
+        try:
+            # Upload the report
+            r = self._post_request(upload_report_url, json=report)
+            if 200 <= r.status_code < 300:
+                scan_record = r.json()
+                report_uuid = scan_record.get("report_uuid", "")
+                return self.base_url + "/api/v1/scans/" + report_uuid
+        except Exception as ex:
+            logging.info(str(ex))
+        return None
+
+
     def ai_analysis(self, report=None, sensitive_report=None):
         if report is None:
             return None
-        auth_url = self.base_url + "/api/v1/analyses"
+        ai_analysis_url = self.base_url + "/api/v1/analyses"
         updated_report = report
 
         findings = report.get("findings", {})
         for id, finding in findings.items():
             try:
                 # AI agent to generate an HTTP request to validate the credential
-                r = self._post_request(auth_url, json=finding)
+                r = self._post_request(ai_analysis_url, json=finding)
                 if r.status_code == 200:
                     updated_finding = r.json()
                     req_validator = updated_finding.get("ai_report", {}).get("request_validator", {})
@@ -173,7 +189,7 @@ class Spark1(http_client.HttpClient):
             for id, finding in findings.items():
                 try:
                     # Submit the updated report findings with the HTTP responses so the AI agent can confirm which credentials were valid
-                    r = self._post_request(auth_url, json=finding)
+                    r = self._post_request(ai_analysis_url, json=finding)
                     if r.status_code == 200:
                         analyzed_finding = r.json()
                         analyzed_report["findings"][id] = analyzed_finding
