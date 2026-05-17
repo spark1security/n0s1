@@ -104,7 +104,7 @@ class Spark1(http_client.HttpClient):
                  get_server_info: bool = True, async_: bool = False, async_workers: int = 5,
                  max_retries: int = 3, timeout: int = None,
                  auth: tuple[str, str] = None):
-        self.base_url = "https://api.spark1.us"
+        self.base_url = "https://n0s1.spark1.us"
         # self.base_url = "http://127.0.0.1:5000"
         self.local_ip = _get_local_ip()
         if server:
@@ -143,14 +143,11 @@ class Spark1(http_client.HttpClient):
     def upload_report(self, report: dict):
         if report is None:
             return None
-        upload_report_url = self.base_url + "/api/v1/reports"
+        upload_report_url = self.base_url + "/api/v1/scans"
         try:
             # Upload the report
             r = self._post_request(upload_report_url, json=report)
-            if 200 <= r.status_code < 300:
-                scan_record = r.json()
-                report_uuid = scan_record.get("report_uuid", "")
-                return self.base_url + "/api/v1/scans/" + report_uuid
+            return r
         except Exception as ex:
             logging.info(str(ex))
         return None
