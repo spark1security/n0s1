@@ -558,6 +558,8 @@ class SecretScanner():
             n0s1_pro = spark1.Spark1(token_auth=N0S1_TOKEN)
             if n0s1_pro.is_connected(self.scan_arguments):
                 mode = "professional"
+            else:
+                n0s1_pro = None
         message = f"Starting scan in {mode} mode..."
         self.log_message(message)
 
