@@ -397,11 +397,11 @@ def main():
     scope_config = secret_scanner.get_scope_config()
     if scope_config:
         if args.map_file:
-            scanner.log_message(f"Running scoped scan using map file [{args.map_file}]. Scan scope:", level=logging.INFO)
+            scanner.log_message(f"Running scoped scan using map file [{args.map_file}]. Scan scope:",
+                                level=logging.INFO)
         else:
             scanner.log_message(f"Running scoped scan using search query:", level=logging.INFO)
         pprint.pprint(scope_config)
-
 
     report_file = args.report_file
 
@@ -430,7 +430,8 @@ def main():
     secret_scanner.set(limit=limit)
     secret_scanner.set(insecure=insecure)
 
-    commands = ["local_scan", "linear_scan", "slack_scan", "asana_scan", "zendesk_scan", "github_scan", "gitlab_scan", "wrike_scan", "jira_scan", "confluence_scan"]
+    commands = ["local_scan", "linear_scan", "slack_scan", "asana_scan", "zendesk_scan", "github_scan", "gitlab_scan",
+                "wrike_scan", "jira_scan", "confluence_scan"]
     extended_commands = []
     for c in commands:
         short_c = c.replace("_scan", "")
@@ -527,7 +528,6 @@ def main():
     finally:
         secret_scanner.save_report()
         scanner.log_message("Done!")
-
 
 
 if __name__ == "__main__":

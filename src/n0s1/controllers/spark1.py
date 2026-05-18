@@ -104,7 +104,7 @@ class Spark1(http_client.HttpClient):
                  get_server_info: bool = True, async_: bool = False, async_workers: int = 5,
                  max_retries: int = 3, timeout: int = None,
                  auth: tuple[str, str] = None):
-        self.base_url = "https://api.spark1.us"
+        self.base_url = "https://n0s1.spark1.us"
         # self.base_url = "http://127.0.0.1:5000"
         self.local_ip = _get_local_ip()
         if server:
@@ -140,17 +140,30 @@ class Spark1(http_client.HttpClient):
             return False
         return False
 
+    def upload_report(self, report: dict):
+        if report is None:
+            return None
+        upload_report_url = self.base_url + "/api/v1/scans"
+        try:
+            # Upload the report
+            r = self._post_request(upload_report_url, json=report)
+            return r
+        except Exception as ex:
+            logging.info(str(ex))
+        return None
+
+
     def ai_analysis(self, report=None, sensitive_report=None):
         if report is None:
             return None
-        auth_url = self.base_url + "/api/v1/analyses"
+        ai_analysis_url = self.base_url + "/api/v1/analyses"
         updated_report = report
 
         findings = report.get("findings", {})
         for id, finding in findings.items():
             try:
                 # AI agent to generate an HTTP request to validate the credential
-                r = self._post_request(auth_url, json=finding)
+                r = self._post_request(ai_analysis_url, json=finding)
                 if r.status_code == 200:
                     updated_finding = r.json()
                     req_validator = updated_finding.get("ai_report", {}).get("request_validator", {})
@@ -173,7 +186,7 @@ class Spark1(http_client.HttpClient):
             for id, finding in findings.items():
                 try:
                     # Submit the updated report findings with the HTTP responses so the AI agent can confirm which credentials were valid
-                    r = self._post_request(auth_url, json=finding)
+                    r = self._post_request(ai_analysis_url, json=finding)
                     if r.status_code == 200:
                         analyzed_finding = r.json()
                         analyzed_report["findings"][id] = analyzed_finding

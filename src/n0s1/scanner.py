@@ -358,7 +358,7 @@ class SecretScanner():
             with open(self.regex_file, "r") as f:
                 extension = os.path.splitext(self.regex_file)[1]
                 if extension.lower() == ".yaml".lower():
-                    self.regex_config = yaml.load(f, Loader=yaml.FullLoader)
+                    self.regex_config = yaml.safe_load(f)
                 else:
                     self.regex_config = toml.load(f)
         else:
@@ -368,7 +368,7 @@ class SecretScanner():
     def _setup_cfg(self):
         if os.path.exists(self.config_file):
             with open(self.config_file, "r") as f:
-                self.cfg = yaml.load(f, Loader=yaml.FullLoader)
+                self.cfg = yaml.safe_load(f)
         else:
             self.log_message(f"Config file [{self.config_file}] not found!", level=logging.WARNING)
 
@@ -558,6 +558,8 @@ class SecretScanner():
             n0s1_pro = spark1.Spark1(token_auth=N0S1_TOKEN)
             if n0s1_pro.is_connected(self.scan_arguments):
                 mode = "professional"
+            else:
+                n0s1_pro = None
         message = f"Starting scan in {mode} mode..."
         self.log_message(message)
 
@@ -599,12 +601,35 @@ class SecretScanner():
                     for item_data in data:
                         if item_data and item_data.lower().find(label.lower()) == -1:
                             self.scan_text_and_report_leaks(item_data, name, self.regex_config, self.scan_arguments, ticket)
-        if n0s1_pro and self.ai_analysis:
-            ai_analyzed_report = n0s1_pro.ai_analysis(self.report_json, self.report_sensitive_json)
-            if ai_analyzed_report:
-                self.report_json = ai_analyzed_report
+        if n0s1_pro:
+            upload_http_response = n0s1_pro.upload_report(self.report_json)
+            self._process_report_upload(upload_http_response)
+            if self.ai_analysis:
+                ai_analyzed_report = n0s1_pro.ai_analysis(self.report_json, self.report_sensitive_json)
+                if ai_analyzed_report:
+                    self.report_json = ai_analyzed_report
 
         return self.report_json
+
+    def _process_report_upload(self, upload_http_response):
+        r = upload_http_response
+        if 200 <= r.status_code < 300:
+            scan_record = r.json()
+            report_uuid = scan_record.get("report_uuid", "")
+            self.report_json["uuid"] = report_uuid
+            message = f"Uploading report [{self.report_file}] to n0s1.spark1.us ..."
+            self.log_message(message)
+            message = f"Upload successful! Report UUID: [{report_uuid}]"
+            self.log_message(message)
+        else:
+            message = f"Unable to upload report to n0s1.spark1.us! HTTP response status: [{r.status_code}]."
+            self.log_message(message)
+            try:
+                response_data = r.json()
+                self.log_message(str(response_data))
+            except Exception as ex:
+                logging.info(str(ex))
+
 
     def scan_text_and_report_leaks(self, data, name, regex_config, scan_arguments, ticket):
         secret_found, scan_text_result = scan_text(regex_config, data)
