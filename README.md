@@ -47,12 +47,12 @@ n0s1 --help
 [CLI:](https://pypi.org/project/n0s1/)
 ```bash
 python3 -m pip install n0s1
-n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<YOUR_JIRA_API_TOKEN>"
+n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --email "your-email@company.com" --api-key "<YOUR_JIRA_API_TOKEN>"
 ```
 
 [Docker:](https://hub.docker.com/r/spark1security/n0s1)
 ```bash
-docker run spark1security/n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<YOUR_JIRA_API_TOKEN>"
+docker run spark1security/n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --email "your-email@company.com" --api-key "<YOUR_JIRA_API_TOKEN>"
 ```
 
 [MCP:](https://pypi.org/project/n0s1-mcp/)
@@ -68,7 +68,7 @@ cd n0s1
 python3 -m venv n0s1_python
 source n0s1_python/bin/activate
 pip install -e .
-n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --api-key "<YOUR_JIRA_API_TOKEN>"
+n0s1 jira_scan --server "https://<YOUR_JIRA_SERVER>.atlassian.net" --email "your-email@company.com" --api-key "<YOUR_JIRA_API_TOKEN>"
 deactivate
 ```
 
