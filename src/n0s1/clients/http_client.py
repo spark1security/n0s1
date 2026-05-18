@@ -89,6 +89,30 @@ class HttpClient:
         self.logging.debug(response.text)
         return response
 
+    def _patch_request(
+            self, url: str = None, params: dict = None, headers: dict = None, data=None, json: dict = None
+    ) -> Response:
+        if url is None or len(url) <= 0:
+            url = self.uri
+        if headers:
+            response = requests.patch(
+                url,
+                params=params,
+                headers={**headers, **self.headers},
+                data=data,
+                json=json,
+            )
+        else:
+            response = requests.patch(
+                url,
+                params=params,
+                headers=self.headers,
+                data=data,
+                json=json,
+            )
+        self.logging.debug(response.text)
+        return response
+
     def _put_request(self, url: str = None, params: dict = None, headers: dict = None, data=None) -> Response:
         if url is None or len(url) <= 0:
             url = self.uri

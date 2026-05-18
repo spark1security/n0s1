@@ -602,12 +602,13 @@ class SecretScanner():
                         if item_data and item_data.lower().find(label.lower()) == -1:
                             self.scan_text_and_report_leaks(item_data, name, self.regex_config, self.scan_arguments, ticket)
         if n0s1_pro:
-            upload_http_response = n0s1_pro.upload_report(self.report_json)
+            upload_http_response = n0s1_pro.upload_report(self.report_json, ai_analysis=self.ai_analysis)
             self._process_report_upload(upload_http_response)
             if self.ai_analysis:
-                ai_analyzed_report = n0s1_pro.ai_analysis(self.report_json, self.report_sensitive_json)
-                if ai_analyzed_report:
-                    self.report_json = ai_analyzed_report
+                report_uuid = self.report_json.get("uuid", "")
+                self.log_message(
+                    f"AI analysis queued. Run: n0s1 analyze --report-uuid {report_uuid}"
+                )
 
         return self.report_json
 

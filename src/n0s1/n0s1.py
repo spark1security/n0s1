@@ -1,6 +1,7 @@
 import argparse
 import logging
 import json
+import os
 import pprint
 import sys
 
@@ -8,6 +9,11 @@ try:
     import scanner
 except:
     import n0s1.scanner as scanner
+
+try:
+    import controllers.spark1 as spark1
+except:
+    import n0s1.controllers.spark1 as spark1
 
 
 def init_argparse() -> argparse.ArgumentParser:
@@ -367,6 +373,20 @@ def init_argparse() -> argparse.ArgumentParser:
         type=str,
         help="Confluence API key."
     )
+
+    analyze_parser = subparsers.add_parser(
+        "analyze",
+        help="Submit a scan report for async AI analysis, or advance an in-progress analysis",
+        parents=[parent_parser],
+    )
+    analyze_parser.add_argument(
+        "--report-uuid",
+        dest="report_uuid",
+        nargs="?",
+        type=str,
+        help="UUID of a previously uploaded report to analyze or check."
+    )
+
     return parser
 
 
@@ -432,13 +452,92 @@ def main():
 
     commands = ["local_scan", "linear_scan", "slack_scan", "asana_scan", "zendesk_scan", "github_scan", "gitlab_scan",
                 "wrike_scan", "jira_scan", "confluence_scan"]
-    extended_commands = []
+    extended_commands = ["analyze"]
     for c in commands:
         short_c = c.replace("_scan", "")
         extended_commands.append(c)
         extended_commands.append(short_c)
     if command not in extended_commands:
         parser.print_help()
+        return
+
+    if command == "analyze":
+        N0S1_TOKEN = os.getenv("N0S1_TOKEN")
+        if not N0S1_TOKEN:
+            scanner.log_message("N0S1_TOKEN environment variable is required for the analyze command.")
+            return
+
+        report_uuid = getattr(args, "report_uuid", None)
+        report_file_path = args.report_file
+        local_report = None
+
+        if not report_uuid and report_file_path:
+            try:
+                with open(report_file_path) as f:
+                    local_report = json.load(f)
+                report_uuid = local_report.get("uuid")
+            except Exception as e:
+                scanner.log_message(f"Failed to read report file: {e}")
+                return
+
+        if not report_uuid and not local_report:
+            scanner.log_message("Provide --report-uuid or --report-file.")
+            return
+
+        n0s1_pro = spark1.Spark1(token_auth=N0S1_TOKEN)
+
+        if report_uuid:
+            status_data = n0s1_pro.get_scan_status(report_uuid)
+            if status_data is None:
+                scanner.log_message(f"Report [{report_uuid}] not found on backend.")
+                return
+
+            ai_status = status_data.get("ai_analysis_status")
+
+            if ai_status == "waiting_client":
+                remote_report = status_data.get("report")
+                if not remote_report:
+                    scanner.log_message("Backend returned no report data.")
+                    return
+                updated_report = spark1._execute_request_validators(remote_report, local_report)
+                r = n0s1_pro.upload_responses(report_uuid, updated_report)
+                if r and 200 <= r.status_code < 300:
+                    scanner.log_message("HTTP responses uploaded. Backend will compute verdicts.")
+                    scanner.log_message(f"Run again to check status: n0s1 analyze --report-uuid {report_uuid}")
+                else:
+                    status_code = r.status_code if r else "N/A"
+                    scanner.log_message(f"Failed to upload responses. HTTP status: [{status_code}]")
+                return
+
+            if ai_status == "complete":
+                scanner.log_message(f"AI analysis complete for report [{report_uuid}].")
+                remote_report = status_data.get("report")
+                if remote_report and report_file_path:
+                    try:
+                        with open(report_file_path, "w") as f:
+                            json.dump(remote_report, f, indent=2)
+                        scanner.log_message(f"Updated report saved to [{report_file_path}].")
+                    except Exception as e:
+                        scanner.log_message(f"Could not save report: {e}")
+                return
+
+            if ai_status in ("pending", "pending_verdict"):
+                scanner.log_message(f"AI analysis in progress (status: {ai_status}). Try again later.")
+                return
+
+            if ai_status == "failed":
+                scanner.log_message(f"AI analysis failed for report [{report_uuid}].")
+                return
+
+        r = n0s1_pro.submit_for_ai_analysis(report_uuid=report_uuid, report=local_report)
+        if r and 200 <= r.status_code < 300:
+            result = r.json()
+            uuid_out = result.get("report_uuid", report_uuid)
+            scanner.log_message(f"AI analysis queued. Report UUID: [{uuid_out}]")
+            scanner.log_message(f"Run later to advance: n0s1 analyze --report-uuid {uuid_out}")
+        else:
+            status_code = r.status_code if r else "N/A"
+            scanner.log_message(f"Failed to queue AI analysis. HTTP status: [{status_code}]")
         return
 
     if command == "local_scan":
