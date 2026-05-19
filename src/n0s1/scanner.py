@@ -67,6 +67,7 @@ repo_default_value = None
 branch_default_value = None
 scan_path_default_value = None
 report_uuid_default_value = None
+n0s1_token_default_value = None
 
 class SecretScanner():
     def __init__(self, target=None, regex_file=regex_file_default_value, config_file=config_file_default_value,
@@ -80,7 +81,7 @@ class SecretScanner():
                  scope=scope_default_value, api_key=api_key_default_value, server=server_default_value,
                  email=email_default_value, owner=owner_default_value, repo=repo_default_value,
                  branch=branch_default_value, scan_path=scan_path_default_value,
-                 report_uuid=report_uuid_default_value):
+                 report_uuid=report_uuid_default_value, n0s1_token=n0s1_token_default_value):
         global n0s1_version
         self.logging_function = log_message
 
@@ -112,6 +113,7 @@ class SecretScanner():
         self.branch = None
         self.scan_path = None
         self.report_uuid = None
+        self.n0s1_token = None
 
         self.regex_config = None
         self.cfg = None
@@ -128,13 +130,14 @@ class SecretScanner():
                        "scan_date": {"timestamp": datetime_now_obj.timestamp(), "date_utc": date_utc},
                        "regex_config": {}, "findings": {}}
 
-        self.set(target=target, regex_file=regex_file, config_file=config_file, report_file=report_file, report_format=report_format, post_comment=post_comment, skip_comment=skip_comment, show_matched_secret_on_logs=show_matched_secret_on_logs, ai_analysis=ai_analysis, private=private, debug=debug, secret_manager=secret_manager, contact_help=contact_help, label=label, timeout=timeout, limit=limit, insecure=insecure, map=map, map_file=map_file, scope=scope, api_key=api_key, server=server, email=email, owner=owner, repo=repo, branch=branch, scan_path=scan_path, report_uuid=report_uuid)
+        self.set(target=target, regex_file=regex_file, config_file=config_file, report_file=report_file, report_format=report_format, post_comment=post_comment, skip_comment=skip_comment, show_matched_secret_on_logs=show_matched_secret_on_logs, ai_analysis=ai_analysis, private=private, debug=debug, secret_manager=secret_manager, contact_help=contact_help, label=label, timeout=timeout, limit=limit, insecure=insecure, map=map, map_file=map_file, scope=scope, api_key=api_key, server=server, email=email, owner=owner, repo=repo, branch=branch, scan_path=scan_path, report_uuid=report_uuid, n0s1_token=n0s1_token)
 
 
     def set(self, target=None, regex_file=None, config_file=None, report_file=None, report_format=None, post_comment=None,
             skip_comment=None, show_matched_secret_on_logs=None, ai_analysis=None, private=None, debug=None, secret_manager=None,
             contact_help=None, label=None, timeout=None, limit=None, insecure=None, map=None, map_file=None, scope=None,
-            api_key=None, server=None, email=None, owner=None, repo=None, branch=None, scan_path=None, report_uuid=None):
+            api_key=None, server=None, email=None, owner=None, repo=None, branch=None, scan_path=None, report_uuid=None,
+            n0s1_token=None):
         global DEBUG
         if target is not None:
             self.target = target
@@ -198,6 +201,8 @@ class SecretScanner():
             self.scan_path = scan_path
         if report_uuid is not None:
             self.report_uuid = report_uuid
+        if n0s1_token is not None:
+            self.n0s1_token = n0s1_token
 
         DEBUG = self.debug
 
@@ -559,7 +564,7 @@ class SecretScanner():
             message = f"Private flag enabled. Authentication to n0s1 service skipped!"
             self.log_message(message)
         else:
-            N0S1_TOKEN = os.getenv("N0S1_TOKEN")
+            N0S1_TOKEN = self.n0s1_token or os.getenv("N0S1_TOKEN")
             n0s1_pro = spark1.Spark1(token_auth=N0S1_TOKEN)
             if n0s1_pro.is_connected(self.scan_arguments):
                 mode = "professional"
@@ -638,9 +643,9 @@ class SecretScanner():
 
 
     def analyze(self):
-        N0S1_TOKEN = os.getenv("N0S1_TOKEN")
+        N0S1_TOKEN = self.n0s1_token or os.getenv("N0S1_TOKEN")
         if not N0S1_TOKEN:
-            self.log_message("N0S1_TOKEN environment variable is required for the analyze command.")
+            self.log_message("n0s1 API key is required for the analyze command. Use --n0s1-api-key or set the N0S1_TOKEN environment variable.")
             return
 
         report_uuid = self.report_uuid

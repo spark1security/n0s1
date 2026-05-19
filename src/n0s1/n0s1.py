@@ -163,6 +163,13 @@ def init_argparse() -> argparse.ArgumentParser:
         type=str,
         help="Define a search query Ex: \"search:org:spark1security action in:name\" for GitHub or \"jql:project != IT\" for Jira. If using with --map-file, it defines a chunk of the map file to be scanned. Ex: 3/4 (will scan the third quarter of the map)."
     )
+    parent_parser.add_argument(
+        "--n0s1-api-key",
+        dest="n0s1_api_key",
+        nargs="?",
+        type=str,
+        help="n0s1 API key for Professional mode. Visit n0s1.spark1.us to issue a new token."
+    )
     subparsers = parser.add_subparsers(
         help="Subcommands", dest="command", metavar="COMMAND"
     )
@@ -400,6 +407,7 @@ def main():
     secret_scanner.set(debug=args.debug)
     secret_scanner.set(regex_file=args.regex_file)
     secret_scanner.set(config_file=args.config_file)
+    secret_scanner.set(n0s1_token=getattr(args, "n0s1_api_key", None))
 
     if not args.map:
         args.map = "-1"
