@@ -17,12 +17,14 @@ python tests/integration/skd_tests.py <platform>
 ```
 
 Available platforms: `local`, `slack`, `asana`, `zendesk`, `github`,
-`gitlab`, `wrike`, `linear`, `jira`, `confluence`.
+`gitlab`, `wrike`, `linear`, `jira`, `confluence`, `analyze_uuid`, `analyze_file`.
 
 ```bash
 python tests/integration/skd_tests.py jira
 python tests/integration/skd_tests.py confluence
 python tests/integration/skd_tests.py github
+python tests/integration/skd_tests.py analyze_uuid
+python tests/integration/skd_tests.py analyze_file
 ```
 
 ## Environment Variables
@@ -42,6 +44,8 @@ Each platform requires specific environment variables. Tests are
 | Linear | `LINEAR_TOKEN` | — |
 | Jira | `JIRA_TOKEN` | `JIRA_EMAIL`, `JIRA_SERVER`, `JIRA_SCOPE` |
 | Confluence | `CONFLUENCE_TOKEN` (falls back to `JIRA_TOKEN`) | `CONFLUENCE_EMAIL`, `CONFLUENCE_SERVER`, `CONFLUENCE_SCOPE` |
+| Analyze (UUID) | `N0S1_TOKEN`, `N0S1_REPORT_UUID` | — |
+| Analyze (File) | `N0S1_TOKEN`, `N0S1_REPORT_FILE` | — |
 
 ## Notes
 

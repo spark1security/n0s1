@@ -7,6 +7,7 @@ Complete guide for using the n0s1 secret scanner tool.
 - [Basic Usage](#basic-usage)
 - [Global Options](#global-options)
 - [Platform Commands](#platform-commands)
+- [AI Analysis](#ai-analysis)
 - [Advanced Features](#advanced-features)
   - [MCP Server](#mcp-server)
 - [Examples](#examples)
@@ -77,9 +78,15 @@ These options work with all scan commands and should be specified **before** the
 - Default: shows sanitized versions only
 
 **`--ai-analysis`**
-- Send scan results to an AI agent to validate leaked credentials. The agent will update the report with each credential’s status: live (authentication succeeded), unable to test, or invalid.
-- ⚠️ The leaked credentials identified by the scanner will be tested live. If you are not authorized to test the credentials, do not enable this mode
-- Only supported when using Professional mode 
+- Queue AI analysis after the scan completes. The AI agent validates each leaked credential and updates the report with a verdict: live (authentication succeeded), unable to test, or invalid.
+- Analysis is **asynchronous** — the scan exits immediately after uploading the report. Run `n0s1 analyze --report-uuid <uuid>` to advance the analysis to completion.
+- ⚠️ The leaked credentials identified by the scanner will be tested live. If you are not authorized to test the credentials, do not enable this mode.
+- Requires a valid n0s1 API key (see `--n0s1-api-key`). Only supported in Professional mode.
+
+**`--n0s1-api-key <key>`**
+- n0s1 API key for Professional mode (uploading reports, running AI analysis).
+- Overrides the `N0S1_TOKEN` environment variable when both are set.
+- Visit [n0s1.spark1.us](https://n0s1.spark1.us) to issue a token.
 
 **`--private`**
 - Enable private mode to disable all interaction with the n0s1 backend service
@@ -377,6 +384,71 @@ n0s1 confluence_scan --server <url> --email <email> --api-key <token>
 n0s1 confluence_scan --server https://mycompany.atlassian.net --email admin@company.com --api-key ATATTxxxxxxxxxxxx --report-file confluence-results.json
 ```
 
+## AI Analysis
+
+AI analysis validates discovered credentials by attempting authentication against the target service. Each finding receives a verdict: **live** (credential works), **invalid** (credential rejected), or **unable to test** (could not reach the service).
+
+Analysis is **async** and driven by a state machine split between the client and the n0s1 backend:
+
+```
+Scan ──► backend queues analysis ──► backend generates HTTP request templates
+      ──► client executes requests with real credentials ──► backend computes verdicts
+```
+
+A valid n0s1 API key is required. Set it via `--n0s1-api-key` or the `N0S1_TOKEN` environment variable.
+
+### Workflow A: Scan + AI analysis in one go
+
+```bash
+# Step 1: scan and queue analysis
+n0s1 jira_scan \
+  --server https://myco.atlassian.net \
+  --email user@myco.com \
+  --api-key $JIRA_TOKEN \
+  --n0s1-api-key $N0S1_TOKEN \
+  --ai-analysis \
+  --report-file report.json
+# Prints: "AI analysis queued. Run: n0s1 analyze --report-uuid <uuid>"
+
+# Step 2: advance analysis (run a few minutes later; repeat until complete)
+n0s1 analyze \
+  --n0s1-api-key $N0S1_TOKEN \
+  --report-uuid <uuid> \
+  --report-file report.json
+```
+
+### Workflow B: Analyze an existing report file
+
+```bash
+# Submit a previously saved report for analysis
+n0s1 analyze --n0s1-api-key $N0S1_TOKEN --report-file report.json
+
+# Check status / advance (re-run until status is "complete")
+n0s1 analyze --n0s1-api-key $N0S1_TOKEN --report-uuid <uuid> --report-file report.json
+```
+
+### `analyze` command reference
+
+```bash
+n0s1 analyze [global options] [--report-uuid <uuid>] [--report-file <path>]
+```
+
+**Options:**
+
+- `--report-uuid <uuid>` — UUID of a previously uploaded report. If the backend is waiting for the client to execute HTTP validators, this triggers that step automatically.
+- `--report-file <path>` — Path to a local report JSON file. Used to read the UUID and to inject real credentials during step 2. Also updated in-place when analysis completes.
+- `--n0s1-api-key <key>` — n0s1 API key (or set `N0S1_TOKEN`).
+
+**Status values printed during the workflow:**
+
+| Status | Meaning |
+|---|---|
+| `pending` | Queued; backend is generating request templates |
+| `waiting_client` | Templates ready; `analyze` will execute them automatically |
+| `pending_verdict` | Client responses uploaded; backend is computing verdicts |
+| `complete` | Verdicts written; report file updated |
+| `failed` | Unrecoverable error |
+
 ## Advanced Features
 
 ### Using Custom Regex Patterns
@@ -537,7 +609,8 @@ echo "All scans complete. Review report files."
 
 ## Best Practices
 
-1. **Start with read-only scans**: Don't use `--post-comment` until you've verified the scanner works correctly
+1. **Store the n0s1 API key securely**: Use `N0S1_TOKEN` env var instead of passing `--n0s1-api-key` inline
+2. **Start with read-only scans**: Don't use `--post-comment` until you've verified the scanner works correctly
 2. **Use custom regex carefully**: Test patterns thoroughly to avoid false positives
 3. **Protect API keys**: Store tokens in environment variables or secret managers, never in code
 4. **Regular scanning**: Schedule scans in CI/CD pipelines for continuous monitoring

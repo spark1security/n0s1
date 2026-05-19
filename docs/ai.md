@@ -48,6 +48,8 @@ CLI and Docker share **identical parameters** — Docker is just a containerized
 | `linear_scan` | Linear | `api_key` |
 | `zendesk_scan` | Zendesk | `server`, `email`, `api_key` |
 
+The `analyze` command is not a scan target — it is a separate command for async AI analysis (see below).
+
 ---
 
 ## Python SDK — Canonical Usage
@@ -110,7 +112,7 @@ scanner.SecretScanner(
     post_comment=False,        # bool: post warning comment on tickets with leaks
     skip_comment=False,        # bool: skip scanning ticket/issue comments
     show_matched_secret_on_logs=False,  # bool: log the actual secret and add it to the report
-    ai_analysis=False,         # bool: Allow AI agent to verify leaks
+    ai_analysis=False,         # bool: queue async AI credential validation after upload
     private=False,             # bool: disable backend interaction
     debug=False,               # bool: verbose debug logging
     insecure=False,            # bool: skip SSL certificate verification
@@ -128,6 +130,10 @@ scanner.SecretScanner(
     scope=None,                # str: platform query or map chunk (see Scope section)
     map=None,                  # int: mapping depth levels (generates map file, skips scan)
     map_file=None,             # str: path to existing map file to use as scan scope
+
+    # AI analysis
+    report_uuid=None,          # str: UUID of a previously uploaded report (used by analyze())
+    n0s1_token=None,           # str: n0s1 API key; overrides N0S1_TOKEN env var
 )
 ```
 
@@ -136,6 +142,7 @@ scanner.SecretScanner(
 | Method | Returns | Description |
 |---|---|---|
 | `.scan()` | `dict` | Execute scan; returns full report |
+| `.analyze()` | `None` | Submit/advance async AI analysis for a report |
 | `.set(**kwargs)` | `None` | Update any constructor parameter after instantiation |
 | `.get_report()` | `dict` | Get current report without running scan |
 | `.get_config()` | `dict` | Get resolved configuration |
@@ -275,6 +282,8 @@ n0s1 local_scan --path ./src --regex-file ./custom.yaml
 | `--scope`                       | `scope`                       | |
 | `--map`                         | `map`                         | int as string in CLI |
 | `--map-file`                    | `map_file`                    | |
+| `--n0s1-api-key`                | `n0s1_token`                  | overrides `N0S1_TOKEN` env var |
+| `--report-uuid`                 | `report_uuid`                 | `analyze` command only |
 
 ---
 
@@ -463,7 +472,45 @@ scanner.SecretScanner(
 ).scan()
 ```
 
-### 5. Parallel scanning using map files
+### 5. AI credential validation
+
+```python
+import os
+from n0s1 import scanner
+
+n0s1_token = os.getenv("N0S1_TOKEN")
+
+# Step 1: scan and queue AI analysis
+s = scanner.SecretScanner(
+    target="jira_scan",
+    server=os.getenv("JIRA_SERVER"),
+    email=os.getenv("JIRA_EMAIL"),
+    api_key=os.getenv("JIRA_TOKEN"),
+    n0s1_token=n0s1_token,
+    ai_analysis=True,
+    report_file="report.json",
+)
+result = s.scan()
+report_uuid = result.get("uuid")
+# Logs: "AI analysis queued. Run: n0s1 analyze --report-uuid <uuid>"
+
+# Step 2: advance analysis — re-run until log prints "AI analysis complete"
+analyzer = scanner.SecretScanner(
+    report_uuid=report_uuid,
+    report_file="report.json",
+    n0s1_token=n0s1_token,
+)
+analyzer.analyze()
+```
+
+The `analyze()` call is idempotent — the state machine advances exactly one step per call:
+- `pending` → waits (backend generating request templates)
+- `waiting_client` → executes HTTP validators, re-uploads, exits
+- `pending_verdict` → waits (backend computing verdicts)
+- `complete` → saves updated report to `report_file` and logs completion
+- `failed` → logs failure
+
+### 6. Parallel scanning using map files
 
 ```python
 import json, subprocess
@@ -486,10 +533,11 @@ for i in range(1, 5):
 
 ## Environment Variables (Conventional)
 
-The SDK does not read env vars automatically. Load them explicitly:
+The SDK does not read env vars automatically for platform credentials. Load them explicitly. `N0S1_TOKEN` is the one exception — it is read automatically by `analyze()` and during Professional-mode scan uploads when `n0s1_token` is not set on the instance.
 
 | Variable | Used for |
 |---|---|
+| `N0S1_TOKEN` | n0s1 API key — Professional mode uploads and AI analysis |
 | `JIRA_TOKEN` | Jira / Confluence API key |
 | `JIRA_SERVER` | Jira / Confluence server URL |
 | `JIRA_EMAIL` | Jira / Confluence user email |
@@ -739,7 +787,7 @@ response = client.messages.create(
 | `src/n0s1/n0s1.py` | CLI entrypoint — `init_argparse()`, `main()` |
 | `src/n0s1/config/regex.yaml` | Default secret detection patterns |
 | `src/n0s1/config/config.yaml` | Default configuration |
-| `src/n0s1/test/skd_tests.py` | SDK usage examples for all platforms |
+| `tests/integration/skd_tests.py` | SDK integration tests for all platforms and the `analyze` command |
 | `src/n0s1/mcp_tools/__init__.py` | MCP tools package — public API surface |
 | `src/n0s1/mcp_tools/tools.py` | 11 transport-agnostic tool functions |
 | `src/n0s1/mcp_tools/schemas.py` | Pydantic models for all MCP responses |

@@ -132,7 +132,11 @@ scanner.SecretScanner(
     # Scope
     map=None,                       # Mapping depth level
     map_file=None,                  # Map file path
-    scope=None                      # Search query/scope
+    scope=None,                     # Search query/scope
+
+    # AI analysis
+    report_uuid=None,               # str: UUID of a previously uploaded report (for analyze())
+    n0s1_token=None,                # str: n0s1 API key; overrides N0S1_TOKEN env var
 )
 ```
 
@@ -187,6 +191,27 @@ Get the scope configuration.
 ```python
 scope_config = scanner_instance.get_scope_config()
 ```
+
+#### `analyze()`
+Submit a scan report for async AI analysis, or advance an in-progress analysis. Requires a valid n0s1 API key set via `n0s1_token` or the `N0S1_TOKEN` environment variable.
+
+```python
+# Submit by UUID (report already uploaded)
+scanner_instance = scanner.SecretScanner(
+    report_uuid="abc-123",
+    n0s1_token=os.getenv("N0S1_TOKEN"),
+)
+scanner_instance.analyze()
+
+# Submit by local report file
+scanner_instance = scanner.SecretScanner(
+    report_file="n0s1_report.json",
+    n0s1_token=os.getenv("N0S1_TOKEN"),
+)
+scanner_instance.analyze()
+```
+
+`analyze()` returns `None`. Progress is reported via log messages. Re-call until the log prints `"AI analysis complete"`.
 
 ## Platform-Specific Examples
 
@@ -542,6 +567,52 @@ total_findings = sum(len(r.get("findings", {})) for r in all_results.values())
 print(f"\nTotal findings across all platforms: {total_findings}")
 ```
 
+### AI Analysis
+
+AI analysis validates discovered credentials by testing them against their target services. It is **async** — the scan uploads the report, the backend generates request templates, the client executes them with real credentials, and the backend writes verdicts. Re-call `analyze()` until it prints completion.
+
+**Workflow A: scan with `--ai-analysis` flag, then analyze**
+
+```python
+import os
+import time
+
+n0s1_token = os.getenv("N0S1_TOKEN")
+
+# Step 1: scan and queue analysis
+scanner_instance = scanner.SecretScanner(
+    target="jira_scan",
+    server=os.getenv("JIRA_SERVER"),
+    email=os.getenv("JIRA_EMAIL"),
+    api_key=os.getenv("JIRA_TOKEN"),
+    n0s1_token=n0s1_token,
+    ai_analysis=True,
+    report_file="report.json",
+)
+result = scanner_instance.scan()
+report_uuid = result.get("uuid")
+# Logs: "AI analysis queued. Run: n0s1 analyze --report-uuid <uuid>"
+
+# Step 2: advance analysis (repeat until complete)
+analyzer = scanner.SecretScanner(
+    report_uuid=report_uuid,
+    report_file="report.json",
+    n0s1_token=n0s1_token,
+)
+analyzer.analyze()
+```
+
+**Workflow B: analyze an existing report file**
+
+```python
+scanner_instance = scanner.SecretScanner(
+    report_file="report.json",
+    n0s1_token=os.getenv("N0S1_TOKEN"),
+)
+scanner_instance.analyze()
+# Logs the assigned UUID — use it for subsequent calls
+```
+
 ### Error Handling
 
 ```python
@@ -791,6 +862,8 @@ The `scan()` method returns a dictionary with the following structure:
 | `map`                         | str | None | Mapping depth                    |
 | `map_file`                    | str | None | Map file path                    |
 | `scope`                       | str | None | Search scope/query               |
+| `report_uuid`                 | str | None | UUID of an uploaded report (for `analyze()`) |
+| `n0s1_token`                  | str | None | n0s1 API key; overrides `N0S1_TOKEN` env var |
 
 ## Best Practices
 
