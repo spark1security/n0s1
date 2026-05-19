@@ -262,6 +262,54 @@ def test_confluence_scan():
     return result
 
 
+def test_analyze_with_uuid():
+    """Test AI analysis using a previously uploaded report UUID"""
+    print("\n" + "="*60)
+    print("Testing ANALYZE (with report UUID)")
+    print("="*60)
+
+    n0s1_token = os.getenv("N0S1_TOKEN")
+    report_uuid = os.getenv("N0S1_REPORT_UUID")
+
+    if not n0s1_token:
+        print("SKIPPED: N0S1_TOKEN environment variable not set")
+        return None
+    if not report_uuid:
+        print("SKIPPED: N0S1_REPORT_UUID environment variable not set")
+        return None
+
+    scanner_instance = scanner.SecretScanner(
+        report_uuid=report_uuid,
+        debug=True,
+    )
+    scanner_instance.analyze()
+    return {"status": "completed"}
+
+
+def test_analyze_with_report_file():
+    """Test AI analysis using a local report file"""
+    print("\n" + "="*60)
+    print("Testing ANALYZE (with report file)")
+    print("="*60)
+
+    n0s1_token = os.getenv("N0S1_TOKEN")
+    report_file = os.getenv("N0S1_REPORT_FILE")
+
+    if not n0s1_token:
+        print("SKIPPED: N0S1_TOKEN environment variable not set")
+        return None
+    if not report_file:
+        print("SKIPPED: N0S1_REPORT_FILE environment variable not set")
+        return None
+
+    scanner_instance = scanner.SecretScanner(
+        report_file=report_file,
+        debug=True,
+    )
+    scanner_instance.analyze()
+    return {"status": "completed"}
+
+
 def run_all_tests():
     """Run all platform tests"""
     print("\n" + "="*60)
@@ -279,13 +327,20 @@ def run_all_tests():
         ("Linear Scan", test_linear_scan),
         ("Jira Scan", test_jira_scan),
         ("Confluence Scan", test_confluence_scan),
+        ("Analyze (UUID)", test_analyze_with_uuid),
+        ("Analyze (File)", test_analyze_with_report_file),
     ]
 
     results = {}
     for test_name, test_func in tests:
         try:
             result = test_func()
-            results[test_name] = f"PASSED | Total findings: [{len(result.get('findings', []))}]" if result is not None else "SKIPPED"
+            if isinstance(result, dict):
+                results[test_name] = f"PASSED | Total findings: [{len(result.get('findings', []))}]"
+            elif result is None:
+                results[test_name] = "SKIPPED"
+            else:
+                results[test_name] = "PASSED"
         except Exception as e:
             print(f"ERROR in {test_name}: {str(e)}")
             results[test_name] = f"FAILED: {str(e)}"
@@ -313,6 +368,8 @@ def run_single_test(platform):
         "linear": test_linear_scan,
         "jira": test_jira_scan,
         "confluence": test_confluence_scan,
+        "analyze_uuid": test_analyze_with_uuid,
+        "analyze_file": test_analyze_with_report_file,
     }
 
     platform_lower = platform.lower()
