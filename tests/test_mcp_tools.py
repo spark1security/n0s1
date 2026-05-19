@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from n0s1.mcp_tools.context import ToolContext
 from n0s1.mcp_tools.redaction import redact_match
 from n0s1.mcp_tools.schemas import (
+    AnalysisStatus,
     Finding,
     FindingsPage,
     ScanResult,
@@ -71,11 +72,26 @@ _MOCK_SENSITIVE_JSON = {
 }
 
 
+_BACKEND_UUID = "backend-uuid-from-server"
+
+# Like _MOCK_REPORT_JSON but with a backend-assigned UUID, as returned when
+# ai_analysis=True causes the scanner to upload the report.
+_MOCK_REPORT_WITH_BACKEND_UUID = dict(_MOCK_REPORT_JSON)
+_MOCK_REPORT_WITH_BACKEND_UUID = {**_MOCK_REPORT_JSON, "uuid": _BACKEND_UUID}
+
+
 def _make_mock_scanner(report_json=None, sensitive_json=None):
     """Return a mock SecretScanner instance."""
     instance = MagicMock()
     instance.scan.return_value = report_json if report_json is not None else _MOCK_REPORT_JSON
     instance.report_sensitive_json = sensitive_json if sensitive_json is not None else _MOCK_SENSITIVE_JSON
+    return instance
+
+
+def _make_mock_analyzer(ai_status: str):
+    """Return a mock SecretScanner whose analyze() returns ai_status."""
+    instance = MagicMock()
+    instance.analyze.return_value = ai_status
     return instance
 
 
@@ -224,6 +240,39 @@ class TestSchemaRoundTrip(unittest.TestCase):
         s = Status(report_uuid="u1", status="complete", progress_pct=100.0)
         validated = Status.model_validate(s.model_dump())
         self.assertEqual(validated.progress_pct, 100.0)
+
+    def test_status_with_ai_analysis_status(self):
+        s = Status(
+            report_uuid="u1",
+            status="complete",
+            progress_pct=100.0,
+            ai_analysis_status="complete",
+        )
+        validated = Status.model_validate(s.model_dump())
+        self.assertEqual(validated.ai_analysis_status, "complete")
+
+    def test_scan_result_with_ai_analysis_status(self):
+        use = Usage(
+            tokens_in_estimate=10, tokens_out_actual=1,
+            tokens_saved_estimate=9, savings_pct=90.0,
+        )
+        summary = ScanSummary(total_findings=0, by_severity={}, by_type={})
+        result = ScanResult(
+            report_uuid="u2", status="complete", summary=summary,
+            usage=use, ai_analysis_status="pending",
+        )
+        validated = ScanResult.model_validate(result.model_dump())
+        self.assertEqual(validated.ai_analysis_status, "pending")
+
+    def test_analysis_status_round_trip(self):
+        a = AnalysisStatus(
+            report_uuid="u3",
+            ai_analysis_status="waiting_client",
+            message="Templates ready.",
+        )
+        validated = AnalysisStatus.model_validate(a.model_dump())
+        self.assertEqual(validated.report_uuid, "u3")
+        self.assertEqual(validated.ai_analysis_status, "waiting_client")
 
     def test_findings_page_round_trip(self):
         use = Usage(
@@ -571,6 +620,174 @@ class TestToolFunctions(unittest.TestCase):
             scan_jira("https://example.atlassian.net", ctx=_patched_ctx())
         call_kwargs = MockScanner.call_args[1]
         self.assertFalse(call_kwargs.get("show_matched_secret_on_logs", False))
+
+    # ------------------------------------------------------------------
+    # ai_analysis parameter tests
+    # ------------------------------------------------------------------
+
+    def test_scan_with_ai_analysis_sets_status_pending(self):
+        from n0s1.mcp_tools.tools import scan_jira
+        ctx = _patched_ctx()
+        with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
+            MockScanner.return_value = _make_mock_scanner()
+            result = scan_jira(
+                "https://example.atlassian.net",
+                ai_analysis=True,
+                n0s1_token="tok-test",
+                ctx=ctx,
+            )
+        self.assertEqual(result.ai_analysis_status, "pending")
+
+    def test_scan_with_ai_analysis_uses_backend_uuid(self):
+        from n0s1.mcp_tools.tools import scan_jira
+        ctx = _patched_ctx()
+        with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
+            MockScanner.return_value = _make_mock_scanner(_MOCK_REPORT_WITH_BACKEND_UUID)
+            result = scan_jira(
+                "https://example.atlassian.net",
+                ai_analysis=True,
+                n0s1_token="tok-test",
+                ctx=ctx,
+            )
+        self.assertEqual(result.report_uuid, _BACKEND_UUID)
+
+    def test_scan_without_ai_analysis_has_no_ai_status(self):
+        from n0s1.mcp_tools.tools import scan_jira
+        ctx = _patched_ctx()
+        with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
+            MockScanner.return_value = _make_mock_scanner()
+            result = scan_jira("https://example.atlassian.net", ctx=ctx)
+        self.assertIsNone(result.ai_analysis_status)
+
+    def test_scan_with_ai_analysis_forwards_n0s1_token(self):
+        from n0s1.mcp_tools.tools import scan_jira
+        with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
+            MockScanner.return_value = _make_mock_scanner()
+            scan_jira(
+                "https://example.atlassian.net",
+                ai_analysis=True,
+                n0s1_token="my-secret-token",
+                ctx=_patched_ctx(),
+            )
+        call_kwargs = MockScanner.call_args[1]
+        self.assertEqual(call_kwargs.get("n0s1_token"), "my-secret-token")
+        self.assertTrue(call_kwargs.get("ai_analysis"))
+
+    def test_get_scan_status_exposes_ai_analysis_status(self):
+        from n0s1.mcp_tools.tools import get_scan_status, scan_jira
+        ctx = _patched_ctx()
+        with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
+            MockScanner.return_value = _make_mock_scanner(_MOCK_REPORT_WITH_BACKEND_UUID)
+            result = scan_jira(
+                "https://example.atlassian.net",
+                ai_analysis=True,
+                ctx=ctx,
+            )
+        status = get_scan_status(result.report_uuid, ctx=ctx)
+        self.assertEqual(status.ai_analysis_status, "pending")
+
+    def test_get_scan_status_ai_analysis_status_none_when_not_requested(self):
+        from n0s1.mcp_tools.tools import get_scan_status, scan_jira
+        ctx = _patched_ctx()
+        with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
+            MockScanner.return_value = _make_mock_scanner()
+            result = scan_jira("https://example.atlassian.net", ctx=ctx)
+        status = get_scan_status(result.report_uuid, ctx=ctx)
+        self.assertIsNone(status.ai_analysis_status)
+
+
+# ---------------------------------------------------------------------------
+# analyze_report tests
+# ---------------------------------------------------------------------------
+
+class TestAnalyzeReport(unittest.TestCase):
+    """Tests for the analyze_report MCP tool."""
+
+    def _call(self, ai_status: str, report_uuid: str = "test-uuid", **kwargs):
+        from n0s1.mcp_tools.tools import analyze_report
+        ctx = _patched_ctx()
+        with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
+            MockScanner.return_value = _make_mock_analyzer(ai_status)
+            result = analyze_report(report_uuid, ctx=ctx, **kwargs)
+        return result
+
+    def test_returns_analysis_status_instance(self):
+        result = self._call("pending")
+        self.assertIsInstance(result, AnalysisStatus)
+
+    def test_status_pending(self):
+        result = self._call("pending")
+        self.assertEqual(result.ai_analysis_status, "pending")
+        self.assertEqual(result.report_uuid, "test-uuid")
+        self.assertTrue(len(result.message) > 0)
+
+    def test_status_waiting_client(self):
+        result = self._call("waiting_client")
+        self.assertEqual(result.ai_analysis_status, "waiting_client")
+        self.assertIn("analyze_report", result.message)
+
+    def test_status_pending_verdict(self):
+        result = self._call("pending_verdict")
+        self.assertEqual(result.ai_analysis_status, "pending_verdict")
+
+    def test_status_complete(self):
+        result = self._call("complete")
+        self.assertEqual(result.ai_analysis_status, "complete")
+        self.assertIn("complete", result.message.lower())
+
+    def test_status_failed(self):
+        result = self._call("failed")
+        self.assertEqual(result.ai_analysis_status, "failed")
+
+    def test_status_submitted(self):
+        result = self._call("submitted")
+        self.assertEqual(result.ai_analysis_status, "submitted")
+
+    def test_status_error(self):
+        result = self._call("error")
+        self.assertEqual(result.ai_analysis_status, "error")
+
+    def test_n0s1_token_forwarded_to_scanner(self):
+        from n0s1.mcp_tools.tools import analyze_report
+        ctx = _patched_ctx()
+        with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
+            MockScanner.return_value = _make_mock_analyzer("pending")
+            analyze_report(
+                "test-uuid",
+                n0s1_token="my-n0s1-key",
+                report_file="/tmp/report.json",
+                ctx=ctx,
+            )
+        call_kwargs = MockScanner.call_args[1]
+        self.assertEqual(call_kwargs.get("n0s1_token"), "my-n0s1-key")
+        self.assertEqual(call_kwargs.get("report_file"), "/tmp/report.json")
+        self.assertEqual(call_kwargs.get("report_uuid"), "test-uuid")
+
+    def test_analyze_report_updates_store_when_uuid_known(self):
+        from n0s1.mcp_tools.tools import analyze_report, get_scan_status, scan_jira
+        ctx = _patched_ctx()
+        # First, run a scan with ai_analysis so the UUID is in the store
+        with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
+            MockScanner.return_value = _make_mock_scanner(_MOCK_REPORT_WITH_BACKEND_UUID)
+            scan_jira("https://example.atlassian.net", ai_analysis=True, ctx=ctx)
+
+        # Now advance the analysis — mock returns "complete"
+        with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
+            MockScanner.return_value = _make_mock_analyzer("complete")
+            analyze_report(_BACKEND_UUID, ctx=ctx)
+
+        # The store should reflect the updated status
+        status = get_scan_status(_BACKEND_UUID, ctx=ctx)
+        self.assertEqual(status.ai_analysis_status, "complete")
+
+    def test_analyze_report_does_not_fire_scan_event(self):
+        from n0s1.mcp_tools.tools import analyze_report
+        events = []
+        ctx = ToolContext(on_scan_event=events.append)
+        with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
+            MockScanner.return_value = _make_mock_analyzer("pending")
+            analyze_report("test-uuid", ctx=ctx)
+        self.assertEqual(len(events), 0)
 
 
 if __name__ == "__main__":
