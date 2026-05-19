@@ -642,11 +642,17 @@ class SecretScanner():
                 logging.info(str(ex))
 
 
-    def analyze(self):
+    def analyze(self) -> str:
+        """Submit/advance async AI analysis.
+
+        Returns the current ai_analysis_status string, or one of the sentinel
+        values "error" (misconfiguration / HTTP failure) and "submitted"
+        (first-time submission with no prior UUID).
+        """
         N0S1_TOKEN = self.n0s1_token or os.getenv("N0S1_TOKEN")
         if not N0S1_TOKEN:
             self.log_message("n0s1 API key is required for the analyze command. Use --n0s1-api-key or set the N0S1_TOKEN environment variable.")
-            return
+            return "error"
 
         report_uuid = self.report_uuid
         report_file_path = self.report_file
@@ -659,11 +665,11 @@ class SecretScanner():
                 report_uuid = local_report.get("uuid")
             except Exception as e:
                 self.log_message(f"Failed to read report file: {e}")
-                return
+                return "error"
 
         if not report_uuid and not local_report:
             self.log_message("Provide a report UUID or a report file.")
-            return
+            return "error"
 
         n0s1_pro = spark1.Spark1(token_auth=N0S1_TOKEN)
 
@@ -671,7 +677,7 @@ class SecretScanner():
             status_data = n0s1_pro.get_scan_status(report_uuid)
             if status_data is None:
                 self.log_message(f"Report [{report_uuid}] not found on backend.")
-                return
+                return "error"
 
             ai_status = status_data.get("ai_analysis_status")
 
@@ -679,16 +685,17 @@ class SecretScanner():
                 remote_report = status_data.get("report")
                 if not remote_report:
                     self.log_message("Backend returned no report data.")
-                    return
+                    return "error"
                 updated_report = spark1._execute_request_validators(remote_report, local_report)
                 r = n0s1_pro.upload_responses(report_uuid, updated_report)
                 if r and 200 <= r.status_code < 300:
                     self.log_message("HTTP responses uploaded. Backend will compute verdicts.")
                     self.log_message(f"Run again to check status: n0s1 analyze --report-uuid {report_uuid}")
+                    return "pending_verdict"
                 else:
                     status_code = r.status_code if r else "N/A"
                     self.log_message(f"Failed to upload responses. HTTP status: [{status_code}]")
-                return
+                    return "error"
 
             if ai_status == "complete":
                 self.log_message(f"AI analysis complete for report [{report_uuid}].")
@@ -700,15 +707,15 @@ class SecretScanner():
                         self.log_message(f"Updated report saved to [{report_file_path}].")
                     except Exception as e:
                         self.log_message(f"Could not save report: {e}")
-                return
+                return "complete"
 
             if ai_status in ("pending", "pending_verdict"):
                 self.log_message(f"AI analysis in progress (status: {ai_status}). Try again later.")
-                return
+                return ai_status
 
             if ai_status == "failed":
                 self.log_message(f"AI analysis failed for report [{report_uuid}].")
-                return
+                return "failed"
 
         r = n0s1_pro.submit_for_ai_analysis(report_uuid=report_uuid, report=local_report)
         if r and 200 <= r.status_code < 300:
@@ -716,9 +723,11 @@ class SecretScanner():
             uuid_out = result.get("report_uuid", report_uuid)
             self.log_message(f"AI analysis queued. Report UUID: [{uuid_out}]")
             self.log_message(f"Run later to advance: n0s1 analyze --report-uuid {uuid_out}")
+            return "submitted"
         else:
             status_code = r.status_code if r else "N/A"
             self.log_message(f"Failed to queue AI analysis. HTTP status: [{status_code}]")
+            return "error"
 
     def scan_text_and_report_leaks(self, data, name, regex_config, scan_arguments, ticket):
         secret_found, scan_text_result = scan_text(regex_config, data)

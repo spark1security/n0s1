@@ -26,6 +26,7 @@ import n0s1.scanner as _scanner
 from n0s1.mcp_tools.context import ToolContext
 from n0s1.mcp_tools.redaction import redact_match
 from n0s1.mcp_tools.schemas import (
+    AnalysisStatus,
     Finding,
     FindingsPage,
     ScanResult,
@@ -129,14 +130,26 @@ def _run_platform_scan(
     ctx: ToolContext,
     tool_name: str,
     input_repr,
+    *,
+    ai_analysis: bool = False,
 ) -> ScanResult:
-    """Run a scan, build a ScanResult, persist it, fire the event callback."""
-    report_uuid = str(uuid.uuid4())
+    """Run a scan, build a ScanResult, persist it, fire the event callback.
+
+    When ai_analysis=True the scanner uploads the report to the n0s1 backend
+    and the backend assigns a UUID.  That backend UUID is used as report_uuid
+    so that subsequent analyze_report / get_scan_status calls work correctly.
+    """
+    local_uuid = str(uuid.uuid4())
+    report_uuid = local_uuid
     result: ScanResult
     error_msg: Optional[str] = None
 
     try:
         report_json, sensitive_json = _dispatch_scan(target, scanner_kwargs, ctx)
+        if ai_analysis:
+            backend_uuid = report_json.get("uuid") if report_json else None
+            if backend_uuid:
+                report_uuid = backend_uuid
         findings = _build_findings(report_json, sensitive_json)
         summary = _build_summary(findings)
         use = usage_block(input_repr, report_json)
@@ -146,6 +159,7 @@ def _run_platform_scan(
             summary=summary,
             findings=findings,
             usage=use,
+            ai_analysis_status="pending" if ai_analysis else None,
         )
     except Exception as exc:
         error_msg = str(exc)
@@ -222,12 +236,16 @@ def scan_jira(
     email: Optional[str] = None,
     report_format: str = "n0s1",
     show_matched_secret_on_logs: bool = False,
+    ai_analysis: bool = False,
+    n0s1_token: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Jira workspace for leaked secrets.
 
     Credentials are read from JIRA_TOKEN and JIRA_EMAIL env vars, or may be
     passed directly via api_key / email for backwards compatibility.
+    Set ai_analysis=True and n0s1_token to queue async AI credential validation
+    after the scan (requires a n0s1 Professional account).
     """
     effective_scope = scope or _jira_scope(project_key, since)
     kwargs: dict = {
@@ -235,6 +253,7 @@ def scan_jira(
         "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
         "report_format": report_format,
+        "ai_analysis": ai_analysis,
     }
     if effective_scope:
         kwargs["scope"] = effective_scope
@@ -242,12 +261,15 @@ def scan_jira(
         kwargs["api_key"] = api_key
     if email:
         kwargs["email"] = email
+    if n0s1_token:
+        kwargs["n0s1_token"] = n0s1_token
     return _run_platform_scan(
         "jira_scan",
         kwargs,
         ctx,
         "scan_jira",
         {"workspace_url": workspace_url, "project_key": project_key, "since": since},
+        ai_analysis=ai_analysis,
     )
 
 
@@ -261,6 +283,8 @@ def scan_confluence(
     email: Optional[str] = None,
     report_format: str = "n0s1",
     show_matched_secret_on_logs: bool = False,
+    ai_analysis: bool = False,
+    n0s1_token: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Confluence workspace for leaked secrets.
@@ -275,6 +299,7 @@ def scan_confluence(
         "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
         "report_format": report_format,
+        "ai_analysis": ai_analysis,
     }
     if effective_scope:
         kwargs["scope"] = effective_scope
@@ -282,12 +307,15 @@ def scan_confluence(
         kwargs["api_key"] = api_key
     if email:
         kwargs["email"] = email
+    if n0s1_token:
+        kwargs["n0s1_token"] = n0s1_token
     return _run_platform_scan(
         "confluence_scan",
         kwargs,
         ctx,
         "scan_confluence",
         {"workspace_url": workspace_url, "space_key": space_key, "since": since},
+        ai_analysis=ai_analysis,
     )
 
 
@@ -299,6 +327,8 @@ def scan_slack(
     api_key: Optional[str] = None,
     report_format: str = "n0s1",
     show_matched_secret_on_logs: bool = False,
+    ai_analysis: bool = False,
+    n0s1_token: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Slack workspace for leaked secrets.
@@ -312,17 +342,21 @@ def scan_slack(
         "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
         "report_format": report_format,
+        "ai_analysis": ai_analysis,
     }
     if scope:
         kwargs["scope"] = scope
     if api_key:
         kwargs["api_key"] = api_key
+    if n0s1_token:
+        kwargs["n0s1_token"] = n0s1_token
     return _run_platform_scan(
         "slack_scan",
         kwargs,
         ctx,
         "scan_slack",
         {"workspace_url": workspace_url, "channel": channel, "since": since},
+        ai_analysis=ai_analysis,
     )
 
 
@@ -335,6 +369,8 @@ def scan_asana(
     api_key: Optional[str] = None,
     report_format: str = "n0s1",
     show_matched_secret_on_logs: bool = False,
+    ai_analysis: bool = False,
+    n0s1_token: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan an Asana workspace for leaked secrets.
@@ -347,17 +383,21 @@ def scan_asana(
         "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
         "report_format": report_format,
+        "ai_analysis": ai_analysis,
     }
     if effective_scope:
         kwargs["scope"] = effective_scope
     if api_key:
         kwargs["api_key"] = api_key
+    if n0s1_token:
+        kwargs["n0s1_token"] = n0s1_token
     return _run_platform_scan(
         "asana_scan",
         kwargs,
         ctx,
         "scan_asana",
         {"workspace_url": workspace_url, "project": project, "since": since},
+        ai_analysis=ai_analysis,
     )
 
 
@@ -369,6 +409,8 @@ def scan_linear(
     api_key: Optional[str] = None,
     report_format: str = "n0s1",
     show_matched_secret_on_logs: bool = False,
+    ai_analysis: bool = False,
+    n0s1_token: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Linear workspace for leaked secrets.
@@ -381,17 +423,21 @@ def scan_linear(
         "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
         "report_format": report_format,
+        "ai_analysis": ai_analysis,
     }
     if scope:
         kwargs["scope"] = scope
     if api_key:
         kwargs["api_key"] = api_key
+    if n0s1_token:
+        kwargs["n0s1_token"] = n0s1_token
     return _run_platform_scan(
         "linear_scan",
         kwargs,
         ctx,
         "scan_linear",
         {"workspace_url": workspace_url, "team": team, "since": since},
+        ai_analysis=ai_analysis,
     )
 
 
@@ -403,6 +449,8 @@ def scan_zendesk(
     email: Optional[str] = None,
     report_format: str = "n0s1",
     show_matched_secret_on_logs: bool = False,
+    ai_analysis: bool = False,
+    n0s1_token: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Zendesk workspace for leaked secrets.
@@ -416,17 +464,21 @@ def scan_zendesk(
         "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
         "report_format": report_format,
+        "ai_analysis": ai_analysis,
     }
     if api_key:
         kwargs["api_key"] = api_key
     if email:
         kwargs["email"] = email
+    if n0s1_token:
+        kwargs["n0s1_token"] = n0s1_token
     return _run_platform_scan(
         "zendesk_scan",
         kwargs,
         ctx,
         "scan_zendesk",
         {"workspace_url": workspace_url, "since": since},
+        ai_analysis=ai_analysis,
     )
 
 
@@ -438,6 +490,8 @@ def scan_wrike(
     api_key: Optional[str] = None,
     report_format: str = "n0s1",
     show_matched_secret_on_logs: bool = False,
+    ai_analysis: bool = False,
+    n0s1_token: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Wrike workspace for leaked secrets.
@@ -449,17 +503,21 @@ def scan_wrike(
         "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
         "report_format": report_format,
+        "ai_analysis": ai_analysis,
     }
     if scope:
         kwargs["scope"] = scope
     if api_key:
         kwargs["api_key"] = api_key
+    if n0s1_token:
+        kwargs["n0s1_token"] = n0s1_token
     return _run_platform_scan(
         "wrike_scan",
         kwargs,
         ctx,
         "scan_wrike",
         {"workspace_url": workspace_url, "since": since},
+        ai_analysis=ai_analysis,
     )
 
 
@@ -472,6 +530,8 @@ def scan_github(
     api_key: Optional[str] = None,
     report_format: str = "n0s1",
     show_matched_secret_on_logs: bool = False,
+    ai_analysis: bool = False,
+    n0s1_token: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a GitHub repository for leaked secrets.
@@ -493,6 +553,7 @@ def scan_github(
         "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
         "report_format": report_format,
+        "ai_analysis": ai_analysis,
     }
     if branch:
         kwargs["branch"] = branch
@@ -500,12 +561,15 @@ def scan_github(
         kwargs["scope"] = scope
     if api_key:
         kwargs["api_key"] = api_key
+    if n0s1_token:
+        kwargs["n0s1_token"] = n0s1_token
     return _run_platform_scan(
         "github_scan",
         kwargs,
         ctx,
         "scan_github",
         {"repo": repo, "since": since},
+        ai_analysis=ai_analysis,
     )
 
 
@@ -519,6 +583,8 @@ def scan_gitlab(
     api_key: Optional[str] = None,
     report_format: str = "n0s1",
     show_matched_secret_on_logs: bool = False,
+    ai_analysis: bool = False,
+    n0s1_token: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a GitLab project for leaked secrets.
@@ -541,6 +607,7 @@ def scan_gitlab(
         "show_matched_secret_on_logs": show_matched_secret_on_logs,
         "post_comment": False,
         "report_format": report_format,
+        "ai_analysis": ai_analysis,
     }
     if server:
         kwargs["server"] = server
@@ -550,12 +617,15 @@ def scan_gitlab(
         kwargs["scope"] = scope
     if api_key:
         kwargs["api_key"] = api_key
+    if n0s1_token:
+        kwargs["n0s1_token"] = n0s1_token
     return _run_platform_scan(
         "gitlab_scan",
         kwargs,
         ctx,
         "scan_gitlab",
         {"repo": repo, "since": since},
+        ai_analysis=ai_analysis,
     )
 
 
@@ -568,6 +638,8 @@ def get_scan_status(report_uuid: str, *, ctx: ToolContext) -> Status:
     """Return the current status of an existing scan.
 
     Returns status="pending" if the report_uuid is not yet known.
+    ai_analysis_status reflects the backend AI analysis state machine when
+    the scan was started with ai_analysis=True; None otherwise.
     """
     with _store_lock:
         result = _scan_store.get(report_uuid)
@@ -581,6 +653,68 @@ def get_scan_status(report_uuid: str, *, ctx: ToolContext) -> Status:
         status=result.status,
         progress_pct=100.0 if result.status == "complete" else None,
         error=error,
+        ai_analysis_status=result.ai_analysis_status,
+    )
+
+
+def analyze_report(
+    report_uuid: str,
+    *,
+    n0s1_token: Optional[str] = None,
+    report_file: Optional[str] = None,
+    ctx: ToolContext,
+) -> AnalysisStatus:
+    """Submit or advance async AI analysis for a previously uploaded report.
+
+    Call once after a scan to queue analysis, then call again periodically
+    until ai_analysis_status is "complete" or "failed".
+
+    Args:
+        report_uuid:  UUID returned by a scan_* tool or a previous analyze_report call.
+        n0s1_token:   n0s1 API key; overrides the N0S1_TOKEN environment variable.
+        report_file:  Path to the local report JSON file.  Required when the backend
+                      is in "waiting_client" state so real credentials can be injected
+                      into the HTTP validator requests.
+
+    Returns:
+        AnalysisStatus with ai_analysis_status set to one of:
+          "pending"         — queued; backend generating request templates
+          "waiting_client"  — templates ready; call again (with report_file) to execute
+          "pending_verdict" — responses uploaded; backend computing verdicts
+          "complete"        — verdicts written; report_file updated if provided
+          "failed"          — unrecoverable error
+          "submitted"       — first-time submission (no prior record on backend)
+          "error"           — misconfiguration or HTTP failure
+    """
+    s = _scanner.SecretScanner(
+        report_uuid=report_uuid,
+        report_file=report_file,
+        n0s1_token=n0s1_token,
+    )
+    ai_status = s.analyze()
+
+    _STATUS_MESSAGES = {
+        "pending": "AI analysis queued — backend is generating request templates.",
+        "waiting_client": "Backend ready — call analyze_report again with report_file to execute HTTP validators.",
+        "pending_verdict": "HTTP responses uploaded — backend is computing verdicts.",
+        "complete": "AI analysis complete.",
+        "failed": "AI analysis failed on the backend.",
+        "submitted": f"Report submitted for AI analysis. Report UUID: {report_uuid}",
+        "error": "analyze() encountered an error — check logs for details.",
+    }
+    message = _STATUS_MESSAGES.get(ai_status, f"Unknown status: {ai_status}")
+
+    with _store_lock:
+        stored = _scan_store.get(report_uuid)
+        if stored is not None:
+            _scan_store[report_uuid] = stored.model_copy(
+                update={"ai_analysis_status": ai_status}
+            )
+
+    return AnalysisStatus(
+        report_uuid=report_uuid,
+        ai_analysis_status=ai_status,
+        message=message,
     )
 
 

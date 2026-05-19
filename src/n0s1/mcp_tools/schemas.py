@@ -54,6 +54,7 @@ class ScanResult(BaseModel):
     findings: Optional[List[Finding]] = None
     next_cursor: Optional[str] = None
     usage: Usage
+    ai_analysis_status: Optional[str] = None
 
 
 class Status(BaseModel):
@@ -63,6 +64,15 @@ class Status(BaseModel):
     status: Literal["pending", "running", "complete", "failed"]
     progress_pct: Optional[float] = None
     error: Optional[str] = None
+    ai_analysis_status: Optional[str] = None
+
+
+class AnalysisStatus(BaseModel):
+    """Result returned by analyze_report."""
+
+    report_uuid: str
+    ai_analysis_status: str
+    message: str
 
 
 class FindingsPage(BaseModel):

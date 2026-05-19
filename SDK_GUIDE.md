@@ -784,7 +784,7 @@ Rules: alphanumeric strings ≥ 16 characters show first 4 + `****` + last 4; ev
 | Submodule | Contents |
 |---|---|
 | `n0s1.mcp_tools.tools` | 11 tool functions |
-| `n0s1.mcp_tools.schemas` | Pydantic models: `ScanResult`, `Finding`, `FindingsPage`, `ScanSummary`, `Status`, `Usage`, `Severity` |
+| `n0s1.mcp_tools.schemas` | Pydantic models: `ScanResult`, `Finding`, `FindingsPage`, `ScanSummary`, `Status`, `AnalysisStatus`, `Usage`, `Severity` |
 | `n0s1.mcp_tools.context` | `ToolContext` dataclass |
 | `n0s1.mcp_tools.redaction` | `redact_match(raw, kind)` |
 | `n0s1.mcp_tools.usage` | `usage_block(input_data, output_payload)`, `estimate_tokens(text)` |

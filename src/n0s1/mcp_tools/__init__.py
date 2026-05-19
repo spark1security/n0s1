@@ -1,12 +1,13 @@
 """n0s1.mcp_tools — transport-agnostic MCP tool specification.
 
-Provides the 11 tool functions that both the stdio (n0s1-mcp) and
+Provides the 12 tool functions that both the stdio (n0s1-mcp) and
 HTTP+SSE (n0s1_api_backend) transports register, without depending on
 either transport or the MCP SDK.
 """
 from n0s1.mcp_tools.context import ToolContext
 from n0s1.mcp_tools.redaction import redact_match
 from n0s1.mcp_tools.schemas import (
+    AnalysisStatus,
     Finding,
     FindingsPage,
     ScanResult,
@@ -16,6 +17,7 @@ from n0s1.mcp_tools.schemas import (
     Usage,
 )
 from n0s1.mcp_tools.tools import (
+    analyze_report,
     get_scan_findings,
     get_scan_status,
     scan_asana,
@@ -34,6 +36,7 @@ __all__ = [
     # Context
     "ToolContext",
     # Schemas
+    "AnalysisStatus",
     "Finding",
     "FindingsPage",
     "ScanResult",
@@ -56,4 +59,5 @@ __all__ = [
     "scan_gitlab",
     "get_scan_status",
     "get_scan_findings",
+    "analyze_report",
 ]

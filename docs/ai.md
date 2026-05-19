@@ -602,7 +602,7 @@ All other inputs (`regex-file`, `config-file`, `report-file`, `secret-manager`, 
 n0s1 is available as an MCP (Model Context Protocol) server, letting any MCP-compatible host (Claude Code, Claude Desktop, etc.) invoke scans as native tool calls — no CLI knowledge required.
 
 The MCP implementation is split into two layers:
-- **`n0s1.mcp_tools`** — transport-agnostic Python package with all 11 tool functions and Pydantic response schemas. Can be embedded directly in any Python MCP transport.
+- **`n0s1.mcp_tools`** — transport-agnostic Python package with all 12 tool functions and Pydantic response schemas. Can be embedded directly in any Python MCP transport.
 - **`n0s1-mcp`** — stdio transport that exposes the tools to Claude Code / Claude Desktop.
 
 ### Register with Claude Code
@@ -643,8 +643,9 @@ Tools read credentials from environment variables by default. Passing `api_key` 
 | `scan_wrike` | _(none — uses `WRIKE_TOKEN`)_ | Scan a Wrike workspace for leaked secrets |
 | `scan_linear` | _(none — uses `LINEAR_TOKEN`)_ | Scan a Linear workspace for leaked secrets |
 | `scan_zendesk` | `workspace_url` | Scan a Zendesk workspace for leaked secrets |
-| `get_scan_status` | `report_uuid` | Check the status of a previous scan |
+| `get_scan_status` | `report_uuid` | Check the status of a previous scan (includes `ai_analysis_status`) |
 | `get_scan_findings` | `report_uuid` | Retrieve paginated findings for a completed scan |
+| `analyze_report` | `report_uuid` | Submit or advance async AI analysis for an uploaded report |
 
 ### Common optional parameters (all `scan_*` tools)
 
@@ -654,6 +655,8 @@ Tools read credentials from environment variables by default. Passing `api_key` 
 | `show_matched_secret_on_logs` | bool | `false` | Include raw secret values in output |
 | `since` | str | — | ISO date; restrict scan to content created after this date |
 | `api_key` | str | — | Override the env-var credential |
+| `ai_analysis` | bool | `false` | Queue async AI credential validation after upload (requires `n0s1_token`) |
+| `n0s1_token` | str | — | n0s1 API key; overrides `N0S1_TOKEN` env var |
 
 ### Per-tool optional parameters
 
@@ -737,8 +740,8 @@ Key submodules:
 
 | Submodule | Contents |
 |---|---|
-| `n0s1.mcp_tools.tools` | 11 tool functions |
-| `n0s1.mcp_tools.schemas` | Pydantic models: `ScanResult`, `Finding`, `FindingsPage`, `ScanSummary`, `Status`, `Usage`, `Severity` |
+| `n0s1.mcp_tools.tools` | 12 tool functions |
+| `n0s1.mcp_tools.schemas` | Pydantic models: `ScanResult`, `Finding`, `FindingsPage`, `ScanSummary`, `Status`, `AnalysisStatus`, `Usage`, `Severity` |
 | `n0s1.mcp_tools.context` | `ToolContext` dataclass (injected by transport layer) |
 | `n0s1.mcp_tools.redaction` | `redact_match(raw, kind)` — produces `AKIA****MPLE` or `<REDACTED:kind>` |
 | `n0s1.mcp_tools.usage` | `usage_block(input_data, output_payload)` — token-savings estimation via cl100k_base |
