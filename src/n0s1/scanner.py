@@ -66,6 +66,8 @@ owner_default_value = None
 repo_default_value = None
 branch_default_value = None
 scan_path_default_value = None
+report_uuid_default_value = None
+n0s1_token_default_value = None
 
 class SecretScanner():
     def __init__(self, target=None, regex_file=regex_file_default_value, config_file=config_file_default_value,
@@ -78,7 +80,8 @@ class SecretScanner():
                  insecure=insecure_default_value, map=map_default_value, map_file=map_file_default_value,
                  scope=scope_default_value, api_key=api_key_default_value, server=server_default_value,
                  email=email_default_value, owner=owner_default_value, repo=repo_default_value,
-                 branch=branch_default_value, scan_path=scan_path_default_value):
+                 branch=branch_default_value, scan_path=scan_path_default_value,
+                 report_uuid=report_uuid_default_value, n0s1_token=n0s1_token_default_value):
         global n0s1_version
         self.logging_function = log_message
 
@@ -109,6 +112,8 @@ class SecretScanner():
         self.repo = None
         self.branch = None
         self.scan_path = None
+        self.report_uuid = None
+        self.n0s1_token = None
 
         self.regex_config = None
         self.cfg = None
@@ -125,13 +130,14 @@ class SecretScanner():
                        "scan_date": {"timestamp": datetime_now_obj.timestamp(), "date_utc": date_utc},
                        "regex_config": {}, "findings": {}}
 
-        self.set(target=target, regex_file=regex_file, config_file=config_file, report_file=report_file, report_format=report_format, post_comment=post_comment, skip_comment=skip_comment, show_matched_secret_on_logs=show_matched_secret_on_logs, ai_analysis=ai_analysis, private=private, debug=debug, secret_manager=secret_manager, contact_help=contact_help, label=label, timeout=timeout, limit=limit, insecure=insecure, map=map, map_file=map_file, scope=scope, api_key=api_key, server=server, email=email, owner=owner, repo=repo, branch=branch, scan_path=scan_path)
+        self.set(target=target, regex_file=regex_file, config_file=config_file, report_file=report_file, report_format=report_format, post_comment=post_comment, skip_comment=skip_comment, show_matched_secret_on_logs=show_matched_secret_on_logs, ai_analysis=ai_analysis, private=private, debug=debug, secret_manager=secret_manager, contact_help=contact_help, label=label, timeout=timeout, limit=limit, insecure=insecure, map=map, map_file=map_file, scope=scope, api_key=api_key, server=server, email=email, owner=owner, repo=repo, branch=branch, scan_path=scan_path, report_uuid=report_uuid, n0s1_token=n0s1_token)
 
 
     def set(self, target=None, regex_file=None, config_file=None, report_file=None, report_format=None, post_comment=None,
             skip_comment=None, show_matched_secret_on_logs=None, ai_analysis=None, private=None, debug=None, secret_manager=None,
             contact_help=None, label=None, timeout=None, limit=None, insecure=None, map=None, map_file=None, scope=None,
-            api_key=None, server=None, email=None, owner=None, repo=None, branch=None, scan_path=None):
+            api_key=None, server=None, email=None, owner=None, repo=None, branch=None, scan_path=None, report_uuid=None,
+            n0s1_token=None):
         global DEBUG
         if target is not None:
             self.target = target
@@ -193,6 +199,10 @@ class SecretScanner():
             self.branch = branch
         if scan_path is not None:
             self.scan_path = scan_path
+        if report_uuid is not None:
+            self.report_uuid = report_uuid
+        if n0s1_token is not None:
+            self.n0s1_token = n0s1_token
 
         DEBUG = self.debug
 
@@ -554,7 +564,7 @@ class SecretScanner():
             message = f"Private flag enabled. Authentication to n0s1 service skipped!"
             self.log_message(message)
         else:
-            N0S1_TOKEN = os.getenv("N0S1_TOKEN")
+            N0S1_TOKEN = self.n0s1_token or os.getenv("N0S1_TOKEN")
             n0s1_pro = spark1.Spark1(token_auth=N0S1_TOKEN)
             if n0s1_pro.is_connected(self.scan_arguments):
                 mode = "professional"
@@ -602,12 +612,13 @@ class SecretScanner():
                         if item_data and item_data.lower().find(label.lower()) == -1:
                             self.scan_text_and_report_leaks(item_data, name, self.regex_config, self.scan_arguments, ticket)
         if n0s1_pro:
-            upload_http_response = n0s1_pro.upload_report(self.report_json)
+            upload_http_response = n0s1_pro.upload_report(self.report_json, ai_analysis=self.ai_analysis)
             self._process_report_upload(upload_http_response)
             if self.ai_analysis:
-                ai_analyzed_report = n0s1_pro.ai_analysis(self.report_json, self.report_sensitive_json)
-                if ai_analyzed_report:
-                    self.report_json = ai_analyzed_report
+                report_uuid = self.report_json.get("uuid", "")
+                self.log_message(
+                    f"AI analysis queued. Run: n0s1 analyze --report-uuid {report_uuid}"
+                )
 
         return self.report_json
 
@@ -630,6 +641,93 @@ class SecretScanner():
             except Exception as ex:
                 logging.info(str(ex))
 
+
+    def analyze(self) -> str:
+        """Submit/advance async AI analysis.
+
+        Returns the current ai_analysis_status string, or one of the sentinel
+        values "error" (misconfiguration / HTTP failure) and "submitted"
+        (first-time submission with no prior UUID).
+        """
+        N0S1_TOKEN = self.n0s1_token or os.getenv("N0S1_TOKEN")
+        if not N0S1_TOKEN:
+            self.log_message("n0s1 API key is required for the analyze command. Use --n0s1-api-key or set the N0S1_TOKEN environment variable.")
+            return "error"
+
+        report_uuid = self.report_uuid
+        report_file_path = self.report_file
+        local_report = None
+
+        if not report_uuid and report_file_path:
+            try:
+                with open(report_file_path) as f:
+                    local_report = json.load(f)
+                report_uuid = local_report.get("uuid")
+            except Exception as e:
+                self.log_message(f"Failed to read report file: {e}")
+                return "error"
+
+        if not report_uuid and not local_report:
+            self.log_message("Provide a report UUID or a report file.")
+            return "error"
+
+        n0s1_pro = spark1.Spark1(token_auth=N0S1_TOKEN)
+
+        if report_uuid:
+            status_data = n0s1_pro.get_scan_status(report_uuid)
+            if status_data is None:
+                self.log_message(f"Report [{report_uuid}] not found on backend.")
+                return "error"
+
+            ai_status = status_data.get("ai_analysis_status")
+
+            if ai_status == "waiting_client":
+                remote_report = status_data.get("report")
+                if not remote_report:
+                    self.log_message("Backend returned no report data.")
+                    return "error"
+                updated_report = spark1._execute_request_validators(remote_report, local_report)
+                r = n0s1_pro.upload_responses(report_uuid, updated_report)
+                if r and 200 <= r.status_code < 300:
+                    self.log_message("HTTP responses uploaded. Backend will compute verdicts.")
+                    self.log_message(f"Run again to check status: n0s1 analyze --report-uuid {report_uuid}")
+                    return "pending_verdict"
+                else:
+                    status_code = r.status_code if r else "N/A"
+                    self.log_message(f"Failed to upload responses. HTTP status: [{status_code}]")
+                    return "error"
+
+            if ai_status == "complete":
+                self.log_message(f"AI analysis complete for report [{report_uuid}].")
+                remote_report = status_data.get("report")
+                if remote_report and report_file_path:
+                    try:
+                        with open(report_file_path, "w") as f:
+                            json.dump(remote_report, f, indent=2)
+                        self.log_message(f"Updated report saved to [{report_file_path}].")
+                    except Exception as e:
+                        self.log_message(f"Could not save report: {e}")
+                return "complete"
+
+            if ai_status in ("pending", "pending_verdict"):
+                self.log_message(f"AI analysis in progress (status: {ai_status}). Try again later.")
+                return ai_status
+
+            if ai_status == "failed":
+                self.log_message(f"AI analysis failed for report [{report_uuid}].")
+                return "failed"
+
+        r = n0s1_pro.submit_for_ai_analysis(report_uuid=report_uuid, report=local_report)
+        if r and 200 <= r.status_code < 300:
+            result = r.json()
+            uuid_out = result.get("report_uuid", report_uuid)
+            self.log_message(f"AI analysis queued. Report UUID: [{uuid_out}]")
+            self.log_message(f"Run later to advance: n0s1 analyze --report-uuid {uuid_out}")
+            return "submitted"
+        else:
+            status_code = r.status_code if r else "N/A"
+            self.log_message(f"Failed to queue AI analysis. HTTP status: [{status_code}]")
+            return "error"
 
     def scan_text_and_report_leaks(self, data, name, regex_config, scan_arguments, ticket):
         secret_found, scan_text_result = scan_text(regex_config, data)
