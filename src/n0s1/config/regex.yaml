@@ -125,7 +125,7 @@ rules:
     description: >-
       Uncovered a possible Airtable Personal AccessToken, potentially
       compromising database access and leading to data leakage or alteration.
-    regex: '\b(pat[[:alnum:]]{14}\.[a-f0-9]{64})\b'
+    regex: '\b(pat[a-zA-Z0-9]{14}\.[a-f0-9]{64})\b'
     keywords:
       - airtable
     example: >-

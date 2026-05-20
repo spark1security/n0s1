@@ -10,6 +10,9 @@ Complete guide for using the n0s1 secret scanner tool.
 - [AI Analysis](#ai-analysis)
 - [Advanced Features](#advanced-features)
   - [MCP Server](#mcp-server)
+    - [Available MCP Tools](#available-mcp-tools)
+    - [analyze_report tool reference](#analyze_report-tool-reference)
+    - [AI analysis workflow via MCP](#ai-analysis-workflow-via-mcp)
 - [Examples](#examples)
 
 ## Overview
@@ -529,6 +532,71 @@ After registration, you can ask Claude things like:
 Claude will call the appropriate n0s1 tool, pass your credentials, and summarize the findings inline.
 
 Use `--scope project` instead of `--scope user` to limit the server to the current project only.
+
+#### Available MCP Tools
+
+| Tool | Description |
+|---|---|
+| `scan_jira` | Scan Jira tickets for leaked secrets |
+| `scan_confluence` | Scan Confluence pages for leaked secrets |
+| `scan_slack` | Scan Slack channels for leaked secrets |
+| `scan_github` | Scan GitHub repositories for leaked secrets |
+| `scan_gitlab` | Scan GitLab projects for leaked secrets |
+| `scan_zendesk` | Scan Zendesk tickets for leaked secrets |
+| `scan_linear` | Scan Linear issues for leaked secrets |
+| `scan_asana` | Scan Asana tasks for leaked secrets |
+| `scan_wrike` | Scan Wrike tasks for leaked secrets |
+| `scan_local` | Scan a local filesystem path for leaked secrets |
+| `get_scan_status` | Return the current status of a previously started scan |
+| `get_scan_findings` | Return a paginated list of findings for a completed scan |
+| `analyze_report` | Submit or advance async AI analysis for a previously uploaded report |
+
+All platform `scan_*` tools accept two optional parameters for AI analysis:
+
+| Parameter | Description |
+|---|---|
+| `ai_analysis` | Set to `true` to queue async AI credential validation after the scan (requires n0s1 Pro) |
+| `n0s1_api_key` | n0s1 API key; overrides the `N0S1_TOKEN` environment variable |
+
+#### `analyze_report` tool reference
+
+Submit a report for AI analysis, or advance an in-progress analysis to the next step. Call once to queue, then call again periodically until `ai_analysis_status` is `"complete"` or `"failed"`.
+
+**Parameters:**
+
+| Parameter | Required | Description |
+|---|---|---|
+| `report_uuid` | Yes | UUID returned by a `scan_*` tool or a previous `analyze_report` call |
+| `n0s1_api_key` | No | n0s1 API key; overrides `N0S1_TOKEN` env var |
+| `report_file` | No | Path to local report JSON file — required when status is `"waiting_client"` so real credentials can be injected into HTTP validator requests |
+
+**Returned `ai_analysis_status` values:**
+
+| Status | Meaning |
+|---|---|
+| `pending` | Queued; backend is generating request templates |
+| `waiting_client` | Templates ready; call again with `report_file` to execute HTTP validators |
+| `pending_verdict` | Client responses uploaded; backend is computing verdicts |
+| `complete` | Verdicts written to report |
+| `failed` | Unrecoverable error |
+
+#### AI analysis workflow via MCP
+
+**Option A — queue analysis during the scan:**
+
+Ask Claude: *"Scan Jira at https://myco.atlassian.net for secrets and queue AI analysis. My Jira token is `$JIRA_TOKEN`, email is `user@myco.com`, and n0s1 key is `$N0S1_TOKEN`."*
+
+Claude will call `scan_jira` with `ai_analysis=true` and return a `report_uuid`. A few minutes later, ask:
+
+*"Advance AI analysis for report UUID `<uuid>`. The report file is at `./report.json`."*
+
+Claude will call `analyze_report` with the UUID and `report_file`, execute the HTTP validator requests, and re-upload the enriched report. Call again once more to retrieve the final verdicts.
+
+**Option B — analyze an existing report file:**
+
+Ask Claude: *"Submit `./report.json` for AI analysis using n0s1 key `$N0S1_TOKEN`."*
+
+Claude will call `analyze_report` with the UUID extracted from the file. Repeat as above until complete.
 
 ### CI/CD Integration
 
