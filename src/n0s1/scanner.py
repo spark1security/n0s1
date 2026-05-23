@@ -731,6 +731,26 @@ class SecretScanner():
 
     def scan_text_and_report_leaks(self, data, name, regex_config, scan_arguments, ticket):
         secret_found, scan_text_result = scan_text(regex_config, data)
+
+        if secret_found:
+            pattern_allowed = False
+            is_file_scan = (ticket.get("ticket", {}).get("file", {}).get("name", "").lower() == "file".lower())
+            if is_file_scan:
+                file_with_leak = ticket.get("url", "")
+                global_allowlist = regex_config.get("allowlist", {})
+                global_allowlist_paths = global_allowlist.get("paths", [])
+                modifiers = ["(?i)", "(?m)", "(?s)", "(?x)", "(?g)", "(?u)", "(?A)", "(?L)", "(?U)", ]
+                for allowlist_str in global_allowlist_paths:
+                    for modifier in modifiers:
+                        if allowlist_str.find(modifier) > 0:
+                            allowlist_str = allowlist_str.replace(modifier, "")
+                            allowlist_str = modifier + allowlist_str
+                    if _safe_re_search(allowlist_str, file_with_leak):
+                        pattern_allowed = True
+                        break
+                if pattern_allowed:
+                    secret_found = False
+
         scan_text_result["ticket_data"] = ticket
         scan_text_result["ticket_data"]["field"] = name
         scan_text_result["ticket_data"]["platform"] = self.controller.get_name()
@@ -788,6 +808,21 @@ def _sha1_hash(to_hash):
         raise "Unable to generate SHA-256 hash for input string" from e
 
 
+_REGEX_MODIFIERS = ["(?i)", "(?m)", "(?s)", "(?x)", "(?g)", "(?u)", "(?A)", "(?L)", "(?U)"]
+
+
+def _normalize_regex(regex_str):
+    for modifier in _REGEX_MODIFIERS:
+        if regex_str.find(modifier) > 0:
+            regex_str = regex_str.replace(modifier, "")
+            regex_str = modifier + regex_str
+    return regex_str
+
+
+def _text_matches_any_regex(text, regexes):
+    return any(_safe_re_search(_normalize_regex(r), text) for r in regexes)
+
+
 def _safe_re_search(regex_str, text):
     global DEBUG
     m = None
@@ -809,31 +844,14 @@ def match_regex(regex_config, text):
     global_stopwords = global_allowlist.get("stopwords", [])
 
     for c in regex_config["rules"]:
-        regex_str = c["regex"]
+        regex_str = _normalize_regex(c["regex"])
         mock_secret = c.get("example", "<REDACTED>")
-        modifiers = ["(?i)", "(?m)", "(?s)", "(?x)", "(?g)", "(?u)", "(?A)", "(?L)", "(?U)", ]
-        for modifier in modifiers:
-            if regex_str.find(modifier) > 0:
-                regex_str = regex_str.replace(modifier, "")
-                regex_str = modifier + regex_str
         if m := _safe_re_search(regex_str, text):
-            pattern_allowed = False
-            allowlists = c.get("allowlists", [])
-            for allowlist in allowlists:
-                for allowlist_str in allowlist.get("regexes", []):
-                    for modifier in modifiers:
-                        if allowlist_str.find(modifier) > 0:
-                            allowlist_str = allowlist_str.replace(modifier, "")
-                            allowlist_str = modifier + allowlist_str
-                    if _safe_re_search(allowlist_str, text):
-                        pattern_allowed = True
-            for allowlist_str in global_allowlist_regexes:
-                for modifier in modifiers:
-                    if allowlist_str.find(modifier) > 0:
-                        allowlist_str = allowlist_str.replace(modifier, "")
-                        allowlist_str = modifier + allowlist_str
-                if _safe_re_search(allowlist_str, text):
-                    pattern_allowed = True
+            per_rule_regexes = [r for al in c.get("allowlists", []) for r in al.get("regexes", [])]
+            pattern_allowed = (
+                _text_matches_any_regex(text, per_rule_regexes) or
+                _text_matches_any_regex(text, global_allowlist_regexes)
+            )
             if pattern_allowed:
                 continue
             begin = m.regs[0][0]
