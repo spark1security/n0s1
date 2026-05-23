@@ -376,6 +376,68 @@ result = scanner_instance.scan()
 
 ## Advanced Usage
 
+### Reducing False Positives with the Global Allowlist
+
+The regex configuration file (`regex.yaml`) contains a top-level `allowlist` section that suppresses findings across **all** detection rules. This is the right place to add exclusions that apply project-wide — rather than duplicating them inside every individual rule.
+
+The three sub-keys and how they are applied:
+
+| Key | Checked against | Suppresses when |
+|---|---|---|
+| `regexes` | The full text of the field being scanned | Any pattern matches |
+| `stopwords` | The matched secret string only | Any stopword is a substring (case-insensitive) |
+| `paths` | The file path or URL being scanned | Any pattern matches |
+
+**Example — custom `my-regex.yaml` with project-specific exclusions:**
+
+```yaml
+# my-regex.yaml — copy regex.yaml and add your exclusions here
+
+allowlist:
+  regexes:
+    # Suppress placeholder / template values
+    - (?i)^x{3,}$               # xxxxx, XXXXX, …
+    - (?i)^changeme$
+    - (?i)^your[_-].*here$
+    - '^\$\{\{[ \t]*secrets\.[A-Za-z]\w+[ \t]*}}$'  # GitHub Actions refs
+  stopwords:
+    - placeholder
+    - example_token
+  paths:
+    - '(?:^|/)node_modules(?:/.*)?$'
+    - '(?:^|/)vendor(?:/.*)?$'
+
+rules:
+  # ... rest of detection rules unchanged ...
+```
+
+Pass the file via `regex_file`:
+
+```python
+scanner_instance = scanner.SecretScanner(
+    target="jira_scan",
+    server="https://yourcompany.atlassian.net",
+    email="your-email@company.com",
+    api_key=os.getenv("JIRA_TOKEN"),
+    regex_file="./my-regex.yaml"
+)
+result = scanner_instance.scan()
+```
+
+You can also call `scan_text` directly against the low-level API if you want to verify that an allowlist entry works before running a full scan:
+
+```python
+import n0s1.scanner as scanner
+import yaml
+
+with open("my-regex.yaml") as f:
+    regex_config = yaml.safe_load(f)
+
+# Should return (False, {}) — suppressed by allowlist
+matched, result = scanner.scan_text(regex_config, "changeme")
+print("suppressed:", not matched)
+```
+
 ### Custom Regex Patterns
 
 ```python

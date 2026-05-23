@@ -9,6 +9,7 @@ Complete guide for using the n0s1 secret scanner tool.
 - [Platform Commands](#platform-commands)
 - [AI Analysis](#ai-analysis)
 - [Advanced Features](#advanced-features)
+  - [Reducing False Positives](#reducing-false-positives)
   - [MCP Server](#mcp-server)
     - [Available MCP Tools](#available-mcp-tools)
     - [analyze_report tool reference](#analyze_report-tool-reference)
@@ -453,6 +454,70 @@ n0s1 analyze [global options] [--report-uuid <uuid>] [--report-file <path>]
 | `failed` | Unrecoverable error |
 
 ## Advanced Features
+
+### Reducing False Positives
+
+n0s1 ships with a global allowlist in `regex.yaml` that suppresses findings across all detection rules. Use it — or your own copy via `--regex-file` — instead of editing individual rules when you need to silence recurring false positives.
+
+The top-level `allowlist` section supports three filter types:
+
+```yaml
+allowlist:
+  description: global allow lists
+
+  # Suppress any finding whose full text matches one of these patterns.
+  # Useful for placeholder or template values that look like secrets.
+  regexes:
+    - (?i)^true|false|null$
+    - >-
+      ^(?i:a+|b+|c+|...x+...)$   # single-repeated-character strings
+    - '^\$\{\{[ \t]*secrets\.[A-Za-z]\w+[ \t]*}}$'  # GitHub Actions secret refs
+
+  # Suppress any finding where the matched secret contains one of these words
+  # (case-insensitive substring match).
+  stopwords:
+    - abcdefghijklmnopqrstuvwxyz
+    - placeholder
+    - example
+
+  # Skip file or URL paths that match these patterns (local and GitHub/GitLab scans).
+  paths:
+    - '(?i)\.(?:bmp|gif|jpe?g|png|svg)$'
+    - '(?:^|/)node_modules(?:/.*)?$'
+    - '(?:^|/)vendor(?:/.*)?$'
+```
+
+**How each filter works:**
+
+| Key | Applied to | Effect |
+|---|---|---|
+| `regexes` | The full text of the field being scanned | If any pattern matches, the finding is suppressed |
+| `stopwords` | The matched secret string only | If any stopword is a substring, the finding is suppressed |
+| `paths` | File path or URL of the item being scanned | If any pattern matches, the item is skipped entirely |
+
+**Common use case — silencing placeholder values:**
+
+If your project uses values like `xxxxx`, `changeme`, or `YOUR_TOKEN_HERE` in documentation or tests, add them to `regexes`:
+
+```yaml
+allowlist:
+  regexes:
+    - (?i)^x{3,}$          # xxxxx, XXXXX, etc.
+    - (?i)^changeme$
+    - (?i)^your[_-].*here$
+```
+
+Pass your customized file with `--regex-file`:
+
+```bash
+n0s1 jira_scan \
+  --regex-file ./my-regex.yaml \
+  --server https://mycompany.atlassian.net \
+  --email user@mycompany.com \
+  --api-key $JIRA_TOKEN
+```
+
+Per-rule `allowlists` entries (inside individual rules in the `rules:` list) work the same way but apply only to that rule. The global `allowlist` is a convenient alternative when the same exclusion applies across many rules.
 
 ### Using Custom Regex Patterns
 
