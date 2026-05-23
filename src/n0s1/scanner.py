@@ -804,6 +804,10 @@ def _safe_re_search(regex_str, text):
 
 
 def match_regex(regex_config, text):
+    global_allowlist = regex_config.get("allowlist", {})
+    global_allowlist_regexes = global_allowlist.get("regexes", [])
+    global_stopwords = global_allowlist.get("stopwords", [])
+
     for c in regex_config["rules"]:
         regex_str = c["regex"]
         mock_secret = c.get("example", "<REDACTED>")
@@ -823,11 +827,24 @@ def match_regex(regex_config, text):
                             allowlist_str = modifier + allowlist_str
                     if _safe_re_search(allowlist_str, text):
                         pattern_allowed = True
+            for allowlist_str in global_allowlist_regexes:
+                for modifier in modifiers:
+                    if allowlist_str.find(modifier) > 0:
+                        allowlist_str = allowlist_str.replace(modifier, "")
+                        allowlist_str = modifier + allowlist_str
+                if _safe_re_search(allowlist_str, text):
+                    pattern_allowed = True
             if pattern_allowed:
                 continue
             begin = m.regs[0][0]
             end = m.regs[0][1]
             matched_text = text[begin:end]
+            for stopword in global_stopwords:
+                if stopword.lower() in matched_text.lower():
+                    pattern_allowed = True
+                    break
+            if pattern_allowed:
+                continue
             mocked_text = text.replace(matched_text, mock_secret)
             if len(mocked_text) > 10000 or mocked_text.lower().find(matched_text.lower()) >= 0:
                 mocked_text, snippet_text = _sanitize_text(text, begin, end, mock_secret)
