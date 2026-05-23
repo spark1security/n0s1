@@ -733,22 +733,11 @@ class SecretScanner():
         secret_found, scan_text_result = scan_text(regex_config, data)
 
         if secret_found:
-            pattern_allowed = False
             is_file_scan = (ticket.get("ticket", {}).get("file", {}).get("name", "").lower() == "file".lower())
             if is_file_scan:
                 file_with_leak = ticket.get("url", "")
-                global_allowlist = regex_config.get("allowlist", {})
-                global_allowlist_paths = global_allowlist.get("paths", [])
-                modifiers = ["(?i)", "(?m)", "(?s)", "(?x)", "(?g)", "(?u)", "(?A)", "(?L)", "(?U)", ]
-                for allowlist_str in global_allowlist_paths:
-                    for modifier in modifiers:
-                        if allowlist_str.find(modifier) > 0:
-                            allowlist_str = allowlist_str.replace(modifier, "")
-                            allowlist_str = modifier + allowlist_str
-                    if _safe_re_search(allowlist_str, file_with_leak):
-                        pattern_allowed = True
-                        break
-                if pattern_allowed:
+                global_allowlist_paths = regex_config.get("allowlist", {}).get("paths", [])
+                if _text_matches_any_regex(file_with_leak, global_allowlist_paths):
                     secret_found = False
 
         scan_text_result["ticket_data"] = ticket
