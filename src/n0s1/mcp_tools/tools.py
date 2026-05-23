@@ -135,9 +135,9 @@ def _run_platform_scan(
 ) -> ScanResult:
     """Run a scan, build a ScanResult, persist it, fire the event callback.
 
-    When ai_analysis=True the scanner uploads the report to the n0s1 backend
-    and the backend assigns a UUID.  That backend UUID is used as report_uuid
-    so that subsequent analyze_report / get_scan_status calls work correctly.
+    The scanner always uploads the report to the n0s1 backend, which assigns a
+    UUID.  That backend UUID is used as report_uuid so that subsequent
+    analyze_report / get_scan_status calls work correctly.
     """
     local_uuid = str(uuid.uuid4())
     report_uuid = local_uuid
@@ -146,10 +146,9 @@ def _run_platform_scan(
 
     try:
         report_json, sensitive_json = _dispatch_scan(target, scanner_kwargs, ctx)
-        if ai_analysis:
-            backend_uuid = report_json.get("uuid") if report_json else None
-            if backend_uuid:
-                report_uuid = backend_uuid
+        backend_uuid = report_json.get("uuid") if report_json else None
+        if backend_uuid:
+            report_uuid = backend_uuid
         findings = _build_findings(report_json, sensitive_json)
         summary = _build_summary(findings)
         use = usage_block(input_repr, report_json)
