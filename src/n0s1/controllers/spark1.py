@@ -1,12 +1,51 @@
+import base64
 import logging
+import os
 import socket
 import requests
 import json
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 try:
     import clients.http_client as http_client
 except Exception:
     import n0s1.clients.http_client as http_client
+
+
+def encrypt_sensitive_report(report_sensitive_json: dict) -> tuple[dict, bytes]:
+    """AES-256-GCM encrypt every sensitive_secret in report_sensitive_json in place.
+
+    Each secret is encrypted with a fresh 12-byte nonce; the nonce is prepended
+    to the ciphertext and the whole thing is base64-encoded before being written
+    back into the dict.  The same raw_key decrypts all findings in this report.
+
+    NOTE: this mutates report_sensitive_json.  After this call, sensitive_secret
+    fields contain ciphertext, not plaintext.  Callers that need the plaintext
+    for local use (e.g. redaction) should finish that work before calling this.
+
+    Returns:
+        (mutated_dict, raw_key) — raw_key is 32 random bytes.  Upload it via
+        Spark1.upload_key() and then discard it from memory.
+    """
+    raw_key = os.urandom(32)
+    aesgcm = AESGCM(raw_key)
+    for finding in (report_sensitive_json or {}).get("findings", {}).values():
+        secret = finding.get("sensitive_secret", "")
+        if not secret:
+            continue
+        nonce = os.urandom(12)
+        ct = aesgcm.encrypt(nonce, secret.encode(), None)
+        finding["sensitive_secret"] = base64.b64encode(nonce + ct).decode()
+    return report_sensitive_json, raw_key
+
+
+def _has_sensitive_secrets(sensitive_json: dict) -> bool:
+    """Return True if sensitive_json contains at least one non-empty sensitive_secret."""
+    for finding in (sensitive_json or {}).get("findings", {}).values():
+        if finding.get("sensitive_secret"):
+            return True
+    return False
 
 
 def _get_local_ip():
@@ -140,7 +179,44 @@ class Spark1(http_client.HttpClient):
             return False
         return False
 
-    def upload_report(self, report: dict, ai_analysis: bool = False):
+    def upload_key(self, report_uuid: str, raw_key: bytes) -> bool:
+        """POST the AES-256 key to the backend for secure at-rest storage.
+
+        The backend Fernet-wraps it before persisting; only the scan owner can
+        retrieve it (GET /api/v1/scans/<uuid>/key).  The key is one-time-use —
+        it is zeroed on first retrieval.
+
+        Returns True on success (201), False on any error.  A False return means
+        the encrypted secrets in sensitive_json cannot be decrypted later; use
+        POST /api/v1/scans/<uuid>/rekey to re-upload a new key after the next
+        scan run.
+        """
+        if not report_uuid or not raw_key:
+            return False
+        url = f"{self.base_url}/api/v1/scans/{report_uuid}/key"
+        raw_key_b64 = base64.b64encode(raw_key).decode()
+        try:
+            r = self._post_request(url, json={"encrypted_key": raw_key_b64})
+            if r and 200 <= r.status_code < 300:
+                return True
+            logging.warning(
+                "upload_key: failed status=%s report_uuid=%s",
+                r.status_code if r else "N/A", report_uuid,
+            )
+        except Exception as ex:
+            logging.warning("upload_key: exception report_uuid=%s: %s", report_uuid, ex)
+        return False
+
+    def upload_report(self, report: dict, ai_analysis: bool = False, sensitive_json: dict = None):
+        """Upload a completed scan report.
+
+        If sensitive_json is provided and contains findings with sensitive_secret
+        values, those secrets are AES-256-GCM encrypted in-place and the key is
+        uploaded to POST /api/v1/scans/<uuid>/key.  After this call,
+        sensitive_json["findings"][id]["sensitive_secret"] contains ciphertext,
+        not plaintext.  The raw key is discarded from memory immediately after
+        the upload attempt.
+        """
         if report is None:
             return None
         upload_report_url = self.base_url + "/api/v1/scans"
@@ -149,6 +225,20 @@ class Spark1(http_client.HttpClient):
             if ai_analysis:
                 payload["ai_analysis"] = True
             r = self._post_request(upload_report_url, json=payload)
+            if r and 200 <= r.status_code < 300 and _has_sensitive_secrets(sensitive_json):
+                report_uuid = r.json().get("report_uuid", "")
+                if report_uuid:
+                    _, raw_key = encrypt_sensitive_report(sensitive_json)
+                    try:
+                        if not self.upload_key(report_uuid, raw_key):
+                            logging.warning(
+                                "upload_report: key upload failed for %s — secrets are "
+                                "encrypted in sensitive_json but key is not stored on the "
+                                "backend; use POST /rekey after the next scan to recover",
+                                report_uuid,
+                            )
+                    finally:
+                        del raw_key
             return r
         except Exception as ex:
             logging.info(str(ex))
