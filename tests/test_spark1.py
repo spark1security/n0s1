@@ -1,4 +1,4 @@
-"""Unit tests for spark1.encrypt_sensitive_report, upload_key, and upload_report.
+"""Unit tests for spark1 crypto helpers and Spark1 key management methods.
 
 No network calls are made — all HTTP is mocked.
 """
@@ -16,6 +16,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from n0s1.controllers.spark1 import (
     Spark1,
     encrypt_sensitive_report,
+    decrypt_sensitive_report,
     _has_sensitive_secrets,
 )
 
@@ -288,6 +289,149 @@ class TestUploadReportWithSensitiveJson(unittest.TestCase):
             s.upload_report({"findings": []}, ai_analysis=True)
         payload = mock_post.call_args[1]["json"]
         self.assertTrue(payload.get("ai_analysis"))
+
+
+# ---------------------------------------------------------------------------
+# decrypt_sensitive_report
+# ---------------------------------------------------------------------------
+
+class TestDecryptSensitiveReport(unittest.TestCase):
+
+    def _encrypt(self, sensitive_json):
+        """Helper: encrypt in-place, return the raw_key_b64."""
+        _, raw_key = encrypt_sensitive_report(sensitive_json)
+        return base64.b64encode(raw_key).decode()
+
+    def test_roundtrip_single_finding(self):
+        plaintext = "AKIAIOSFODNN7EXAMPLE"
+        sj = _make_sensitive_json(plaintext)
+        raw_key_b64 = self._encrypt(sj)
+        decrypt_sensitive_report(sj, raw_key_b64)
+        self.assertEqual(sj["findings"]["finding_0"]["sensitive_secret"], plaintext)
+
+    def test_roundtrip_multiple_findings(self):
+        secrets = ["secret_a", "secret_b", "secret_c"]
+        sj = _make_sensitive_json(*secrets)
+        raw_key_b64 = self._encrypt(sj)
+        decrypt_sensitive_report(sj, raw_key_b64)
+        for i, plaintext in enumerate(secrets):
+            self.assertEqual(sj["findings"][f"finding_{i}"]["sensitive_secret"], plaintext)
+
+    def test_mutates_in_place_and_returns_same_dict(self):
+        sj = _make_sensitive_json("mysecret")
+        raw_key_b64 = self._encrypt(sj)
+        returned = decrypt_sensitive_report(sj, raw_key_b64)
+        self.assertIs(returned, sj)
+
+    def test_empty_secret_left_unchanged(self):
+        sj = {"findings": {"f1": {"sensitive_secret": ""}}}
+        _, raw_key = encrypt_sensitive_report(sj)
+        raw_key_b64 = base64.b64encode(raw_key).decode()
+        decrypt_sensitive_report(sj, raw_key_b64)
+        self.assertEqual(sj["findings"]["f1"]["sensitive_secret"], "")
+
+    def test_wrong_key_leaves_field_unchanged_and_logs_warning(self):
+        sj = _make_sensitive_json("mysecret")
+        self._encrypt(sj)
+        wrong_key_b64 = base64.b64encode(os.urandom(32)).decode()
+        original_ct = sj["findings"]["finding_0"]["sensitive_secret"]
+        with self.assertLogs("root", level="WARNING") as log:
+            decrypt_sensitive_report(sj, wrong_key_b64)
+        # Field unchanged on bad decrypt
+        self.assertEqual(sj["findings"]["finding_0"]["sensitive_secret"], original_ct)
+        self.assertTrue(any("failed to decrypt" in m for m in log.output))
+
+    def test_invalid_raw_key_b64_logs_warning_and_returns_dict(self):
+        sj = _make_sensitive_json("mysecret")
+        with self.assertLogs("root", level="WARNING") as log:
+            result = decrypt_sensitive_report(sj, "not-valid-base64!!!")
+        self.assertIs(result, sj)
+        self.assertTrue(any("invalid raw_key_b64" in m for m in log.output))
+
+    def test_none_sensitive_json_returns_none(self):
+        result = decrypt_sensitive_report(None, base64.b64encode(os.urandom(32)).decode())
+        self.assertIsNone(result)
+
+
+# ---------------------------------------------------------------------------
+# Spark1.retrieve_key
+# ---------------------------------------------------------------------------
+
+class TestRetrieveKey(unittest.TestCase):
+
+    def test_returns_raw_key_b64_on_200(self):
+        s = _make_spark1()
+        raw_key_b64 = base64.b64encode(os.urandom(32)).decode()
+        resp = _mock_response(200, {"key": raw_key_b64, "key_version": 1})
+        with patch.object(s, "_get_request", return_value=resp):
+            result = s.retrieve_key("uuid-123")
+        self.assertEqual(result, raw_key_b64)
+
+    def test_calls_correct_url(self):
+        s = _make_spark1()
+        resp = _mock_response(200, {"key": "abc", "key_version": 1})
+        with patch.object(s, "_get_request", return_value=resp) as mock_get:
+            s.retrieve_key("uuid-xyz")
+        url = mock_get.call_args[0][0]
+        self.assertIn("/api/v1/scans/uuid-xyz/key", url)
+
+    def test_returns_none_on_consumed_410(self):
+        s = _make_spark1()
+        resp = _mock_response(410, {"error": "consumed", "consumed_at": "2026-05-24T10:00:00"})
+        with patch.object(s, "_get_request", return_value=resp):
+            with self.assertLogs("root", level="WARNING") as log:
+                result = s.retrieve_key("uuid-123")
+        self.assertIsNone(result)
+        self.assertTrue(any("already consumed" in m for m in log.output))
+
+    def test_consumed_log_mentions_security_incident(self):
+        s = _make_spark1()
+        resp = _mock_response(410, {"error": "consumed", "consumed_at": "2026-05-24T10:00:00"})
+        with patch.object(s, "_get_request", return_value=resp):
+            with self.assertLogs("root", level="WARNING") as log:
+                s.retrieve_key("uuid-123")
+        self.assertTrue(any("security incident" in m for m in log.output))
+
+    def test_returns_none_on_expired_410(self):
+        s = _make_spark1()
+        resp = _mock_response(410, {"error": "expired"})
+        with patch.object(s, "_get_request", return_value=resp):
+            result = s.retrieve_key("uuid-123")
+        self.assertIsNone(result)
+
+    def test_returns_none_on_404(self):
+        s = _make_spark1()
+        with patch.object(s, "_get_request", return_value=_mock_response(404)):
+            result = s.retrieve_key("uuid-123")
+        self.assertIsNone(result)
+
+    def test_returns_none_on_network_error(self):
+        s = _make_spark1()
+        with patch.object(s, "_get_request", side_effect=Exception("timeout")):
+            result = s.retrieve_key("uuid-123")
+        self.assertIsNone(result)
+
+    def test_returns_none_for_empty_report_uuid(self):
+        s = _make_spark1()
+        with patch.object(s, "_get_request") as mock_get:
+            result = s.retrieve_key("")
+        self.assertIsNone(result)
+        mock_get.assert_not_called()
+
+    def test_decrypt_roundtrip_via_retrieve_key(self):
+        """retrieve_key output feeds directly into decrypt_sensitive_report."""
+        plaintext = "AKIAIOSFODNN7EXAMPLE"
+        sj = _make_sensitive_json(plaintext)
+        _, raw_key = encrypt_sensitive_report(sj)
+        raw_key_b64 = base64.b64encode(raw_key).decode()
+
+        s = _make_spark1()
+        resp = _mock_response(200, {"key": raw_key_b64, "key_version": 1})
+        with patch.object(s, "_get_request", return_value=resp):
+            retrieved_key_b64 = s.retrieve_key("uuid-123")
+
+        decrypt_sensitive_report(sj, retrieved_key_b64)
+        self.assertEqual(sj["findings"]["finding_0"]["sensitive_secret"], plaintext)
 
 
 if __name__ == "__main__":

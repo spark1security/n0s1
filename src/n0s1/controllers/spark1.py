@@ -40,6 +40,43 @@ def encrypt_sensitive_report(report_sensitive_json: dict) -> tuple[dict, bytes]:
     return report_sensitive_json, raw_key
 
 
+def decrypt_sensitive_report(report_sensitive_json: dict, raw_key_b64: str) -> dict:
+    """AES-256-GCM decrypt every sensitive_secret in report_sensitive_json in place.
+
+    Inverse of encrypt_sensitive_report.  Each sensitive_secret is expected to be
+    a base64-encoded blob of (12-byte nonce || ciphertext) as written by
+    encrypt_sensitive_report.  Fields that are empty or cannot be decoded/decrypted
+    are left unchanged and a warning is logged.
+
+    Args:
+        report_sensitive_json: dict with encrypted sensitive_secret values.
+        raw_key_b64:           base64-encoded 32-byte AES key returned by retrieve_key().
+
+    Returns:
+        The same dict with sensitive_secret fields restored to plaintext.
+    """
+    try:
+        raw_key = base64.b64decode(raw_key_b64)
+    except Exception as exc:
+        logging.warning("decrypt_sensitive_report: invalid raw_key_b64: %s", exc)
+        return report_sensitive_json
+
+    aesgcm = AESGCM(raw_key)
+    for finding_id, finding in (report_sensitive_json or {}).get("findings", {}).items():
+        ct_b64 = finding.get("sensitive_secret", "")
+        if not ct_b64:
+            continue
+        try:
+            ct_bytes = base64.b64decode(ct_b64)
+            nonce, ciphertext = ct_bytes[:12], ct_bytes[12:]
+            finding["sensitive_secret"] = aesgcm.decrypt(nonce, ciphertext, None).decode()
+        except Exception as exc:
+            logging.warning(
+                "decrypt_sensitive_report: failed to decrypt finding %s: %s", finding_id, exc
+            )
+    return report_sensitive_json
+
+
 def _has_sensitive_secrets(sensitive_json: dict) -> bool:
     """Return True if sensitive_json contains at least one non-empty sensitive_secret."""
     for finding in (sensitive_json or {}).get("findings", {}).values():
@@ -206,6 +243,54 @@ class Spark1(http_client.HttpClient):
         except Exception as ex:
             logging.warning("upload_key: exception report_uuid=%s: %s", report_uuid, ex)
         return False
+
+    def retrieve_key(self, report_uuid: str) -> str | None:
+        """GET the AES-256 key for a scan from the backend (one-time use).
+
+        The backend atomically zeroes the key on first retrieval, so a second
+        call for the same report_uuid will return None with a "consumed" reason.
+        Use decrypt_sensitive_report() with the returned value to restore
+        plaintext sensitive_secret fields locally.
+
+        Returns:
+            raw_key_b64 (str) on success, None on any failure.
+
+        Failure reasons logged:
+            "consumed" (410) — key already retrieved; possible unauthorized access.
+            "expired"  (410) — 24h TTL elapsed without retrieval; re-scan or /rekey.
+            404              — no key was uploaded for this report_uuid.
+        """
+        if not report_uuid:
+            return None
+        url = f"{self.base_url}/api/v1/scans/{report_uuid}/key"
+        try:
+            r = self._get_request(url)
+            if r.status_code == 200:
+                return r.json().get("key")
+            if r.status_code == 410:
+                body = r.json()
+                reason = body.get("error", "unknown")
+                if reason == "consumed":
+                    logging.warning(
+                        "retrieve_key: key already consumed report_uuid=%s consumed_at=%s "
+                        "— possible unauthorized retrieval; treat as security incident",
+                        report_uuid, body.get("consumed_at"),
+                    )
+                else:
+                    logging.info(
+                        "retrieve_key: key %s report_uuid=%s — re-scan or use POST /rekey",
+                        reason, report_uuid,
+                    )
+                return None
+            if r.status_code == 404:
+                logging.info("retrieve_key: no key found report_uuid=%s", report_uuid)
+                return None
+            logging.warning(
+                "retrieve_key: unexpected status=%s report_uuid=%s", r.status_code, report_uuid
+            )
+        except Exception as ex:
+            logging.warning("retrieve_key: exception report_uuid=%s: %s", report_uuid, ex)
+        return None
 
     def upload_report(self, report: dict, ai_analysis: bool = False, sensitive_json: dict = None):
         """Upload a completed scan report.
