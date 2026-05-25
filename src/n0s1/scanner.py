@@ -463,7 +463,9 @@ class SecretScanner():
         if finding_id not in self.report_json["findings"]:
             self.report_json["findings"][finding_id] = new_finding
             if not self.report_sensitive_json:
-                self.report_sensitive_json = {"findings": {}}
+                self.report_sensitive_json = json.loads(json.dumps(self.report_json))
+            if not self.report_sensitive_json.get("findings", None):
+                self.report_sensitive_json["findings"] = {}
             self.report_sensitive_json["findings"][finding_id] = json.loads(json.dumps(new_finding))
             self.report_sensitive_json["findings"][finding_id]["sensitive_secret"] = scan_text_result.get("secret", "")
         if post_comment:
@@ -612,12 +614,11 @@ class SecretScanner():
                         if item_data and item_data.lower().find(label.lower()) == -1:
                             self.scan_text_and_report_leaks(item_data, name, self.regex_config, self.scan_arguments, ticket)
         if n0s1_pro:
-            upload_http_response = n0s1_pro.upload_report(
+            self.report_json = n0s1_pro.upload_report(
                 self.report_json,
                 ai_analysis=self.ai_analysis,
                 sensitive_json=self.report_sensitive_json,
             )
-            self._process_report_upload(upload_http_response)
             if self.ai_analysis:
                 report_uuid = self.report_json.get("uuid", "")
                 self.log_message(
@@ -625,25 +626,6 @@ class SecretScanner():
                 )
 
         return self.report_json
-
-    def _process_report_upload(self, upload_http_response):
-        r = upload_http_response
-        if 200 <= r.status_code < 300:
-            scan_record = r.json()
-            report_uuid = scan_record.get("report_uuid", "")
-            self.report_json["uuid"] = report_uuid
-            message = f"Uploading report [{self.report_file}] to n0s1.spark1.us ..."
-            self.log_message(message)
-            message = f"Upload successful! Report UUID: [{report_uuid}]"
-            self.log_message(message)
-        else:
-            message = f"Unable to upload report to n0s1.spark1.us! HTTP response status: [{r.status_code}]."
-            self.log_message(message)
-            try:
-                response_data = r.json()
-                self.log_message(str(response_data))
-            except Exception as ex:
-                logging.info(str(ex))
 
 
     def analyze(self) -> str:
@@ -690,7 +672,7 @@ class SecretScanner():
                 if not remote_report:
                     self.log_message("Backend returned no report data.")
                     return "error"
-                updated_report = spark1._execute_request_validators(remote_report, local_report)
+                updated_report = n0s1_pro.execute_request_validators(remote_report)
                 r = n0s1_pro.upload_responses(report_uuid, updated_report)
                 if r and 200 <= r.status_code < 300:
                     self.log_message("HTTP responses uploaded. Backend will compute verdicts.")
@@ -713,7 +695,7 @@ class SecretScanner():
                         self.log_message(f"Could not save report: {e}")
                 return "complete"
 
-            if ai_status in ("pending", "pending_verdict"):
+            if ai_status in ("pending", "pending_step1_batch", "pending_verdict"):
                 self.log_message(f"AI analysis in progress (status: {ai_status}). Try again later.")
                 return ai_status
 

@@ -85,6 +85,13 @@ def _has_sensitive_secrets(sensitive_json: dict) -> bool:
     return False
 
 
+def _overwrite_findings(src_report, dst_report):
+    if dst_report is None:
+        dst_report = {}
+    dst_report["findings"] = (src_report or {}).get("findings", {})
+    return dst_report
+
+
 def _get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -139,13 +146,20 @@ def _inject_cred(req_validator, cred):
     req_validator_sensitive["headers"] = headers
     return req_validator_sensitive
 
+
 def _execute_request(req: dict, timeout: int = 15) -> dict:
     try:
+        headers = req.get("headers", {})
+        if not isinstance(headers, dict):
+            headers = {}
+        params = req.get("params", {})
+        if not isinstance(params, dict):
+            params = {}
         kwargs = {
             "method": req.get("method", None),
             "url": req.get("url", None),
-            "headers": req.get("headers", {}),
-            "params": req.get("params", {}),
+            "headers": headers,
+            "params": params,
             "timeout": timeout,
             "allow_redirects": True,
         }
@@ -310,21 +324,34 @@ class Spark1(http_client.HttpClient):
             if ai_analysis:
                 payload["ai_analysis"] = True
             r = self._post_request(upload_report_url, json=payload)
-            if r and 200 <= r.status_code < 300 and _has_sensitive_secrets(sensitive_json):
-                report_uuid = r.json().get("report_uuid", "")
+            if r and 200 <= r.status_code < 300:
+                report_uuid = r.json().get("report_uuid", None)
                 if report_uuid:
-                    _, raw_key = encrypt_sensitive_report(sensitive_json)
-                    try:
-                        if not self.upload_key(report_uuid, raw_key):
-                            logging.warning(
-                                "upload_report: key upload failed for %s — secrets are "
-                                "encrypted in sensitive_json but key is not stored on the "
-                                "backend; use POST /rekey after the next scan to recover",
-                                report_uuid,
-                            )
-                    finally:
-                        del raw_key
-            return r
+                    report["uuid"] = report_uuid
+                    if ai_analysis and _has_sensitive_secrets(sensitive_json):
+                        encrypted_report, raw_key = encrypt_sensitive_report(sensitive_json)
+                        updated_report = _overwrite_findings(encrypted_report, report)
+                        payload = dict(updated_report)
+                        try:
+                            if self.upload_key(report_uuid, raw_key):
+                                r = self._patch_request(upload_report_url + f"/{report_uuid}", json=payload)
+                                if r and 200 <= r.status_code < 300:
+                                    return updated_report
+                                else:
+                                    logging.warning(
+                                        f"Unable to upload encrypted report to {self.base_url}! HTTP response status: [{r.status_code}].")
+                            else:
+                                logging.warning(
+                                    "upload_report: key upload failed for %s — secrets are "
+                                    "encrypted in sensitive_json but key is not stored on the "
+                                    "backend; use POST /rekey after the next scan to recover",
+                                    report_uuid,
+                                )
+                        finally:
+                            del raw_key
+            else:
+                logging.warning(f"Unable to upload report to {self.base_url}! HTTP response status: [{r.status_code}].")
+            return report
         except Exception as ex:
             logging.info(str(ex))
         return None
@@ -368,24 +395,30 @@ class Spark1(http_client.HttpClient):
         return None
 
 
-def _execute_request_validators(remote_report: dict, local_report: dict = None) -> dict:
-    """Client-side step 2: inject credentials and execute each request_validator."""
-    local_findings = (local_report or {}).get("findings", {})
-    findings = remote_report.get("findings", {})
-    for finding_id, finding in findings.items():
-        req_validator = finding.get("ai_report", {}).get("request_validator")
-        if not req_validator:
-            continue
-        if finding.get("ai_report", {}).get("response_validator"):
-            continue
-        cred = (
-            local_findings.get(finding_id, {}).get("sensitive_secret")
-            or finding.get("mocked_secret", "")
-        )
-        if cred:
-            req_validator = _inject_cred(req_validator, cred)
-        resp = _execute_request(req_validator)
-        finding.setdefault("ai_report", {})["response_validator"] = resp
-        remote_report["findings"][finding_id] = finding
-    return remote_report
+    def execute_request_validators(self, remote_report: dict) -> dict:
+        """Client-side step 2: inject credentials and execute each request_validator."""
+        report_uuid = remote_report.get("uuid", "")
+        key = self.retrieve_key(report_uuid)
+        sensitive_report = decrypt_sensitive_report(remote_report, key)
+        findings = sensitive_report.get("findings", {})
+        cred = None
+        for finding_id, finding in findings.items():
+            req_validator = finding.get("ai_report", {}).get("request_validator")
+            if not req_validator:
+                continue
+            if finding.get("ai_report", {}).get("response_validator"):
+                continue
+            cred = (
+                    findings.get(finding_id, {}).get("sensitive_secret")
+                    or finding.get("mocked_secret", "")
+            )
+            if cred:
+                req_validator = _inject_cred(req_validator, cred)
+            resp = _execute_request(req_validator)
+            finding.setdefault("ai_report", {})["response_validator"] = resp
+            remote_report["findings"][finding_id] = finding
+            finding.pop("sensitive_secret", None)
+        del key
+        del cred
+        return remote_report
 
