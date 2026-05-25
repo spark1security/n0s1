@@ -434,7 +434,7 @@ n0s1 analyze --n0s1-api-key $N0S1_TOKEN --report-uuid <uuid> --report-file repor
 ### `analyze` command reference
 
 ```bash
-n0s1 analyze [global options] [--report-uuid <uuid>] [--report-file <path>]
+n0s1 analyze [global options] [--report-uuid <uuid>] [--report-file <path>] [--wait [SECONDS]]
 ```
 
 **Options:**
@@ -442,6 +442,7 @@ n0s1 analyze [global options] [--report-uuid <uuid>] [--report-file <path>]
 - `--report-uuid <uuid>` — UUID of a previously uploaded report. If the backend is waiting for the client to execute HTTP validators, this triggers that step automatically.
 - `--report-file <path>` — Path to a local report JSON file. Used to read the UUID and to inject real credentials during step 2. Also updated in-place when analysis completes.
 - `--n0s1-api-key <key>` — n0s1 API key (or set `N0S1_TOKEN`).
+- `--wait [SECONDS]` — Block until analysis completes or `SECONDS` elapse (default 300 when `--wait` is given without a value). Polls the backend every 30 seconds and logs progress. Useful for CI/CD pipelines that cannot implement their own retry loop.
 
 **Status values printed during the workflow:**
 
@@ -452,6 +453,45 @@ n0s1 analyze [global options] [--report-uuid <uuid>] [--report-file <path>]
 | `pending_verdict` | Client responses uploaded; backend is computing verdicts |
 | `complete` | Verdicts written; report file updated |
 | `failed` | Unrecoverable error |
+
+**Exit codes:**
+
+| Exit code | Meaning |
+|---|---|
+| `0` | Analysis complete (or successfully submitted/advanced) |
+| `1` | Real error — misconfiguration, HTTP failure, AI analysis `failed`, or `--wait` timeout elapsed |
+| `2` | Analysis still pending — backend not ready yet; call again to retry |
+
+Exit code `2` is the machine-readable signal for "not ready yet." Automated workflows can branch on it without parsing log output.
+
+### Automating `analyze` in CI/CD
+
+**Option 1 — Blocking mode (simplest):**
+
+Let `n0s1` poll internally. The step blocks until analysis finishes or the timeout expires.
+
+```yaml
+- name: Wait for AI analysis
+  run: n0s1 analyze --n0s1-api-key ${{ secrets.N0S1_TOKEN }} --report-uuid $REPORT_UUID --wait 600
+  # exits 0 on complete, 1 on error/timeout
+```
+
+**Option 2 — External retry loop:**
+
+Use exit code `2` to drive a workflow-level retry. This gives you full control over retry cadence, notifications, and maximum attempts.
+
+```yaml
+- name: Advance AI analysis
+  id: analyze
+  run: |
+    n0s1 analyze --n0s1-api-key ${{ secrets.N0S1_TOKEN }} --report-uuid $REPORT_UUID
+    echo "status=$?" >> $GITHUB_OUTPUT
+  continue-on-error: true
+
+- name: Retry if still pending
+  if: steps.analyze.outputs.status == '2'
+  run: echo "Analysis not ready — re-queue this job or add a wait step"
+```
 
 ## Advanced Features
 

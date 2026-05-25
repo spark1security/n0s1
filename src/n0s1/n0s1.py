@@ -387,6 +387,20 @@ def init_argparse() -> argparse.ArgumentParser:
         type=str,
         help="UUID of a previously uploaded report to analyze or check."
     )
+    analyze_parser.add_argument(
+        "--wait",
+        dest="wait",
+        nargs="?",
+        const=300,
+        default=None,
+        type=int,
+        metavar="SECONDS",
+        help=(
+            "Poll the backend until analysis completes or SECONDS elapse "
+            "(default 300 when --wait is given without a value). "
+            "Exits 0 on success, 1 on error/timeout, 2 if still pending."
+        ),
+    )
 
     return parser
 
@@ -465,7 +479,20 @@ def main():
 
     if command == "analyze":
         secret_scanner.set(report_uuid=getattr(args, "report_uuid", None))
-        secret_scanner.analyze()
+        wait_seconds = getattr(args, "wait", None)
+        if wait_seconds is not None:
+            status = secret_scanner.analyze_blocking(wait_seconds)
+        else:
+            status = secret_scanner.analyze()
+        # Exit codes: 0 = success, 1 = real error/timeout, 2 = pending (retry needed)
+        _PENDING = {"pending", "pending_step1_batch", "pending_verdict", "submitted"}
+        _ERROR = {"error", "failed", "timeout"}
+        if status in _ERROR:
+            sys.exit(1)
+        elif status in _PENDING:
+            sys.exit(2)
+        else:
+            sys.exit(0)
         return
 
     if command == "local_scan":

@@ -201,17 +201,46 @@ scanner_instance = scanner.SecretScanner(
     report_uuid="abc-123",
     n0s1_token=os.getenv("N0S1_TOKEN"),
 )
-scanner_instance.analyze()
+status = scanner_instance.analyze()
 
 # Submit by local report file
 scanner_instance = scanner.SecretScanner(
     report_file="n0s1_report.json",
     n0s1_token=os.getenv("N0S1_TOKEN"),
 )
-scanner_instance.analyze()
+status = scanner_instance.analyze()
 ```
 
-`analyze()` returns `None`. Progress is reported via log messages. Re-call until the log prints `"AI analysis complete"`.
+`analyze()` returns a status string:
+
+| Return value | Meaning |
+|---|---|
+| `"complete"` | Analysis finished; report file updated |
+| `"submitted"` | First submission accepted; backend is queuing |
+| `"pending"` / `"pending_step1_batch"` / `"pending_verdict"` | Backend still processing — call again later |
+| `"failed"` | Unrecoverable AI analysis failure |
+| `"error"` | Misconfiguration or HTTP error |
+
+Re-call on any pending status until `"complete"` is returned.
+
+#### `analyze_blocking(wait_seconds, poll_interval=30)`
+Convenience wrapper around `analyze()` that polls internally until a terminal state or timeout. Useful in scripts and pipelines that cannot implement their own retry loop.
+
+```python
+analyzer = scanner.SecretScanner(
+    report_uuid="abc-123",
+    n0s1_token=os.getenv("N0S1_TOKEN"),
+)
+status = analyzer.analyze_blocking(wait_seconds=600)
+if status == "complete":
+    print("Done!")
+elif status == "timeout":
+    print("Still pending after 600 s — try again later")
+else:
+    print(f"Error: {status}")
+```
+
+`analyze_blocking()` returns the same status strings as `analyze()`, plus `"timeout"` when `wait_seconds` elapses without reaching a terminal state. It logs remaining time before each retry.
 
 ## Platform-Specific Examples
 
@@ -631,13 +660,12 @@ print(f"\nTotal findings across all platforms: {total_findings}")
 
 ### AI Analysis
 
-AI analysis validates discovered credentials by testing them against their target services. It is **async** — the scan uploads the report, the backend generates request templates, the client executes them with real credentials, and the backend writes verdicts. Re-call `analyze()` until it prints completion.
+AI analysis validates discovered credentials by testing them against their target services. It is **async** — the scan uploads the report, the backend generates request templates, the client executes them with real credentials, and the backend writes verdicts.
 
-**Workflow A: scan with `--ai-analysis` flag, then analyze**
+**Workflow A: scan with `--ai-analysis` flag, then analyze (blocking)**
 
 ```python
 import os
-import time
 
 n0s1_token = os.getenv("N0S1_TOKEN")
 
@@ -653,15 +681,30 @@ scanner_instance = scanner.SecretScanner(
 )
 result = scanner_instance.scan()
 report_uuid = result.get("uuid")
-# Logs: "AI analysis queued. Run: n0s1 analyze --report-uuid <uuid>"
 
-# Step 2: advance analysis (repeat until complete)
+# Step 2: wait for completion (polls every 30 s, up to 10 minutes)
 analyzer = scanner.SecretScanner(
     report_uuid=report_uuid,
     report_file="report.json",
     n0s1_token=n0s1_token,
 )
-analyzer.analyze()
+status = analyzer.analyze_blocking(wait_seconds=600)
+if status != "complete":
+    raise RuntimeError(f"AI analysis did not complete: {status}")
+```
+
+**Workflow A (manual retry): advance one step at a time**
+
+```python
+analyzer = scanner.SecretScanner(
+    report_uuid=report_uuid,
+    report_file="report.json",
+    n0s1_token=n0s1_token,
+)
+status = analyzer.analyze()
+# status is "pending*" / "submitted" → call again later
+# status is "complete"             → done
+# status is "error" / "failed"    → raise or handle
 ```
 
 **Workflow B: analyze an existing report file**
@@ -671,8 +714,8 @@ scanner_instance = scanner.SecretScanner(
     report_file="report.json",
     n0s1_token=os.getenv("N0S1_TOKEN"),
 )
-scanner_instance.analyze()
-# Logs the assigned UUID — use it for subsequent calls
+status = scanner_instance.analyze_blocking(wait_seconds=300)
+# Logs the assigned UUID; blocks until complete or timeout
 ```
 
 ### Error Handling

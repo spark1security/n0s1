@@ -5,6 +5,7 @@ import math
 import os
 import pathlib
 import re
+import time
 import toml
 import yaml
 from datetime import datetime, timezone
@@ -714,6 +715,31 @@ class SecretScanner():
             status_code = r.status_code if r else "N/A"
             self.log_message(f"Failed to queue AI analysis. HTTP status: [{status_code}]")
             return "error"
+
+    def analyze_blocking(self, wait_seconds: int, poll_interval: int = 30) -> str:
+        """Poll analyze() until a terminal state or timeout.
+
+        Returns the same status strings as analyze(), plus "timeout" when
+        wait_seconds elapses without reaching a terminal state.
+        """
+        _PENDING = {"pending", "pending_step1_batch", "pending_verdict", "submitted"}
+        deadline = time.monotonic() + wait_seconds
+        while True:
+            status = self.analyze()
+            if status not in _PENDING:
+                return status
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                self.log_message(
+                    f"Timed out waiting for AI analysis after {wait_seconds}s (last status: {status})."
+                )
+                return "timeout"
+            sleep_for = min(poll_interval, remaining)
+            self.log_message(
+                f"Status [{status}] — retrying in {int(sleep_for)}s "
+                f"({int(remaining)}s remaining)."
+            )
+            time.sleep(sleep_for)
 
     def scan_text_and_report_leaks(self, data, name, regex_config, scan_arguments, ticket):
         secret_found, scan_text_result = scan_text(regex_config, data)
