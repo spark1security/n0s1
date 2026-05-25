@@ -115,6 +115,9 @@ def _inject_cred(req_validator, cred):
         return req_validator_sensitive
 
     headers = req_validator_sensitive.get("headers", {})
+    if not isinstance(headers, dict):
+        headers = {}
+    req_validator_sensitive["headers"] = headers
     auth_header = headers.get("Authorization", "")
 
     # Bearer / Token header
@@ -195,7 +198,7 @@ class Spark1(http_client.HttpClient):
                  max_retries: int = 3, timeout: int = None,
                  auth: tuple[str, str] = None):
         self.base_url = "https://n0s1.spark1.us"
-        # self.base_url = "http://127.0.0.1:5000"
+        self.base_url = "http://127.0.0.1:5000"
         self.local_ip = _get_local_ip()
         if server:
             self.base_url = server
@@ -406,15 +409,25 @@ class Spark1(http_client.HttpClient):
             req_validator = finding.get("ai_report", {}).get("request_validator")
             if not req_validator:
                 continue
-            if finding.get("ai_report", {}).get("response_validator"):
-                continue
-            cred = (
-                    findings.get(finding_id, {}).get("sensitive_secret")
-                    or finding.get("mocked_secret", "")
-            )
-            if cred:
-                req_validator = _inject_cred(req_validator, cred)
-            resp = _execute_request(req_validator)
+
+            is_testable = req_validator.get("testable", False)
+            if is_testable:
+                if finding.get("ai_report", {}).get("response_validator"):
+                    continue
+                cred = (
+                        findings.get(finding_id, {}).get("sensitive_secret")
+                        or finding.get("mocked_secret", "")
+                )
+                if cred:
+                    req_validator = _inject_cred(req_validator, cred)
+                resp = _execute_request(req_validator)
+            else:
+                resp = {
+                    "status_code": 503,
+                    "headers": req_validator.get("headers", None),
+                    "body": req_validator.get("notes", None),
+                    "error": "request_not_submitted",
+                }
             finding.setdefault("ai_report", {})["response_validator"] = resp
             remote_report["findings"][finding_id] = finding
             finding.pop("sensitive_secret", None)
