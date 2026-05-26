@@ -328,7 +328,7 @@ class Spark1(http_client.HttpClient):
             logging.warning("retrieve_key: exception report_uuid=%s: %s", report_uuid, ex)
         return None
 
-    def upload_report(self, report: dict, ai_analysis: bool = False, sensitive_json: dict = None):
+    def upload_report(self, report: dict, ai_analysis: bool = False, sensitive_json: dict = None, allow_secret_upload: bool = False):
         """Upload a completed scan report.
 
         If sensitive_json is provided and contains findings with sensitive_secret
@@ -355,6 +355,8 @@ class Spark1(http_client.HttpClient):
                         updated_report = _overwrite_findings(encrypted_report, report)
                         try:
                             if self.upload_key(report_uuid, raw_key):
+                                if not allow_secret_upload:
+                                    return updated_report
                                 r = self.upload_responses(report_uuid, updated_report)
                                 if r and 200 <= r.status_code < 300:
                                     return updated_report

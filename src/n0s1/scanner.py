@@ -70,6 +70,7 @@ scan_path_default_value = None
 report_uuid_default_value = None
 n0s1_token_default_value = None
 wait_default_value = None
+allow_secret_upload_default_value = False
 
 class SecretScanner():
     def __init__(self, target=None, regex_file=regex_file_default_value, config_file=config_file_default_value,
@@ -84,7 +85,7 @@ class SecretScanner():
                  email=email_default_value, owner=owner_default_value, repo=repo_default_value,
                  branch=branch_default_value, scan_path=scan_path_default_value,
                  report_uuid=report_uuid_default_value, n0s1_token=n0s1_token_default_value,
-                 wait=wait_default_value):
+                 wait=wait_default_value, allow_secret_upload=allow_secret_upload_default_value):
         global n0s1_version
         self.logging_function = log_message
 
@@ -118,6 +119,7 @@ class SecretScanner():
         self.report_uuid = None
         self.n0s1_token = None
         self.wait = None
+        self.allow_secret_upload = False
 
         self.regex_config = None
         self.cfg = None
@@ -134,14 +136,14 @@ class SecretScanner():
                        "scan_date": {"timestamp": datetime_now_obj.timestamp(), "date_utc": date_utc},
                        "regex_config": {}, "findings": {}}
 
-        self.set(target=target, regex_file=regex_file, config_file=config_file, report_file=report_file, report_format=report_format, post_comment=post_comment, skip_comment=skip_comment, show_matched_secret_on_logs=show_matched_secret_on_logs, ai_analysis=ai_analysis, private=private, debug=debug, secret_manager=secret_manager, contact_help=contact_help, label=label, timeout=timeout, limit=limit, insecure=insecure, map=map, map_file=map_file, scope=scope, api_key=api_key, server=server, email=email, owner=owner, repo=repo, branch=branch, scan_path=scan_path, report_uuid=report_uuid, n0s1_token=n0s1_token, wait=wait)
+        self.set(target=target, regex_file=regex_file, config_file=config_file, report_file=report_file, report_format=report_format, post_comment=post_comment, skip_comment=skip_comment, show_matched_secret_on_logs=show_matched_secret_on_logs, ai_analysis=ai_analysis, private=private, debug=debug, secret_manager=secret_manager, contact_help=contact_help, label=label, timeout=timeout, limit=limit, insecure=insecure, map=map, map_file=map_file, scope=scope, api_key=api_key, server=server, email=email, owner=owner, repo=repo, branch=branch, scan_path=scan_path, report_uuid=report_uuid, n0s1_token=n0s1_token, wait=wait, allow_secret_upload=allow_secret_upload)
 
 
     def set(self, target=None, regex_file=None, config_file=None, report_file=None, report_format=None, post_comment=None,
             skip_comment=None, show_matched_secret_on_logs=None, ai_analysis=None, private=None, debug=None, secret_manager=None,
             contact_help=None, label=None, timeout=None, limit=None, insecure=None, map=None, map_file=None, scope=None,
             api_key=None, server=None, email=None, owner=None, repo=None, branch=None, scan_path=None, report_uuid=None,
-            n0s1_token=None, wait=None):
+            n0s1_token=None, wait=None, allow_secret_upload=None):
         global DEBUG
         if target is not None:
             self.target = target
@@ -209,6 +211,8 @@ class SecretScanner():
             self.n0s1_token = n0s1_token
         if wait is not None:
             self.wait = wait
+        if allow_secret_upload is not None:
+            self.allow_secret_upload = allow_secret_upload
 
         DEBUG = self.debug
 
@@ -624,6 +628,7 @@ class SecretScanner():
                 self.report_json,
                 ai_analysis=self.ai_analysis,
                 sensitive_json=self.report_sensitive_json,
+                allow_secret_upload=self.allow_secret_upload,
             )
             if self.ai_analysis:
                 self.report_uuid = self.report_json.get("uuid", "")
@@ -681,7 +686,20 @@ class SecretScanner():
                 if not remote_report:
                     self.log_message("Backend returned no report data.")
                     return "error"
-                updated_report = n0s1_pro.execute_request_validators(remote_report)
+
+                target_report = local_report
+                if spark1._has_sensitive_secrets(remote_report):
+                    target_report = remote_report
+                else:
+                    # Insert ["ai_report"] in local report if missing
+                    findings = target_report.get("findings", {})
+                    for f in findings:
+                        if "ai_report" not in target_report["findings"][f]:
+                            if f in remote_report.get("findings", {}):
+                                if "ai_report" in remote_report["findings"][f]:
+                                    target_report["findings"][f]["ai_report"] = remote_report["findings"][f]["ai_report"]
+
+                updated_report = n0s1_pro.execute_request_validators(target_report)
                 r = n0s1_pro.upload_responses(report_uuid, updated_report)
                 if r and 200 <= r.status_code < 300:
                     self.log_message("HTTP responses uploaded. Backend will compute verdicts.")

@@ -184,6 +184,12 @@ def init_argparse() -> argparse.ArgumentParser:
             "Exits 0 on success, 1 on error/timeout, 2 if still pending."
         ),
     )
+    parent_parser.add_argument(
+        "--allow-secret-upload",
+        dest="allow_secret_upload",
+        action="store_true",
+        help="Allow encrypted secrets to be uploaded to the n0s1 backend during --ai-analysis. Disabled by default. When enabled, the analyze command supports both --report-file and --report-uuid. When disabled only --report-file is supported.",
+    )
     subparsers = parser.add_subparsers(
         help="Subcommands", dest="command", metavar="COMMAND"
     )
@@ -423,6 +429,7 @@ def main():
     secret_scanner.set(config_file=args.config_file)
     secret_scanner.set(n0s1_token=getattr(args, "n0s1_api_key", None))
     secret_scanner.set(wait=getattr(args, "wait", None))
+    secret_scanner.set(allow_secret_upload=getattr(args, "allow_secret_upload", False))
 
     if not args.map:
         args.map = "-1"
