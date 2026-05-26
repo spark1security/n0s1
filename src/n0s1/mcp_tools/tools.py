@@ -237,6 +237,7 @@ def scan_jira(
     show_matched_secret_on_logs: bool = False,
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
+    allow_secret_upload: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Jira workspace for leaked secrets.
@@ -253,6 +254,7 @@ def scan_jira(
         "post_comment": False,
         "report_format": report_format,
         "ai_analysis": ai_analysis,
+        "allow_secret_upload": allow_secret_upload,
     }
     if effective_scope:
         kwargs["scope"] = effective_scope
@@ -284,6 +286,7 @@ def scan_confluence(
     show_matched_secret_on_logs: bool = False,
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
+    allow_secret_upload: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Confluence workspace for leaked secrets.
@@ -299,6 +302,7 @@ def scan_confluence(
         "post_comment": False,
         "report_format": report_format,
         "ai_analysis": ai_analysis,
+        "allow_secret_upload": allow_secret_upload,
     }
     if effective_scope:
         kwargs["scope"] = effective_scope
@@ -328,6 +332,7 @@ def scan_slack(
     show_matched_secret_on_logs: bool = False,
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
+    allow_secret_upload: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Slack workspace for leaked secrets.
@@ -342,6 +347,7 @@ def scan_slack(
         "post_comment": False,
         "report_format": report_format,
         "ai_analysis": ai_analysis,
+        "allow_secret_upload": allow_secret_upload,
     }
     if scope:
         kwargs["scope"] = scope
@@ -370,6 +376,7 @@ def scan_asana(
     show_matched_secret_on_logs: bool = False,
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
+    allow_secret_upload: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan an Asana workspace for leaked secrets.
@@ -383,6 +390,7 @@ def scan_asana(
         "post_comment": False,
         "report_format": report_format,
         "ai_analysis": ai_analysis,
+        "allow_secret_upload": allow_secret_upload,
     }
     if effective_scope:
         kwargs["scope"] = effective_scope
@@ -410,6 +418,7 @@ def scan_linear(
     show_matched_secret_on_logs: bool = False,
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
+    allow_secret_upload: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Linear workspace for leaked secrets.
@@ -423,6 +432,7 @@ def scan_linear(
         "post_comment": False,
         "report_format": report_format,
         "ai_analysis": ai_analysis,
+        "allow_secret_upload": allow_secret_upload,
     }
     if scope:
         kwargs["scope"] = scope
@@ -450,6 +460,7 @@ def scan_zendesk(
     show_matched_secret_on_logs: bool = False,
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
+    allow_secret_upload: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Zendesk workspace for leaked secrets.
@@ -464,6 +475,7 @@ def scan_zendesk(
         "post_comment": False,
         "report_format": report_format,
         "ai_analysis": ai_analysis,
+        "allow_secret_upload": allow_secret_upload,
     }
     if api_key:
         kwargs["api_key"] = api_key
@@ -491,6 +503,7 @@ def scan_wrike(
     show_matched_secret_on_logs: bool = False,
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
+    allow_secret_upload: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Wrike workspace for leaked secrets.
@@ -503,6 +516,7 @@ def scan_wrike(
         "post_comment": False,
         "report_format": report_format,
         "ai_analysis": ai_analysis,
+        "allow_secret_upload": allow_secret_upload,
     }
     if scope:
         kwargs["scope"] = scope
@@ -531,6 +545,7 @@ def scan_github(
     show_matched_secret_on_logs: bool = False,
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
+    allow_secret_upload: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a GitHub repository for leaked secrets.
@@ -553,6 +568,7 @@ def scan_github(
         "post_comment": False,
         "report_format": report_format,
         "ai_analysis": ai_analysis,
+        "allow_secret_upload": allow_secret_upload,
     }
     if branch:
         kwargs["branch"] = branch
@@ -584,6 +600,7 @@ def scan_gitlab(
     show_matched_secret_on_logs: bool = False,
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
+    allow_secret_upload: bool = False,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a GitLab project for leaked secrets.
@@ -607,6 +624,7 @@ def scan_gitlab(
         "post_comment": False,
         "report_format": report_format,
         "ai_analysis": ai_analysis,
+        "allow_secret_upload": allow_secret_upload,
     }
     if server:
         kwargs["server"] = server

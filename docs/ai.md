@@ -134,6 +134,8 @@ scanner.SecretScanner(
     # AI analysis
     report_uuid=None,          # str: UUID of a previously uploaded report (used by analyze())
     n0s1_token=None,           # str: n0s1 API key; overrides N0S1_TOKEN env var
+    wait=None,                 # int: minutes to block waiting for AI analysis (with ai_analysis=True)
+    allow_secret_upload=False, # bool: upload encrypted secrets to the n0s1 backend (default: False)
 )
 ```
 
@@ -142,7 +144,7 @@ scanner.SecretScanner(
 | Method | Returns | Description |
 |---|---|---|
 | `.scan()` | `dict` | Execute scan; returns full report |
-| `.analyze()` | `None` | Submit/advance async AI analysis for a report |
+| `.analyze()` | `str` | Submit/advance async AI analysis; returns status string |
 | `.set(**kwargs)` | `None` | Update any constructor parameter after instantiation |
 | `.get_report()` | `dict` | Get current report without running scan |
 | `.get_config()` | `dict` | Get resolved configuration |
@@ -284,6 +286,8 @@ n0s1 local_scan --path ./src --regex-file ./custom.yaml
 | `--map-file`                    | `map_file`                    | |
 | `--n0s1-api-key`                | `n0s1_token`                  | overrides `N0S1_TOKEN` env var |
 | `--report-uuid`                 | `report_uuid`                 | `analyze` command only |
+| `--wait`                        | `wait`                        | int (minutes); blocks until AI analysis completes |
+| `--allow-secret-upload`         | `allow_secret_upload`         | boolean flag; uploads encrypted secrets to backend |
 
 ---
 
@@ -657,6 +661,8 @@ Tools read credentials from environment variables by default. Passing `api_key` 
 | `api_key` | str | — | Override the env-var credential |
 | `ai_analysis` | bool | `false` | Queue async AI credential validation after upload (requires `n0s1_token`) |
 | `n0s1_token` | str | — | n0s1 API key; overrides `N0S1_TOKEN` env var |
+| `allow_secret_upload` | bool | `false` | Upload encrypted secrets to the n0s1 backend. When `false`, credentials stay local and are injected during the `waiting_client` step |
+| `wait_minutes` | int | — | Block until AI analysis completes or this many minutes elapse (used with `ai_analysis=true`) |
 
 ### Per-tool optional parameters
 

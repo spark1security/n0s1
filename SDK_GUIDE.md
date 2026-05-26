@@ -137,6 +137,8 @@ scanner.SecretScanner(
     # AI analysis
     report_uuid=None,               # str: UUID of a previously uploaded report (for analyze())
     n0s1_token=None,                # str: n0s1 API key; overrides N0S1_TOKEN env var
+    wait=None,                      # int: minutes to block waiting for AI analysis (scan + --ai-analysis)
+    allow_secret_upload=False,      # bool: upload encrypted secrets to n0s1 backend (default: False)
 )
 ```
 
@@ -223,7 +225,7 @@ status = scanner_instance.analyze()
 
 Re-call on any pending status until `"complete"` is returned.
 
-#### `analyze_blocking(wait_seconds, poll_interval=30)`
+#### `analyze_blocking(wait_minutes, poll_interval=30)`
 Convenience wrapper around `analyze()` that polls internally until a terminal state or timeout. Useful in scripts and pipelines that cannot implement their own retry loop.
 
 ```python
@@ -231,16 +233,16 @@ analyzer = scanner.SecretScanner(
     report_uuid="abc-123",
     n0s1_token=os.getenv("N0S1_TOKEN"),
 )
-status = analyzer.analyze_blocking(wait_seconds=600)
+status = analyzer.analyze_blocking(wait_minutes=10)
 if status == "complete":
     print("Done!")
 elif status == "timeout":
-    print("Still pending after 600 s — try again later")
+    print("Still pending after 10 min — try again later")
 else:
     print(f"Error: {status}")
 ```
 
-`analyze_blocking()` returns the same status strings as `analyze()`, plus `"timeout"` when `wait_seconds` elapses without reaching a terminal state. It logs remaining time before each retry.
+`analyze_blocking()` returns the same status strings as `analyze()`, plus `"timeout"` when `wait_minutes` elapses without reaching a terminal state. It logs remaining time before each retry.
 
 ## Platform-Specific Examples
 
@@ -688,7 +690,7 @@ analyzer = scanner.SecretScanner(
     report_file="report.json",
     n0s1_token=n0s1_token,
 )
-status = analyzer.analyze_blocking(wait_seconds=600)
+status = analyzer.analyze_blocking(wait_minutes=10)
 if status != "complete":
     raise RuntimeError(f"AI analysis did not complete: {status}")
 ```
@@ -714,7 +716,7 @@ scanner_instance = scanner.SecretScanner(
     report_file="report.json",
     n0s1_token=os.getenv("N0S1_TOKEN"),
 )
-status = scanner_instance.analyze_blocking(wait_seconds=300)
+status = scanner_instance.analyze_blocking(wait_minutes=5)
 # Logs the assigned UUID; blocks until complete or timeout
 ```
 
@@ -969,6 +971,8 @@ The `scan()` method returns a dictionary with the following structure:
 | `scope`                       | str | None | Search scope/query               |
 | `report_uuid`                 | str | None | UUID of an uploaded report (for `analyze()`) |
 | `n0s1_token`                  | str | None | n0s1 API key; overrides `N0S1_TOKEN` env var |
+| `wait`                        | int | None | Minutes to block waiting for AI analysis when used with `ai_analysis=True` |
+| `allow_secret_upload`         | bool | False | Upload encrypted secrets to the n0s1 backend during AI analysis |
 
 ## Best Practices
 

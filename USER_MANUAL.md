@@ -83,9 +83,20 @@ These options work with all scan commands and should be specified **before** the
 
 **`--ai-analysis`**
 - Queue AI analysis after the scan completes. The AI agent validates each leaked credential and updates the report with a verdict: live (authentication succeeded), unable to test, or invalid.
-- Analysis is **asynchronous** — the scan exits immediately after uploading the report. Run `n0s1 analyze --report-uuid <uuid>` to advance the analysis to completion.
+- Analysis is **asynchronous** by default — the scan exits after uploading the report and prints the UUID. Run `n0s1 analyze --report-uuid <uuid>` to advance the analysis, or add `--wait` to block until completion.
 - ⚠️ The leaked credentials identified by the scanner will be tested live. If you are not authorized to test the credentials, do not enable this mode.
 - Requires a valid n0s1 API key (see `--n0s1-api-key`). Only supported in Professional mode.
+
+**`--allow-secret-upload`**
+- Allow encrypted secrets to be uploaded to the n0s1 backend during AI analysis.
+- Default: disabled. When disabled, credentials stay on the client and are injected locally during the `waiting_client` step (requires `--report-file`).
+- When enabled, the encrypted credentials are sent to the backend so the `analyze` command can operate with `--report-uuid` alone (no local report file needed).
+- ⚠️ Even when enabled, secrets are encrypted before upload. Enable only if your security policy permits sending encrypted credentials to a third-party service.
+
+**`--wait [MINUTES]`**
+- When used with `--ai-analysis`, block until AI analysis completes or `MINUTES` elapse (default 30 when `--wait` is given without a value).
+- Polls the backend every 30 seconds and logs progress. Useful for CI/CD pipelines that cannot implement their own retry loop.
+- Exits 0 on success, 1 on error/timeout, 2 if still pending.
 
 **`--n0s1-api-key <key>`**
 - n0s1 API key for Professional mode (uploading reports, running AI analysis).
@@ -434,7 +445,7 @@ n0s1 analyze --n0s1-api-key $N0S1_TOKEN --report-uuid <uuid> --report-file repor
 ### `analyze` command reference
 
 ```bash
-n0s1 analyze [global options] [--report-uuid <uuid>] [--report-file <path>] [--wait [SECONDS]]
+n0s1 analyze [global options] [--report-uuid <uuid>] [--report-file <path>] [--wait [MINUTES]]
 ```
 
 **Options:**
@@ -442,7 +453,7 @@ n0s1 analyze [global options] [--report-uuid <uuid>] [--report-file <path>] [--w
 - `--report-uuid <uuid>` — UUID of a previously uploaded report. If the backend is waiting for the client to execute HTTP validators, this triggers that step automatically.
 - `--report-file <path>` — Path to a local report JSON file. Used to read the UUID and to inject real credentials during step 2. Also updated in-place when analysis completes.
 - `--n0s1-api-key <key>` — n0s1 API key (or set `N0S1_TOKEN`).
-- `--wait [SECONDS]` — Block until analysis completes or `SECONDS` elapse (default 300 when `--wait` is given without a value). Polls the backend every 30 seconds and logs progress. Useful for CI/CD pipelines that cannot implement their own retry loop.
+- `--wait [MINUTES]` — Block until analysis completes or `MINUTES` elapse (default 30 when `--wait` is given without a value). Polls the backend every 30 seconds and logs progress. Useful for CI/CD pipelines that cannot implement their own retry loop.
 
 **Status values printed during the workflow:**
 
@@ -472,8 +483,8 @@ Let `n0s1` poll internally. The step blocks until analysis finishes or the timeo
 
 ```yaml
 - name: Wait for AI analysis
-  run: n0s1 analyze --n0s1-api-key ${{ secrets.N0S1_TOKEN }} --report-uuid $REPORT_UUID --wait 600
-  # exits 0 on complete, 1 on error/timeout
+  run: n0s1 analyze --n0s1-api-key ${{ secrets.N0S1_TOKEN }} --report-uuid $REPORT_UUID --wait 10
+  # exits 0 on complete, 1 on error/timeout after 10 minutes
 ```
 
 **Option 2 — External retry loop:**
@@ -656,12 +667,13 @@ Use `--scope project` instead of `--scope user` to limit the server to the curre
 | `get_scan_findings` | Return a paginated list of findings for a completed scan |
 | `analyze_report` | Submit or advance async AI analysis for a previously uploaded report |
 
-All platform `scan_*` tools accept two optional parameters for AI analysis:
+All platform `scan_*` tools accept these optional parameters for AI analysis:
 
 | Parameter | Description |
 |---|---|
 | `ai_analysis` | Set to `true` to queue async AI credential validation after the scan (requires n0s1 Pro) |
 | `n0s1_api_key` | n0s1 API key; overrides the `N0S1_TOKEN` environment variable |
+| `allow_secret_upload` | Set to `true` to allow encrypted secrets to be uploaded to the n0s1 backend. Default `false` — credentials stay local and are injected during the `waiting_client` step |
 
 #### `analyze_report` tool reference
 
@@ -674,6 +686,7 @@ Submit a report for AI analysis, or advance an in-progress analysis to the next 
 | `report_uuid` | Yes | UUID returned by a `scan_*` tool or a previous `analyze_report` call |
 | `n0s1_api_key` | No | n0s1 API key; overrides `N0S1_TOKEN` env var |
 | `report_file` | No | Path to local report JSON file — required when status is `"waiting_client"` so real credentials can be injected into HTTP validator requests |
+| `wait_minutes` | No | Block until analysis completes or this many minutes elapse (default 30 when provided without a value). Returns `ai_analysis_status="timeout"` if the deadline is reached |
 
 **Returned `ai_analysis_status` values:**
 
