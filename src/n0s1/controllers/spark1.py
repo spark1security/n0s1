@@ -3,6 +3,7 @@ import logging
 import os
 import socket
 import requests
+from requests.auth import HTTPBasicAuth
 import json
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -150,6 +151,40 @@ def _inject_cred(req_validator, cred):
     return req_validator_sensitive
 
 
+def _build_basic_auth_retry(req: dict, original_kwargs: dict) -> dict | None:
+    """Return a copy of original_kwargs with HTTPBasicAuth, or None if no credentials found.
+
+    Credential sources tried in order:
+      1. req["auth"] is a tuple/list [username, password]
+      2. req headers contain "Authorization: Basic <base64(user:pass)>"
+    The Authorization header is stripped from the retry so it doesn't conflict
+    with the HTTPBasicAuth handler.
+    """
+    auth = req.get("auth")
+    if isinstance(auth, (tuple, list)) and len(auth) == 2:
+        username, password = str(auth[0]), str(auth[1])
+    else:
+        headers = req.get("headers", {})
+        if not isinstance(headers, dict):
+            headers = {}
+        auth_header = headers.get("Authorization", "")
+        if auth_header.lower().startswith("basic "):
+            try:
+                decoded = base64.b64decode(auth_header[6:]).decode()
+                username, _, password = decoded.partition(":")
+            except Exception:
+                return None
+        else:
+            return None
+
+    retry_headers = {k: v for k, v in original_kwargs.get("headers", {}).items()
+                     if k.lower() != "authorization"}
+    retry_kwargs = dict(original_kwargs)
+    retry_kwargs["headers"] = retry_headers
+    retry_kwargs["auth"] = HTTPBasicAuth(username, password)
+    return retry_kwargs
+
+
 def _execute_request(req: dict, timeout: int = 15) -> dict:
     try:
         headers = req.get("headers", {})
@@ -175,6 +210,11 @@ def _execute_request(req: dict, timeout: int = 15) -> dict:
             else:
                 kwargs["data"] = req_body
         resp = requests.request(**kwargs)
+
+        if resp.status_code in (401, 403):
+            retry_kwargs = _build_basic_auth_retry(req, kwargs)
+            if retry_kwargs:
+                resp = requests.request(**retry_kwargs)
 
         data = dict(resp.headers)
         resp_headers = json.loads(json.dumps(data))
@@ -334,10 +374,9 @@ class Spark1(http_client.HttpClient):
                     if ai_analysis and _has_sensitive_secrets(sensitive_json):
                         encrypted_report, raw_key = encrypt_sensitive_report(sensitive_json)
                         updated_report = _overwrite_findings(encrypted_report, report)
-                        payload = dict(updated_report)
                         try:
                             if self.upload_key(report_uuid, raw_key):
-                                r = self._patch_request(upload_report_url + f"/{report_uuid}", json=payload)
+                                r = self.upload_responses(report_uuid, updated_report)
                                 if r and 200 <= r.status_code < 300:
                                     return updated_report
                                 else:

@@ -697,7 +697,7 @@ class SecretScanner():
                 return "complete"
 
             if ai_status in ("pending", "pending_step1_batch", "pending_verdict"):
-                self.log_message(f"AI analysis in progress (status: {ai_status}). Try again later.")
+                self.log_message(f"AI analysis for report [{report_uuid}] in progress (status: {ai_status}). Try again later.")
                 return ai_status
 
             if ai_status == "failed":
