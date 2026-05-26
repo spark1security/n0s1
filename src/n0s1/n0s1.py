@@ -170,6 +170,20 @@ def init_argparse() -> argparse.ArgumentParser:
         type=str,
         help="n0s1 API key for Professional mode. Visit n0s1.spark1.us to issue a new token."
     )
+    parent_parser.add_argument(
+        "--wait",
+        dest="wait",
+        nargs="?",
+        const=30,
+        default=None,
+        type=int,
+        metavar="MINUTES",
+        help=(
+            "When used with --ai-analysis, poll the backend until analysis completes or MINUTES elapse "
+            "(default 30 when --wait is given without a value). "
+            "Exits 0 on success, 1 on error/timeout, 2 if still pending."
+        ),
+    )
     subparsers = parser.add_subparsers(
         help="Subcommands", dest="command", metavar="COMMAND"
     )
@@ -387,20 +401,6 @@ def init_argparse() -> argparse.ArgumentParser:
         type=str,
         help="UUID of a previously uploaded report to analyze or check."
     )
-    analyze_parser.add_argument(
-        "--wait",
-        dest="wait",
-        nargs="?",
-        const=300,
-        default=None,
-        type=int,
-        metavar="SECONDS",
-        help=(
-            "Poll the backend until analysis completes or SECONDS elapse "
-            "(default 300 when --wait is given without a value). "
-            "Exits 0 on success, 1 on error/timeout, 2 if still pending."
-        ),
-    )
 
     return parser
 
@@ -422,6 +422,7 @@ def main():
     secret_scanner.set(regex_file=args.regex_file)
     secret_scanner.set(config_file=args.config_file)
     secret_scanner.set(n0s1_token=getattr(args, "n0s1_api_key", None))
+    secret_scanner.set(wait=getattr(args, "wait", None))
 
     if not args.map:
         args.map = "-1"
@@ -479,9 +480,8 @@ def main():
 
     if command == "analyze":
         secret_scanner.set(report_uuid=getattr(args, "report_uuid", None))
-        wait_seconds = getattr(args, "wait", None)
-        if wait_seconds is not None:
-            status = secret_scanner.analyze_blocking(wait_seconds)
+        if secret_scanner.wait is not None:
+            status = secret_scanner.analyze_blocking(secret_scanner.wait)
         else:
             status = secret_scanner.analyze()
         # Exit codes: 0 = success, 1 = real error/timeout, 2 = pending (retry needed)

@@ -69,6 +69,7 @@ branch_default_value = None
 scan_path_default_value = None
 report_uuid_default_value = None
 n0s1_token_default_value = None
+wait_default_value = None
 
 class SecretScanner():
     def __init__(self, target=None, regex_file=regex_file_default_value, config_file=config_file_default_value,
@@ -82,7 +83,8 @@ class SecretScanner():
                  scope=scope_default_value, api_key=api_key_default_value, server=server_default_value,
                  email=email_default_value, owner=owner_default_value, repo=repo_default_value,
                  branch=branch_default_value, scan_path=scan_path_default_value,
-                 report_uuid=report_uuid_default_value, n0s1_token=n0s1_token_default_value):
+                 report_uuid=report_uuid_default_value, n0s1_token=n0s1_token_default_value,
+                 wait=wait_default_value):
         global n0s1_version
         self.logging_function = log_message
 
@@ -115,6 +117,7 @@ class SecretScanner():
         self.scan_path = None
         self.report_uuid = None
         self.n0s1_token = None
+        self.wait = None
 
         self.regex_config = None
         self.cfg = None
@@ -131,14 +134,14 @@ class SecretScanner():
                        "scan_date": {"timestamp": datetime_now_obj.timestamp(), "date_utc": date_utc},
                        "regex_config": {}, "findings": {}}
 
-        self.set(target=target, regex_file=regex_file, config_file=config_file, report_file=report_file, report_format=report_format, post_comment=post_comment, skip_comment=skip_comment, show_matched_secret_on_logs=show_matched_secret_on_logs, ai_analysis=ai_analysis, private=private, debug=debug, secret_manager=secret_manager, contact_help=contact_help, label=label, timeout=timeout, limit=limit, insecure=insecure, map=map, map_file=map_file, scope=scope, api_key=api_key, server=server, email=email, owner=owner, repo=repo, branch=branch, scan_path=scan_path, report_uuid=report_uuid, n0s1_token=n0s1_token)
+        self.set(target=target, regex_file=regex_file, config_file=config_file, report_file=report_file, report_format=report_format, post_comment=post_comment, skip_comment=skip_comment, show_matched_secret_on_logs=show_matched_secret_on_logs, ai_analysis=ai_analysis, private=private, debug=debug, secret_manager=secret_manager, contact_help=contact_help, label=label, timeout=timeout, limit=limit, insecure=insecure, map=map, map_file=map_file, scope=scope, api_key=api_key, server=server, email=email, owner=owner, repo=repo, branch=branch, scan_path=scan_path, report_uuid=report_uuid, n0s1_token=n0s1_token, wait=wait)
 
 
     def set(self, target=None, regex_file=None, config_file=None, report_file=None, report_format=None, post_comment=None,
             skip_comment=None, show_matched_secret_on_logs=None, ai_analysis=None, private=None, debug=None, secret_manager=None,
             contact_help=None, label=None, timeout=None, limit=None, insecure=None, map=None, map_file=None, scope=None,
             api_key=None, server=None, email=None, owner=None, repo=None, branch=None, scan_path=None, report_uuid=None,
-            n0s1_token=None):
+            n0s1_token=None, wait=None):
         global DEBUG
         if target is not None:
             self.target = target
@@ -204,6 +207,8 @@ class SecretScanner():
             self.report_uuid = report_uuid
         if n0s1_token is not None:
             self.n0s1_token = n0s1_token
+        if wait is not None:
+            self.wait = wait
 
         DEBUG = self.debug
 
@@ -621,10 +626,13 @@ class SecretScanner():
                 sensitive_json=self.report_sensitive_json,
             )
             if self.ai_analysis:
-                report_uuid = self.report_json.get("uuid", "")
-                self.log_message(
-                    f"AI analysis queued. Run: n0s1 analyze --report-uuid {report_uuid}"
-                )
+                self.report_uuid = self.report_json.get("uuid", "")
+                if self.wait:
+                    self.analyze_blocking(self.wait)
+                else:
+                    self.log_message(
+                        f"AI analysis queued. Run: n0s1 analyze --report-uuid {self.report_uuid }"
+                    )
 
         return self.report_json
 
@@ -716,13 +724,14 @@ class SecretScanner():
             self.log_message(f"Failed to queue AI analysis. HTTP status: [{status_code}]")
             return "error"
 
-    def analyze_blocking(self, wait_seconds: int, poll_interval: int = 30) -> str:
+    def analyze_blocking(self, wait_minutes: int, poll_interval: int = 30) -> str:
         """Poll analyze() until a terminal state or timeout.
 
         Returns the same status strings as analyze(), plus "timeout" when
-        wait_seconds elapses without reaching a terminal state.
+        wait_minutes elapses without reaching a terminal state.
         """
         _PENDING = {"pending", "pending_step1_batch", "pending_verdict", "submitted"}
+        wait_seconds = wait_minutes * 60
         deadline = time.monotonic() + wait_seconds
         while True:
             status = self.analyze()
@@ -731,13 +740,13 @@ class SecretScanner():
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 self.log_message(
-                    f"Timed out waiting for AI analysis after {wait_seconds}s (last status: {status})."
+                    f"Timed out waiting for AI analysis after {wait_minutes}m (last status: {status})."
                 )
                 return "timeout"
             sleep_for = min(poll_interval, remaining)
             self.log_message(
                 f"Status [{status}] — retrying in {int(sleep_for)}s "
-                f"({int(remaining)}s remaining)."
+                f"({int(remaining / 60)}m remaining)."
             )
             time.sleep(sleep_for)
 

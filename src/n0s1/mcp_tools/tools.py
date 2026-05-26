@@ -661,13 +661,13 @@ def analyze_report(
     *,
     n0s1_token: Optional[str] = None,
     report_file: Optional[str] = None,
-    wait_seconds: Optional[int] = None,
+    wait_minutes: Optional[int] = None,
     ctx: ToolContext,
 ) -> AnalysisStatus:
     """Submit or advance async AI analysis for a previously uploaded report.
 
     Call once after a scan to queue analysis, then call again periodically
-    until ai_analysis_status is "complete" or "failed".  Pass wait_seconds
+    until ai_analysis_status is "complete" or "failed".  Pass wait_minutes
     to block internally until a terminal state or the timeout elapses.
 
     Args:
@@ -676,8 +676,8 @@ def analyze_report(
         report_file:  Path to the local report JSON file.  Required when the backend
                       is in "waiting_client" state so real credentials can be injected
                       into the HTTP validator requests.
-        wait_seconds: If set, poll the backend every 30 s until a terminal state or
-                      this many seconds elapse.  Returns ai_analysis_status="timeout"
+        wait_minutes: If set, poll the backend every 30 s until a terminal state or
+                      this many minutes elapse.  Returns ai_analysis_status="timeout"
                       if the deadline is reached without completion.
 
     Returns:
@@ -689,15 +689,15 @@ def analyze_report(
           "failed"          — unrecoverable error
           "submitted"       — first-time submission (no prior record on backend)
           "error"           — misconfiguration or HTTP failure
-          "timeout"         — wait_seconds elapsed before analysis reached a terminal state
+          "timeout"         — wait_minutes elapsed before analysis reached a terminal state
     """
     s = _scanner.SecretScanner(
         report_uuid=report_uuid,
         report_file=report_file,
         n0s1_token=n0s1_token,
     )
-    if wait_seconds is not None:
-        ai_status = s.analyze_blocking(wait_seconds)
+    if wait_minutes is not None:
+        ai_status = s.analyze_blocking(wait_minutes)
     else:
         ai_status = s.analyze()
 
@@ -709,7 +709,7 @@ def analyze_report(
         "failed": "AI analysis failed on the backend.",
         "submitted": f"Report submitted for AI analysis. Report UUID: {report_uuid}",
         "error": "analyze() encountered an error — check logs for details.",
-        "timeout": f"Timed out after {wait_seconds}s — analysis still in progress. Call again to retry." if wait_seconds is not None else "Timed out waiting for analysis — still in progress. Call again to retry.",
+        "timeout": f"Timed out after {wait_minutes}m — analysis still in progress. Call again to retry." if wait_minutes is not None else "Timed out waiting for analysis — still in progress. Call again to retry.",
     }
     message = _STATUS_MESSAGES.get(ai_status, f"Unknown status: {ai_status}")
 
