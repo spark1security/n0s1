@@ -688,10 +688,10 @@ class SecretScanner():
                     return "error"
 
                 target_report = local_report
-                if spark1._has_sensitive_secrets(remote_report):
+                if not target_report or spark1._has_sensitive_secrets(remote_report):
                     target_report = remote_report
                 else:
-                    # Insert ["ai_report"] in local report if missing
+                    # Insert ["ai_report"] in target_report report if missing
                     findings = target_report.get("findings", {})
                     for f in findings:
                         if "ai_report" not in target_report["findings"][f]:
@@ -730,17 +730,8 @@ class SecretScanner():
                 self.log_message(f"AI analysis failed for report [{report_uuid}].")
                 return "failed"
 
-        r = n0s1_pro.submit_for_ai_analysis(report_uuid=report_uuid, report=local_report)
-        if r and 200 <= r.status_code < 300:
-            result = r.json()
-            uuid_out = result.get("report_uuid", report_uuid)
-            self.log_message(f"AI analysis queued. Report UUID: [{uuid_out}]")
-            self.log_message(f"Run later to advance: n0s1 analyze --report-uuid {uuid_out}")
-            return "submitted"
-        else:
-            status_code = r.status_code if r else "N/A"
-            self.log_message(f"Failed to queue AI analysis. HTTP status: [{status_code}]")
-            return "error"
+        self.log_message(f"AI analysis for report [{report_uuid}]: Nothing to do.")
+        return "skipped"
 
     def analyze_blocking(self, wait_minutes: int, poll_interval: int = 30) -> str:
         """Poll analyze() until a terminal state or timeout.
