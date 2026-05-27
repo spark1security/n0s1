@@ -217,7 +217,7 @@ class Spark1(http_client.HttpClient):
                  max_retries: int = 3, timeout: int = None,
                  auth: tuple[str, str] = None):
         self.base_url = "https://n0s1.spark1.us"
-        # self.base_url = "http://127.0.0.1:5000"
+        self.base_url = "http://10.0.0.144:5000"
         self.local_ip = _get_local_ip()
         if server:
             self.base_url = server
