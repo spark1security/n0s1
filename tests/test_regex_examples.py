@@ -41,6 +41,7 @@ class TestRegexExamples(unittest.TestCase):
                 regex_file=REGEX_YAML,
                 private=True,
             )
+            print(f"[{rule.get("id", "EMPTY")}]")
             scanner.scan()
 
             findings = scanner.get_report().get("findings", {})
