@@ -71,7 +71,7 @@ rules:
     keywords:
       - ops_
     example: >-
-      ops_eyJhbGciOiJFZERTQSIsImtpZCI6InByb2R1Y3Rpb24ifQ.eyJzdWIiOiJ1c2VyXzAxSFhZWlFQMkdWTjNKS1E2V0g4RjRNWFMiLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MTczMDAwMDAwMCwianRpIjoiMDFIWFlaTVE0RzJWTjNKS1E2V0g4RjRNWFMiLCJ2IjoiMSJ9.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnop
+      ops_eyJzaWduSW5BZGRyZXNzIjoibXkudGVhbS4xcGFzc3dvcmQuY29tIiwiYWNjb3VudEtleSI6IkEzLURFRkFCQy1HSElKS0wtTU5PUFFSLVNUVVZXMS1YWVpBQiIsImRldmljZVV1aWQiOiJhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5emFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXphYmNkZWZnaGlqa2xtbm9wcXIifQ==
   - id: adafruit-api-key
     description: >-
       Identified a potential Adafruit API Key, which could lead to unauthorized
@@ -120,7 +120,7 @@ rules:
       \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{17})(?:[\x60'"\s;]|\\[nr]|$)
     keywords:
       - airtable
-    example: airtable_api_key = "f3a8b2c1d5e6a7b"
+    example: airtable_api_key = "f3a8b2c1d5e6a7b4e"
   - id: airtable-personnal-access-token
     description: >-
       Uncovered a possible Airtable Personal AccessToken, potentially
@@ -129,7 +129,7 @@ rules:
     keywords:
       - airtable
     example: >-
-      patABC123DEFGhi56.f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4
+      patABC123DEFGhi56.f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8b2c1d5e6a7b8c9d0e1f2a3b4e5f6
   - id: algolia-api-key
     description: >-
       Identified an Algolia API Key, which could result in unauthorized search
@@ -148,7 +148,7 @@ rules:
     entropy: 2
     keywords:
       - ltai
-    example: LTAIf3a8b2c1d5e6a7b8c9d0e1f2
+    example: LTAIf3a8b2c1d5e6a7b8c9d0
   - id: alibaba-secret-key
     description: >-
       Discovered a potential Alibaba Cloud Secret Key, potentially allowing
@@ -168,7 +168,7 @@ rules:
     keywords:
       - sk-ant-admin01
     example: >-
-      sk-ant-admin01-A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4eAA
+      sk-ant-admin01-A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4eAA
   - id: anthropic-api-key
     description: >-
       Identified an Anthropic API Key, which may compromise AI assistant
@@ -177,7 +177,7 @@ rules:
     keywords:
       - sk-ant-api03
     example: >-
-      sk-ant-api03-A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4eAA
+      sk-ant-api03-A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4eAA
   - id: artifactory-api-key
     description: >-
       Detected an Artifactory api key, posing a risk unauthorized access to the
@@ -187,7 +187,7 @@ rules:
     keywords:
       - akcp
     example: >-
-      AKCpA1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A
+      AKCpA1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e5f6A1b2c3d4e
   - id: artifactory-reference-token
     description: >-
       Detected an Artifactory reference token, posing a risk of impersonation
@@ -1753,11 +1753,11 @@ rules:
     description: >-
       Uncovered a Postman API token, potentially compromising API testing and
       development workflows.
-    regex: '\b(PMAK-(?i)[a-f0-9]{24}\-[a-f0-9]{34})(?:[\x60''"\s;]|\\[nr]|$)'
+    regex: '\b(PMAK-(?i)[a-f0-9]{24}\-[a-f0-9]{34})\b'
     entropy: 3
     keywords:
       - pmak-
-    example: PMAK-f3a8b2c1d5e6a7b8c9d0e1f2-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3a8
+    example: PMAK-f3a8b2c1d5e6a7b8c9d0e1f2-f3a8b2c1d5e6a7b8c9d0e1f2a3b4c5d6f3
   - id: prefect-api-token
     description: >-
       Detected a Prefect API token, risking unauthorized access to workflow
