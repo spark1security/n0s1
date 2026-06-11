@@ -93,6 +93,10 @@
           "scope": {
             "type": "string",
             "description": "Define a chunk of the map file to scan. Example: '3/4' scans the third quarter."
+          },
+          "report_uuid": {
+            "type": "string",
+            "description": "UUID to assign to the scan report. When set, overrides the auto-generated UUID written to the report JSON."
           }
         }
       }
@@ -172,6 +176,10 @@
           "scope": {
             "type": "string",
             "description": "Search query to filter the scan scope."
+          },
+          "report_uuid": {
+            "type": "string",
+            "description": "UUID to assign to the scan report. When set, overrides the auto-generated UUID written to the report JSON."
           }
         }
       }
@@ -259,6 +267,10 @@
           "map_file": {
             "type": "string",
             "description": "Path to a map file to customize the scan scope."
+          },
+          "report_uuid": {
+            "type": "string",
+            "description": "UUID to assign to the scan report. When set, overrides the auto-generated UUID written to the report JSON."
           }
         }
       }
@@ -346,6 +358,10 @@
           "map_file": {
             "type": "string",
             "description": "Path to a map file to customize the scan scope."
+          },
+          "report_uuid": {
+            "type": "string",
+            "description": "UUID to assign to the scan report. When set, overrides the auto-generated UUID written to the report JSON."
           }
         }
       }
@@ -441,6 +457,10 @@
           "map_file": {
             "type": "string",
             "description": "Path to a map file to customize the scan scope."
+          },
+          "report_uuid": {
+            "type": "string",
+            "description": "UUID to assign to the scan report. When set, overrides the auto-generated UUID written to the report JSON."
           }
         }
       }
@@ -540,6 +560,10 @@
           "map_file": {
             "type": "string",
             "description": "Path to a map file to customize the scan scope."
+          },
+          "report_uuid": {
+            "type": "string",
+            "description": "UUID to assign to the scan report. When set, overrides the auto-generated UUID written to the report JSON."
           }
         }
       }
@@ -619,6 +643,10 @@
           "map_file": {
             "type": "string",
             "description": "Path to a map file to customize the scan scope."
+          },
+          "report_uuid": {
+            "type": "string",
+            "description": "UUID to assign to the scan report. When set, overrides the auto-generated UUID written to the report JSON."
           }
         }
       }
@@ -698,6 +726,10 @@
           "map_file": {
             "type": "string",
             "description": "Path to a map file to customize the scan scope."
+          },
+          "report_uuid": {
+            "type": "string",
+            "description": "UUID to assign to the scan report. When set, overrides the auto-generated UUID written to the report JSON."
           }
         }
       }
@@ -777,6 +809,10 @@
           "map_file": {
             "type": "string",
             "description": "Path to a map file to customize the scan scope."
+          },
+          "report_uuid": {
+            "type": "string",
+            "description": "UUID to assign to the scan report. When set, overrides the auto-generated UUID written to the report JSON."
           }
         }
       }
@@ -868,6 +904,10 @@
           "map_file": {
             "type": "string",
             "description": "Path to a map file to customize the scan scope."
+          },
+          "report_uuid": {
+            "type": "string",
+            "description": "UUID to assign to the scan report. When set, overrides the auto-generated UUID written to the report JSON."
           }
         }
       }

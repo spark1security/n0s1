@@ -285,7 +285,7 @@ n0s1 local_scan --path ./src --regex-file ./custom.yaml
 | `--map`                         | `map`                         | int as string in CLI |
 | `--map-file`                    | `map_file`                    | |
 | `--n0s1-api-key`                | `n0s1_token`                  | overrides `N0S1_TOKEN` env var |
-| `--report-uuid`                 | `report_uuid`                 | `analyze` command only |
+| `--report-uuid`                 | `report_uuid`                 | global; assigns UUID to scan report; also identifies report for `analyze` |
 | `--wait`                        | `wait`                        | int (minutes); blocks until AI analysis completes |
 | `--allow-secret-upload`         | `allow_secret_upload`         | boolean flag; uploads encrypted secrets to backend |
 

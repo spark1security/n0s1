@@ -238,6 +238,7 @@ def scan_jira(
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
     allow_secret_upload: bool = False,
+    report_uuid: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Jira workspace for leaked secrets.
@@ -264,6 +265,8 @@ def scan_jira(
         kwargs["email"] = email
     if n0s1_token:
         kwargs["n0s1_token"] = n0s1_token
+    if report_uuid:
+        kwargs["report_uuid"] = report_uuid
     return _run_platform_scan(
         "jira_scan",
         kwargs,
@@ -287,6 +290,7 @@ def scan_confluence(
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
     allow_secret_upload: bool = False,
+    report_uuid: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Confluence workspace for leaked secrets.
@@ -312,6 +316,8 @@ def scan_confluence(
         kwargs["email"] = email
     if n0s1_token:
         kwargs["n0s1_token"] = n0s1_token
+    if report_uuid:
+        kwargs["report_uuid"] = report_uuid
     return _run_platform_scan(
         "confluence_scan",
         kwargs,
@@ -333,6 +339,7 @@ def scan_slack(
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
     allow_secret_upload: bool = False,
+    report_uuid: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Slack workspace for leaked secrets.
@@ -355,6 +362,8 @@ def scan_slack(
         kwargs["api_key"] = api_key
     if n0s1_token:
         kwargs["n0s1_token"] = n0s1_token
+    if report_uuid:
+        kwargs["report_uuid"] = report_uuid
     return _run_platform_scan(
         "slack_scan",
         kwargs,
@@ -377,6 +386,7 @@ def scan_asana(
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
     allow_secret_upload: bool = False,
+    report_uuid: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan an Asana workspace for leaked secrets.
@@ -398,6 +408,8 @@ def scan_asana(
         kwargs["api_key"] = api_key
     if n0s1_token:
         kwargs["n0s1_token"] = n0s1_token
+    if report_uuid:
+        kwargs["report_uuid"] = report_uuid
     return _run_platform_scan(
         "asana_scan",
         kwargs,
@@ -419,6 +431,7 @@ def scan_linear(
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
     allow_secret_upload: bool = False,
+    report_uuid: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Linear workspace for leaked secrets.
@@ -440,6 +453,8 @@ def scan_linear(
         kwargs["api_key"] = api_key
     if n0s1_token:
         kwargs["n0s1_token"] = n0s1_token
+    if report_uuid:
+        kwargs["report_uuid"] = report_uuid
     return _run_platform_scan(
         "linear_scan",
         kwargs,
@@ -461,6 +476,7 @@ def scan_zendesk(
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
     allow_secret_upload: bool = False,
+    report_uuid: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Zendesk workspace for leaked secrets.
@@ -483,6 +499,8 @@ def scan_zendesk(
         kwargs["email"] = email
     if n0s1_token:
         kwargs["n0s1_token"] = n0s1_token
+    if report_uuid:
+        kwargs["report_uuid"] = report_uuid
     return _run_platform_scan(
         "zendesk_scan",
         kwargs,
@@ -504,6 +522,7 @@ def scan_wrike(
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
     allow_secret_upload: bool = False,
+    report_uuid: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a Wrike workspace for leaked secrets.
@@ -524,6 +543,8 @@ def scan_wrike(
         kwargs["api_key"] = api_key
     if n0s1_token:
         kwargs["n0s1_token"] = n0s1_token
+    if report_uuid:
+        kwargs["report_uuid"] = report_uuid
     return _run_platform_scan(
         "wrike_scan",
         kwargs,
@@ -546,6 +567,7 @@ def scan_github(
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
     allow_secret_upload: bool = False,
+    report_uuid: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a GitHub repository for leaked secrets.
@@ -578,6 +600,8 @@ def scan_github(
         kwargs["api_key"] = api_key
     if n0s1_token:
         kwargs["n0s1_token"] = n0s1_token
+    if report_uuid:
+        kwargs["report_uuid"] = report_uuid
     return _run_platform_scan(
         "github_scan",
         kwargs,
@@ -601,6 +625,7 @@ def scan_gitlab(
     ai_analysis: bool = False,
     n0s1_token: Optional[str] = None,
     allow_secret_upload: bool = False,
+    report_uuid: Optional[str] = None,
     ctx: ToolContext,
 ) -> ScanResult:
     """Scan a GitLab project for leaked secrets.
@@ -636,6 +661,8 @@ def scan_gitlab(
         kwargs["api_key"] = api_key
     if n0s1_token:
         kwargs["n0s1_token"] = n0s1_token
+    if report_uuid:
+        kwargs["report_uuid"] = report_uuid
     return _run_platform_scan(
         "gitlab_scan",
         kwargs,

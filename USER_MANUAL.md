@@ -64,6 +64,11 @@ These options work with all scan commands and should be specified **before** the
 - Default: n0s1 format
 - Example: `--report-format SARIF`
 
+**`--report-uuid <uuid>`**
+- Assign a specific UUID to the scan report. When set, this value is written to the `uuid` field in the report JSON instead of the auto-generated one.
+- Also used with the `analyze` command to identify a previously uploaded report for AI analysis.
+- Example: `--report-uuid 3f8a1b2c-4d5e-6f7a-8b9c-0d1e2f3a4b5c`
+
 ### Scanning Behavior
 
 **`--post-comment`**
@@ -450,7 +455,7 @@ n0s1 analyze [global options] [--report-uuid <uuid>] [--report-file <path>] [--w
 
 **Options:**
 
-- `--report-uuid <uuid>` — UUID of a previously uploaded report. If the backend is waiting for the client to execute HTTP validators, this triggers that step automatically.
+- `--report-uuid <uuid>` — UUID of the report to analyze. If the backend is waiting for the client to execute HTTP validators, this triggers that step automatically. (This is a global option — when passed to a scan command it also assigns that UUID to the newly created report.)
 - `--report-file <path>` — Path to a local report JSON file. Used to read the UUID and to inject real credentials during step 2. Also updated in-place when analysis completes.
 - `--n0s1-api-key <key>` — n0s1 API key (or set `N0S1_TOKEN`).
 - `--wait [MINUTES]` — Block until analysis completes or `MINUTES` elapse (default 30 when `--wait` is given without a value). Polls the backend every 30 seconds and logs progress. Useful for CI/CD pipelines that cannot implement their own retry loop.

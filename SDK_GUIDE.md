@@ -135,7 +135,7 @@ scanner.SecretScanner(
     scope=None,                     # Search query/scope
 
     # AI analysis
-    report_uuid=None,               # str: UUID of a previously uploaded report (for analyze())
+    report_uuid=None,               # str: UUID to assign to the scan report; also used by analyze() to identify a previously uploaded report
     n0s1_token=None,                # str: n0s1 API key; overrides N0S1_TOKEN env var
     wait=None,                      # int: minutes to block waiting for AI analysis (scan + --ai-analysis)
     allow_secret_upload=False,      # bool: upload encrypted secrets to n0s1 backend (default: False)
@@ -969,7 +969,7 @@ The `scan()` method returns a dictionary with the following structure:
 | `map`                         | str | None | Mapping depth                    |
 | `map_file`                    | str | None | Map file path                    |
 | `scope`                       | str | None | Search scope/query               |
-| `report_uuid`                 | str | None | UUID of an uploaded report (for `analyze()`) |
+| `report_uuid`                 | str | None | UUID to assign to the scan report (written to `uuid` in the report JSON at scan start); also used by `analyze()` to identify a previously uploaded report |
 | `n0s1_token`                  | str | None | n0s1 API key; overrides `N0S1_TOKEN` env var |
 | `wait`                        | int | None | Minutes to block waiting for AI analysis when used with `ai_analysis=True` |
 | `allow_secret_upload`         | bool | False | Upload encrypted secrets to the n0s1 backend during AI analysis |
