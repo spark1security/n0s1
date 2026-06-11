@@ -699,6 +699,9 @@ class SecretScanner():
                                 if "ai_report" in remote_report["findings"][f]:
                                     target_report["findings"][f]["ai_report"] = remote_report["findings"][f]["ai_report"]
 
+                if "uuid" not in target_report or not target_report["uuid"] or len(str(target_report["uuid"])) <= 0:
+                    target_report["uuid"] = report_uuid
+
                 updated_report = n0s1_pro.execute_request_validators(target_report)
                 r = n0s1_pro.upload_responses(report_uuid, updated_report)
                 if r and 200 <= r.status_code < 300:
