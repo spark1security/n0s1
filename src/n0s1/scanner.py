@@ -585,6 +585,9 @@ class SecretScanner():
         message = f"Starting scan in {mode} mode..."
         self.log_message(message)
 
+        if self.report_uuid:
+            self.report_json["uuid"] = self.report_uuid
+
         self._set_controller_config()
         if not self.regex_config or not self.controller:
             raise ValueError("No regex configuration provided to the scanner")

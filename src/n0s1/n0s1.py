@@ -51,6 +51,13 @@ def init_argparse() -> argparse.ArgumentParser:
         help="Output report file for the leaked secrets."
     )
     parent_parser.add_argument(
+        "--report-uuid",
+        dest="report_uuid",
+        nargs="?",
+        type=str,
+        help="UUID to assign to the report. When set, this value is written to the uuid field in the report JSON. If not set, the uuid is generated as usual."
+    )
+    parent_parser.add_argument(
         "--report-format",
         dest="report_format",
         nargs="?",
@@ -400,13 +407,6 @@ def init_argparse() -> argparse.ArgumentParser:
         help="Submit a scan report for async AI analysis, or advance an in-progress analysis",
         parents=[parent_parser],
     )
-    analyze_parser.add_argument(
-        "--report-uuid",
-        dest="report_uuid",
-        nargs="?",
-        type=str,
-        help="UUID of a previously uploaded report to analyze or check."
-    )
 
     return parser
 
@@ -430,6 +430,7 @@ def main():
     secret_scanner.set(n0s1_token=getattr(args, "n0s1_api_key", None))
     secret_scanner.set(wait=getattr(args, "wait", None))
     secret_scanner.set(allow_secret_upload=getattr(args, "allow_secret_upload", False))
+    secret_scanner.set(report_uuid=getattr(args, "report_uuid", None))
 
     if not args.map:
         args.map = "-1"
@@ -486,7 +487,6 @@ def main():
         return
 
     if command == "analyze":
-        secret_scanner.set(report_uuid=getattr(args, "report_uuid", None))
         if secret_scanner.wait is not None:
             status = secret_scanner.analyze_blocking(secret_scanner.wait)
         else:
