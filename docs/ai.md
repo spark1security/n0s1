@@ -750,7 +750,7 @@ Key submodules:
 | `n0s1.mcp_tools.schemas` | Pydantic models: `ScanResult`, `Finding`, `FindingsPage`, `ScanSummary`, `Status`, `AnalysisStatus`, `Usage`, `Severity` |
 | `n0s1.mcp_tools.context` | `ToolContext` dataclass (injected by transport layer) |
 | `n0s1.mcp_tools.redaction` | `redact_match(raw, kind)` — produces `AKIA****MPLE` or `<REDACTED:kind>` |
-| `n0s1.mcp_tools.usage` | `usage_block(input_data, output_payload)` — token-savings estimation via cl100k_base |
+| `n0s1.mcp_tools.usage` | `usage_block(input_data, output_payload)` — token-savings estimation via cl100k_base; `input_data` accepts an `int` (raw character count from `SecretScanner.raw_chars_scanned`), or a `str`/`dict`/`list` |
 
 ### When to use MCP over other interfaces
 
