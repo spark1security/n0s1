@@ -1,12 +1,96 @@
+import base64
 import logging
+import os
 import socket
 import requests
+from requests.auth import HTTPBasicAuth
 import json
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 try:
     import clients.http_client as http_client
 except Exception:
     import n0s1.clients.http_client as http_client
+
+
+def encrypt_sensitive_report(report_sensitive_json: dict) -> tuple[dict, bytes]:
+    """AES-256-GCM encrypt every sensitive_secret in report_sensitive_json in place.
+
+    Each secret is encrypted with a fresh 12-byte nonce; the nonce is prepended
+    to the ciphertext and the whole thing is base64-encoded before being written
+    back into the dict.  The same raw_key decrypts all findings in this report.
+
+    NOTE: this mutates report_sensitive_json.  After this call, sensitive_secret
+    fields contain ciphertext, not plaintext.  Callers that need the plaintext
+    for local use (e.g. redaction) should finish that work before calling this.
+
+    Returns:
+        (mutated_dict, raw_key) — raw_key is 32 random bytes.  Upload it via
+        Spark1.upload_key() and then discard it from memory.
+    """
+    raw_key = os.urandom(32)
+    aesgcm = AESGCM(raw_key)
+    for finding in (report_sensitive_json or {}).get("findings", {}).values():
+        secret = finding.get("sensitive_secret", "")
+        if not secret:
+            continue
+        nonce = os.urandom(12)
+        ct = aesgcm.encrypt(nonce, secret.encode(), None)
+        finding["sensitive_secret"] = base64.b64encode(nonce + ct).decode()
+    return report_sensitive_json, raw_key
+
+
+def decrypt_sensitive_report(report_sensitive_json: dict, raw_key_b64: str) -> dict:
+    """AES-256-GCM decrypt every sensitive_secret in report_sensitive_json in place.
+
+    Inverse of encrypt_sensitive_report.  Each sensitive_secret is expected to be
+    a base64-encoded blob of (12-byte nonce || ciphertext) as written by
+    encrypt_sensitive_report.  Fields that are empty or cannot be decoded/decrypted
+    are left unchanged and a warning is logged.
+
+    Args:
+        report_sensitive_json: dict with encrypted sensitive_secret values.
+        raw_key_b64:           base64-encoded 32-byte AES key returned by retrieve_key().
+
+    Returns:
+        The same dict with sensitive_secret fields restored to plaintext.
+    """
+    try:
+        raw_key = base64.b64decode(raw_key_b64)
+    except Exception as exc:
+        logging.warning("decrypt_sensitive_report: invalid raw_key_b64: %s", exc)
+        return report_sensitive_json
+
+    aesgcm = AESGCM(raw_key)
+    for finding_id, finding in (report_sensitive_json or {}).get("findings", {}).items():
+        ct_b64 = finding.get("sensitive_secret", "")
+        if not ct_b64:
+            continue
+        try:
+            ct_bytes = base64.b64decode(ct_b64)
+            nonce, ciphertext = ct_bytes[:12], ct_bytes[12:]
+            finding["sensitive_secret"] = aesgcm.decrypt(nonce, ciphertext, None).decode()
+        except Exception as exc:
+            logging.warning(
+                "decrypt_sensitive_report: failed to decrypt finding %s: %s", finding_id, exc
+            )
+    return report_sensitive_json
+
+
+def _has_sensitive_secrets(sensitive_json: dict) -> bool:
+    """Return True if sensitive_json contains at least one non-empty sensitive_secret."""
+    for finding in (sensitive_json or {}).get("findings", {}).values():
+        if finding.get("sensitive_secret"):
+            return True
+    return False
+
+
+def _overwrite_findings(src_report, dst_report):
+    if dst_report is None:
+        dst_report = {}
+    dst_report["findings"] = (src_report or {}).get("findings", {})
+    return dst_report
 
 
 def _get_local_ip():
@@ -32,6 +116,9 @@ def _inject_cred(req_validator, cred):
         return req_validator_sensitive
 
     headers = req_validator_sensitive.get("headers", {})
+    if not isinstance(headers, dict):
+        headers = {}
+    req_validator_sensitive["headers"] = headers
     auth_header = headers.get("Authorization", "")
 
     # Bearer / Token header
@@ -63,13 +150,33 @@ def _inject_cred(req_validator, cred):
     req_validator_sensitive["headers"] = headers
     return req_validator_sensitive
 
+
+def _build_basic_auth_retry(req: dict, original_kwargs: dict) -> dict | None:
+    """Retry with HTTPBasicAuth after stripping stray double-quotes from the password."""
+    auth = req.get("auth")
+    if not (isinstance(auth, (tuple, list)) and len(auth) == 2):
+        return None
+    username, password = str(auth[0]), str(auth[1]).replace('"', '')
+    return {
+        "method": original_kwargs.get("method"),
+        "url": original_kwargs.get("url"),
+        "auth": HTTPBasicAuth(username, password),
+    }
+
+
 def _execute_request(req: dict, timeout: int = 15) -> dict:
     try:
+        headers = req.get("headers", {})
+        if not isinstance(headers, dict):
+            headers = {}
+        params = req.get("params", {})
+        if not isinstance(params, dict):
+            params = {}
         kwargs = {
             "method": req.get("method", None),
             "url": req.get("url", None),
-            "headers": req.get("headers", {}),
-            "params": req.get("params", {}),
+            "headers": headers,
+            "params": params,
             "timeout": timeout,
             "allow_redirects": True,
         }
@@ -82,6 +189,11 @@ def _execute_request(req: dict, timeout: int = 15) -> dict:
             else:
                 kwargs["data"] = req_body
         resp = requests.request(**kwargs)
+
+        if resp.status_code in (401, 403):
+            retry_kwargs = _build_basic_auth_retry(req, kwargs)
+            if retry_kwargs:
+                resp = requests.request(**retry_kwargs)
 
         data = dict(resp.headers)
         resp_headers = json.loads(json.dumps(data))
@@ -140,7 +252,92 @@ class Spark1(http_client.HttpClient):
             return False
         return False
 
-    def upload_report(self, report: dict, ai_analysis: bool = False):
+    def upload_key(self, report_uuid: str, raw_key: bytes) -> bool:
+        """POST the AES-256 key to the backend for secure at-rest storage.
+
+        The backend Fernet-wraps it before persisting; only the scan owner can
+        retrieve it (GET /api/v1/scans/<uuid>/key).  The key is one-time-use —
+        it is zeroed on first retrieval.
+
+        Returns True on success (201), False on any error.  A False return means
+        the encrypted secrets in sensitive_json cannot be decrypted later; use
+        POST /api/v1/scans/<uuid>/rekey to re-upload a new key after the next
+        scan run.
+        """
+        if not report_uuid or not raw_key:
+            return False
+        url = f"{self.base_url}/api/v1/scans/{report_uuid}/key"
+        raw_key_b64 = base64.b64encode(raw_key).decode()
+        try:
+            r = self._post_request(url, json={"encrypted_key": raw_key_b64})
+            if r and 200 <= r.status_code < 300:
+                return True
+            logging.warning(
+                "upload_key: failed status=%s report_uuid=%s",
+                r.status_code if r else "N/A", report_uuid,
+            )
+        except Exception as ex:
+            logging.warning("upload_key: exception report_uuid=%s: %s", report_uuid, ex)
+        return False
+
+    def retrieve_key(self, report_uuid: str) -> str | None:
+        """GET the AES-256 key for a scan from the backend (one-time use).
+
+        The backend atomically zeroes the key on first retrieval, so a second
+        call for the same report_uuid will return None with a "consumed" reason.
+        Use decrypt_sensitive_report() with the returned value to restore
+        plaintext sensitive_secret fields locally.
+
+        Returns:
+            raw_key_b64 (str) on success, None on any failure.
+
+        Failure reasons logged:
+            "consumed" (410) — key already retrieved; possible unauthorized access.
+            "expired"  (410) — 24h TTL elapsed without retrieval; re-scan or /rekey.
+            404              — no key was uploaded for this report_uuid.
+        """
+        if not report_uuid:
+            return None
+        url = f"{self.base_url}/api/v1/scans/{report_uuid}/key"
+        try:
+            r = self._get_request(url)
+            if r.status_code == 200:
+                return r.json().get("key")
+            if r.status_code == 410:
+                body = r.json()
+                reason = body.get("error", "unknown")
+                if reason == "consumed":
+                    logging.warning(
+                        "retrieve_key: key already consumed report_uuid=%s consumed_at=%s "
+                        "— possible unauthorized retrieval; treat as security incident",
+                        report_uuid, body.get("consumed_at"),
+                    )
+                else:
+                    logging.info(
+                        "retrieve_key: key %s report_uuid=%s — re-scan or use POST /rekey",
+                        reason, report_uuid,
+                    )
+                return None
+            if r.status_code == 404:
+                logging.info("retrieve_key: no key found report_uuid=%s", report_uuid)
+                return None
+            logging.warning(
+                "retrieve_key: unexpected status=%s report_uuid=%s", r.status_code, report_uuid
+            )
+        except Exception as ex:
+            logging.warning("retrieve_key: exception report_uuid=%s: %s", report_uuid, ex)
+        return None
+
+    def upload_report(self, report: dict, ai_analysis: bool = False, sensitive_json: dict = None, allow_secret_upload: bool = False):
+        """Upload a completed scan report.
+
+        If sensitive_json is provided and contains findings with sensitive_secret
+        values, those secrets are AES-256-GCM encrypted in-place and the key is
+        uploaded to POST /api/v1/scans/<uuid>/key.  After this call,
+        sensitive_json["findings"][id]["sensitive_secret"] contains ciphertext,
+        not plaintext.  The raw key is discarded from memory immediately after
+        the upload attempt.
+        """
         if report is None:
             return None
         upload_report_url = self.base_url + "/api/v1/scans"
@@ -149,7 +346,35 @@ class Spark1(http_client.HttpClient):
             if ai_analysis:
                 payload["ai_analysis"] = True
             r = self._post_request(upload_report_url, json=payload)
-            return r
+            if r and 200 <= r.status_code < 300:
+                report_uuid = r.json().get("report_uuid", None)
+                if report_uuid:
+                    report["uuid"] = report_uuid
+                    if ai_analysis and _has_sensitive_secrets(sensitive_json):
+                        encrypted_report, raw_key = encrypt_sensitive_report(sensitive_json)
+                        updated_report = _overwrite_findings(encrypted_report, report)
+                        try:
+                            if self.upload_key(report_uuid, raw_key):
+                                if not allow_secret_upload:
+                                    return updated_report
+                                r = self.upload_responses(report_uuid, updated_report)
+                                if r and 200 <= r.status_code < 300:
+                                    return updated_report
+                                else:
+                                    logging.warning(
+                                        f"Unable to upload encrypted report to {self.base_url}! HTTP response status: [{r.status_code}].")
+                            else:
+                                logging.warning(
+                                    "upload_report: key upload failed for %s — secrets are "
+                                    "encrypted in sensitive_json but key is not stored on the "
+                                    "backend; use POST /rekey after the next scan to recover",
+                                    report_uuid,
+                                )
+                        finally:
+                            del raw_key
+            else:
+                logging.warning(f"Unable to upload report to {self.base_url}! HTTP response status: [{r.status_code}].")
+            return report
         except Exception as ex:
             logging.info(str(ex))
         return None
@@ -193,24 +418,40 @@ class Spark1(http_client.HttpClient):
         return None
 
 
-def _execute_request_validators(remote_report: dict, local_report: dict = None) -> dict:
-    """Client-side step 2: inject credentials and execute each request_validator."""
-    local_findings = (local_report or {}).get("findings", {})
-    findings = remote_report.get("findings", {})
-    for finding_id, finding in findings.items():
-        req_validator = finding.get("ai_report", {}).get("request_validator")
-        if not req_validator:
-            continue
-        if finding.get("ai_report", {}).get("response_validator"):
-            continue
-        cred = (
-            local_findings.get(finding_id, {}).get("sensitive_secret")
-            or finding.get("mocked_secret", "")
-        )
-        if cred:
-            req_validator = _inject_cred(req_validator, cred)
-        resp = _execute_request(req_validator)
-        finding.setdefault("ai_report", {})["response_validator"] = resp
-        remote_report["findings"][finding_id] = finding
-    return remote_report
+    def execute_request_validators(self, remote_report: dict) -> dict:
+        """Client-side step 2: inject credentials and execute each request_validator."""
+        report_uuid = remote_report.get("uuid", "")
+        key = self.retrieve_key(report_uuid)
+        sensitive_report = decrypt_sensitive_report(remote_report, key)
+        findings = sensitive_report.get("findings", {})
+        cred = None
+        for finding_id, finding in findings.items():
+            req_validator = finding.get("ai_report", {}).get("request_validator")
+            if not req_validator:
+                continue
+
+            is_testable = req_validator.get("testable", False)
+            if is_testable:
+                if finding.get("ai_report", {}).get("response_validator"):
+                    continue
+                cred = (
+                        findings.get(finding_id, {}).get("sensitive_secret")
+                        or finding.get("mocked_secret", "")
+                )
+                if cred:
+                    req_validator = _inject_cred(req_validator, cred)
+                resp = _execute_request(req_validator)
+            else:
+                resp = {
+                    "status_code": 503,
+                    "headers": req_validator.get("headers", None),
+                    "body": req_validator.get("notes", None),
+                    "error": "request_not_submitted",
+                }
+            finding.setdefault("ai_report", {})["response_validator"] = resp
+            remote_report["findings"][finding_id] = finding
+            finding.pop("sensitive_secret", None)
+        del key
+        del cred
+        return remote_report
 

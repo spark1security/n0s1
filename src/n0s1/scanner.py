@@ -5,6 +5,7 @@ import math
 import os
 import pathlib
 import re
+import time
 import toml
 import yaml
 from datetime import datetime, timezone
@@ -68,6 +69,8 @@ branch_default_value = None
 scan_path_default_value = None
 report_uuid_default_value = None
 n0s1_token_default_value = None
+wait_default_value = None
+allow_secret_upload_default_value = False
 
 class SecretScanner():
     def __init__(self, target=None, regex_file=regex_file_default_value, config_file=config_file_default_value,
@@ -81,7 +84,8 @@ class SecretScanner():
                  scope=scope_default_value, api_key=api_key_default_value, server=server_default_value,
                  email=email_default_value, owner=owner_default_value, repo=repo_default_value,
                  branch=branch_default_value, scan_path=scan_path_default_value,
-                 report_uuid=report_uuid_default_value, n0s1_token=n0s1_token_default_value):
+                 report_uuid=report_uuid_default_value, n0s1_token=n0s1_token_default_value,
+                 wait=wait_default_value, allow_secret_upload=allow_secret_upload_default_value):
         global n0s1_version
         self.logging_function = log_message
 
@@ -114,6 +118,8 @@ class SecretScanner():
         self.scan_path = None
         self.report_uuid = None
         self.n0s1_token = None
+        self.wait = None
+        self.allow_secret_upload = False
 
         self.regex_config = None
         self.cfg = None
@@ -130,14 +136,14 @@ class SecretScanner():
                        "scan_date": {"timestamp": datetime_now_obj.timestamp(), "date_utc": date_utc},
                        "regex_config": {}, "findings": {}}
 
-        self.set(target=target, regex_file=regex_file, config_file=config_file, report_file=report_file, report_format=report_format, post_comment=post_comment, skip_comment=skip_comment, show_matched_secret_on_logs=show_matched_secret_on_logs, ai_analysis=ai_analysis, private=private, debug=debug, secret_manager=secret_manager, contact_help=contact_help, label=label, timeout=timeout, limit=limit, insecure=insecure, map=map, map_file=map_file, scope=scope, api_key=api_key, server=server, email=email, owner=owner, repo=repo, branch=branch, scan_path=scan_path, report_uuid=report_uuid, n0s1_token=n0s1_token)
+        self.set(target=target, regex_file=regex_file, config_file=config_file, report_file=report_file, report_format=report_format, post_comment=post_comment, skip_comment=skip_comment, show_matched_secret_on_logs=show_matched_secret_on_logs, ai_analysis=ai_analysis, private=private, debug=debug, secret_manager=secret_manager, contact_help=contact_help, label=label, timeout=timeout, limit=limit, insecure=insecure, map=map, map_file=map_file, scope=scope, api_key=api_key, server=server, email=email, owner=owner, repo=repo, branch=branch, scan_path=scan_path, report_uuid=report_uuid, n0s1_token=n0s1_token, wait=wait, allow_secret_upload=allow_secret_upload)
 
 
     def set(self, target=None, regex_file=None, config_file=None, report_file=None, report_format=None, post_comment=None,
             skip_comment=None, show_matched_secret_on_logs=None, ai_analysis=None, private=None, debug=None, secret_manager=None,
             contact_help=None, label=None, timeout=None, limit=None, insecure=None, map=None, map_file=None, scope=None,
             api_key=None, server=None, email=None, owner=None, repo=None, branch=None, scan_path=None, report_uuid=None,
-            n0s1_token=None):
+            n0s1_token=None, wait=None, allow_secret_upload=None):
         global DEBUG
         if target is not None:
             self.target = target
@@ -203,6 +209,10 @@ class SecretScanner():
             self.report_uuid = report_uuid
         if n0s1_token is not None:
             self.n0s1_token = n0s1_token
+        if wait is not None:
+            self.wait = wait
+        if allow_secret_upload is not None:
+            self.allow_secret_upload = allow_secret_upload
 
         DEBUG = self.debug
 
@@ -463,7 +473,9 @@ class SecretScanner():
         if finding_id not in self.report_json["findings"]:
             self.report_json["findings"][finding_id] = new_finding
             if not self.report_sensitive_json:
-                self.report_sensitive_json = {"findings": {}}
+                self.report_sensitive_json = json.loads(json.dumps(self.report_json))
+            if not self.report_sensitive_json.get("findings", None):
+                self.report_sensitive_json["findings"] = {}
             self.report_sensitive_json["findings"][finding_id] = json.loads(json.dumps(new_finding))
             self.report_sensitive_json["findings"][finding_id]["sensitive_secret"] = scan_text_result.get("secret", "")
         if post_comment:
@@ -573,6 +585,9 @@ class SecretScanner():
         message = f"Starting scan in {mode} mode..."
         self.log_message(message)
 
+        if self.report_uuid:
+            self.report_json["uuid"] = self.report_uuid
+
         self._set_controller_config()
         if not self.regex_config or not self.controller:
             raise ValueError("No regex configuration provided to the scanner")
@@ -612,34 +627,22 @@ class SecretScanner():
                         if item_data and item_data.lower().find(label.lower()) == -1:
                             self.scan_text_and_report_leaks(item_data, name, self.regex_config, self.scan_arguments, ticket)
         if n0s1_pro:
-            upload_http_response = n0s1_pro.upload_report(self.report_json, ai_analysis=self.ai_analysis)
-            self._process_report_upload(upload_http_response)
+            self.report_json = n0s1_pro.upload_report(
+                self.report_json,
+                ai_analysis=self.ai_analysis,
+                sensitive_json=self.report_sensitive_json,
+                allow_secret_upload=self.allow_secret_upload,
+            )
             if self.ai_analysis:
-                report_uuid = self.report_json.get("uuid", "")
-                self.log_message(
-                    f"AI analysis queued. Run: n0s1 analyze --report-uuid {report_uuid}"
-                )
+                self.report_uuid = self.report_json.get("uuid", "")
+                if self.wait:
+                    self.analyze_blocking(self.wait)
+                else:
+                    self.log_message(
+                        f"AI analysis queued. Run: n0s1 analyze --report-uuid {self.report_uuid }"
+                    )
 
         return self.report_json
-
-    def _process_report_upload(self, upload_http_response):
-        r = upload_http_response
-        if 200 <= r.status_code < 300:
-            scan_record = r.json()
-            report_uuid = scan_record.get("report_uuid", "")
-            self.report_json["uuid"] = report_uuid
-            message = f"Uploading report [{self.report_file}] to n0s1.spark1.us ..."
-            self.log_message(message)
-            message = f"Upload successful! Report UUID: [{report_uuid}]"
-            self.log_message(message)
-        else:
-            message = f"Unable to upload report to n0s1.spark1.us! HTTP response status: [{r.status_code}]."
-            self.log_message(message)
-            try:
-                response_data = r.json()
-                self.log_message(str(response_data))
-            except Exception as ex:
-                logging.info(str(ex))
 
 
     def analyze(self) -> str:
@@ -686,7 +689,23 @@ class SecretScanner():
                 if not remote_report:
                     self.log_message("Backend returned no report data.")
                     return "error"
-                updated_report = spark1._execute_request_validators(remote_report, local_report)
+
+                target_report = local_report
+                if not target_report or spark1._has_sensitive_secrets(remote_report):
+                    target_report = remote_report
+                else:
+                    # Insert ["ai_report"] in target_report report if missing
+                    findings = target_report.get("findings", {})
+                    for f in findings:
+                        if "ai_report" not in target_report["findings"][f]:
+                            if f in remote_report.get("findings", {}):
+                                if "ai_report" in remote_report["findings"][f]:
+                                    target_report["findings"][f]["ai_report"] = remote_report["findings"][f]["ai_report"]
+
+                if "uuid" not in target_report or not target_report["uuid"] or len(str(target_report["uuid"])) <= 0:
+                    target_report["uuid"] = report_uuid
+
+                updated_report = n0s1_pro.execute_request_validators(target_report)
                 r = n0s1_pro.upload_responses(report_uuid, updated_report)
                 if r and 200 <= r.status_code < 300:
                     self.log_message("HTTP responses uploaded. Backend will compute verdicts.")
@@ -709,25 +728,42 @@ class SecretScanner():
                         self.log_message(f"Could not save report: {e}")
                 return "complete"
 
-            if ai_status in ("pending", "pending_verdict"):
-                self.log_message(f"AI analysis in progress (status: {ai_status}). Try again later.")
+            if ai_status in ("pending", "pending_step1_batch", "pending_verdict"):
+                self.log_message(f"AI analysis for report [{report_uuid}] in progress (status: {ai_status}). Try again later.")
                 return ai_status
 
             if ai_status == "failed":
                 self.log_message(f"AI analysis failed for report [{report_uuid}].")
                 return "failed"
 
-        r = n0s1_pro.submit_for_ai_analysis(report_uuid=report_uuid, report=local_report)
-        if r and 200 <= r.status_code < 300:
-            result = r.json()
-            uuid_out = result.get("report_uuid", report_uuid)
-            self.log_message(f"AI analysis queued. Report UUID: [{uuid_out}]")
-            self.log_message(f"Run later to advance: n0s1 analyze --report-uuid {uuid_out}")
-            return "submitted"
-        else:
-            status_code = r.status_code if r else "N/A"
-            self.log_message(f"Failed to queue AI analysis. HTTP status: [{status_code}]")
-            return "error"
+        self.log_message(f"AI analysis for report [{report_uuid}]: Nothing to do.")
+        return "skipped"
+
+    def analyze_blocking(self, wait_minutes: int, poll_interval: int = 30) -> str:
+        """Poll analyze() until a terminal state or timeout.
+
+        Returns the same status strings as analyze(), plus "timeout" when
+        wait_minutes elapses without reaching a terminal state.
+        """
+        _PENDING = {"pending", "pending_step1_batch", "pending_verdict", "submitted"}
+        wait_seconds = wait_minutes * 60
+        deadline = time.monotonic() + wait_seconds
+        while True:
+            status = self.analyze()
+            if status not in _PENDING:
+                return status
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                self.log_message(
+                    f"Timed out waiting for AI analysis after {wait_minutes}m (last status: {status})."
+                )
+                return "timeout"
+            sleep_for = min(poll_interval, remaining)
+            self.log_message(
+                f"Status [{status}] — retrying in {int(sleep_for)}s "
+                f"({int(remaining / 60)}m remaining)."
+            )
+            time.sleep(sleep_for)
 
     def scan_text_and_report_leaks(self, data, name, regex_config, scan_arguments, ticket):
         secret_found, scan_text_result = scan_text(regex_config, data)
