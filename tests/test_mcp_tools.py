@@ -791,18 +791,18 @@ class TestAnalyzeReport(unittest.TestCase):
             analyze_report("test-uuid", ctx=ctx)
         self.assertEqual(len(events), 0)
 
-    def test_wait_seconds_calls_analyze_blocking(self):
+    def test_wait_minutes_calls_analyze_blocking(self):
         from n0s1.mcp_tools.tools import analyze_report
         ctx = _patched_ctx()
         with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
             mock_analyzer = _make_mock_analyzer("complete")
             MockScanner.return_value = mock_analyzer
-            result = analyze_report("test-uuid", wait_seconds=120, ctx=ctx)
-        mock_analyzer.analyze_blocking.assert_called_once_with(120)
+            result = analyze_report("test-uuid", wait_minutes=2, ctx=ctx)
+        mock_analyzer.analyze_blocking.assert_called_once_with(2)
         mock_analyzer.analyze.assert_not_called()
         self.assertEqual(result.ai_analysis_status, "complete")
 
-    def test_no_wait_seconds_calls_analyze(self):
+    def test_no_wait_minutes_calls_analyze(self):
         from n0s1.mcp_tools.tools import analyze_report
         ctx = _patched_ctx()
         with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
