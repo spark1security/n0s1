@@ -80,11 +80,12 @@ _MOCK_REPORT_WITH_BACKEND_UUID = dict(_MOCK_REPORT_JSON)
 _MOCK_REPORT_WITH_BACKEND_UUID = {**_MOCK_REPORT_JSON, "uuid": _BACKEND_UUID}
 
 
-def _make_mock_scanner(report_json=None, sensitive_json=None):
+def _make_mock_scanner(report_json=None, sensitive_json=None, raw_chars_scanned=0):
     """Return a mock SecretScanner instance."""
     instance = MagicMock()
     instance.scan.return_value = report_json if report_json is not None else _MOCK_REPORT_JSON
     instance.report_sensitive_json = sensitive_json if sensitive_json is not None else _MOCK_SENSITIVE_JSON
+    instance.raw_chars_scanned = raw_chars_scanned
     return instance
 
 

@@ -128,6 +128,7 @@ class SecretScanner():
         self.scope_config = None
         self.report_json = None
         self.report_sensitive_json = None
+        self.raw_chars_scanned = 0
 
         datetime_now_obj = datetime.now(timezone.utc)
         date_utc = datetime_now_obj.strftime("%Y-%m-%dT%H:%M:%S")
@@ -766,6 +767,8 @@ class SecretScanner():
             time.sleep(sleep_for)
 
     def scan_text_and_report_leaks(self, data, name, regex_config, scan_arguments, ticket):
+        if data:
+            self.raw_chars_scanned += len(data)
         secret_found, scan_text_result = scan_text(regex_config, data)
 
         if secret_found:

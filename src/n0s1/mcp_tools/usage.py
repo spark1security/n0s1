@@ -19,6 +19,10 @@ except Exception:  # pragma: no cover
 
 from n0s1.mcp_tools.schemas import Usage
 
+# Typical ratio of characters to tokens for mixed prose + code content.
+# cl100k_base averages ~4 chars/token for English text.
+_CHARS_PER_TOKEN = 4
+
 
 def estimate_tokens(text: str) -> int:
     """Return the estimated token count for *text*.
@@ -32,27 +36,32 @@ def estimate_tokens(text: str) -> int:
     return max(1, int(len(text.split()) * 1.3))
 
 
-def naive_baseline_tokens(input_data: Union[str, dict, list]) -> int:
+def naive_baseline_tokens(input_data: Union[int, str, dict, list]) -> int:
     """Tokens an agent would spend reading raw SaaS content directly.
 
-    Serialises *input_data* to JSON (or uses it as-is if already a str)
-    and tokenises the result — representing the cost of reading the raw
-    payload without the MCP filtering layer.
+    Accepts either:
+    - An ``int`` — the raw character count accumulated by the scanner during
+      the scan (preferred: avoids storing all content in memory).
+    - A ``str``, ``dict``, or ``list`` — serialised and tokenised directly.
     """
+    if isinstance(input_data, int):
+        return max(1, input_data // _CHARS_PER_TOKEN)
     text = input_data if isinstance(input_data, str) else json.dumps(input_data)
     return estimate_tokens(text)
 
 
 def usage_block(
-    input_data: Union[str, dict, list],
+    input_data: Union[int, str, dict, list],
     output_payload: Union[str, dict],
 ) -> Usage:
     """Build a :class:`Usage` instance from raw input and MCP output.
 
     Args:
-        input_data:     The raw SaaS content (or a representative proxy) that
-                        the scanner consumed.  Used to estimate the baseline
-                        token cost an agent would have paid.
+        input_data:     Either the total character count of raw SaaS content
+                        the scanner processed (``int``), or the raw content
+                        itself as a str/dict/list.  Used to estimate the
+                        baseline token cost an agent would have paid without
+                        the MCP filtering layer.
         output_payload: The structured MCP response the agent actually receives.
 
     Returns:
