@@ -643,6 +643,7 @@ class SecretScanner():
                         f"AI analysis queued. Run: n0s1 analyze --report-uuid {self.report_uuid }"
                     )
 
+        self.report_json["raw_chars_scanned"] = self.raw_chars_scanned
         return self.report_json
 
 
