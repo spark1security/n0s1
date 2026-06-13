@@ -627,6 +627,7 @@ class SecretScanner():
                     for item_data in data:
                         if item_data and item_data.lower().find(label.lower()) == -1:
                             self.scan_text_and_report_leaks(item_data, name, self.regex_config, self.scan_arguments, ticket)
+        self.report_json["raw_chars_scanned"] = self.raw_chars_scanned
         if n0s1_pro:
             self.report_json = n0s1_pro.upload_report(
                 self.report_json,
@@ -643,7 +644,6 @@ class SecretScanner():
                         f"AI analysis queued. Run: n0s1 analyze --report-uuid {self.report_uuid }"
                     )
 
-        self.report_json["raw_chars_scanned"] = self.raw_chars_scanned
         return self.report_json
 
 

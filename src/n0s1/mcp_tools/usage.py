@@ -36,18 +36,36 @@ def estimate_tokens(text: str) -> int:
     return max(1, int(len(text.split()) * 1.3))
 
 
+def _mocked_secret_chars(input_data: Union[dict, list]) -> int:
+    """Sum of len(mocked_secret) across all findings in a report or findings collection."""
+    if isinstance(input_data, dict):
+        raw = input_data.get("findings", {})
+        findings = list(raw.values()) if isinstance(raw, dict) else raw
+    else:
+        findings = input_data
+    return sum(
+        len(f.get("mocked_secret") or "")
+        for f in findings
+        if isinstance(f, dict)
+    )
+
+
 def naive_baseline_tokens(input_data: Union[int, str, dict, list]) -> int:
     """Tokens an agent would spend reading raw SaaS content directly.
 
     Accepts either:
     - An ``int`` — the raw character count accumulated by the scanner during
       the scan (preferred: avoids storing all content in memory).
-    - A ``str``, ``dict``, or ``list`` — serialised and tokenised directly.
+    - A ``dict`` (report JSON) or ``list`` (findings array) — token count is
+      derived from the sum of all ``mocked_secret`` field lengths across findings.
+    - A ``str`` — tokenised directly (fallback for plain text input).
     """
     if isinstance(input_data, int):
         return max(1, input_data // _CHARS_PER_TOKEN)
-    text = input_data if isinstance(input_data, str) else json.dumps(input_data)
-    return estimate_tokens(text)
+    if isinstance(input_data, (dict, list)):
+        total_chars = _mocked_secret_chars(input_data)
+        return max(1, total_chars // _CHARS_PER_TOKEN)
+    return estimate_tokens(input_data)
 
 
 def usage_block(
