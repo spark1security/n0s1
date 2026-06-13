@@ -56,21 +56,17 @@ def naive_baseline_tokens(input_data: Union[int, str, dict, list]) -> int:
     Accepts either:
     - An ``int`` — the raw character count accumulated by the scanner during
       the scan (preferred: avoids storing all content in memory).
-    - A ``dict`` (report JSON) or ``list`` (findings array) — token count is
-      derived from the sum of all ``mocked_secret`` field lengths across findings.
-    - A ``str`` — tokenised directly (fallback for plain text input).
+    - A ``str``, ``dict``, or ``list`` — serialised and tokenised directly.
     """
     if isinstance(input_data, int):
         return max(1, input_data // _CHARS_PER_TOKEN)
-    if isinstance(input_data, (dict, list)):
-        total_chars = _mocked_secret_chars(input_data)
-        return max(1, total_chars // _CHARS_PER_TOKEN)
-    return estimate_tokens(input_data)
+    text = input_data if isinstance(input_data, str) else json.dumps(input_data)
+    return estimate_tokens(text)
 
 
 def usage_block(
     input_data: Union[int, str, dict, list],
-    output_payload: Union[str, dict],
+    output_payload: Union[str, dict, list],
 ) -> Usage:
     """Build a :class:`Usage` instance from raw input and MCP output.
 
@@ -81,13 +77,18 @@ def usage_block(
                         baseline token cost an agent would have paid without
                         the MCP filtering layer.
         output_payload: The structured MCP response the agent actually receives.
+                        When a ``dict`` or ``list``, token count is derived from
+                        the sum of all ``mocked_secret`` field lengths across
+                        findings (the content the agent actually sees).
 
     Returns:
         A :class:`Usage` with accurate savings figures.
     """
     tokens_in = naive_baseline_tokens(input_data)
-    out_text = output_payload if isinstance(output_payload, str) else json.dumps(output_payload)
-    tokens_out = estimate_tokens(out_text)
+    if isinstance(output_payload, (dict, list)):
+        tokens_out = max(1, _mocked_secret_chars(output_payload) // _CHARS_PER_TOKEN)
+    else:
+        tokens_out = estimate_tokens(output_payload)
     saved = max(0, tokens_in - tokens_out)
     pct = round(saved / tokens_in * 100, 1) if tokens_in > 0 else 0.0
     return Usage(
