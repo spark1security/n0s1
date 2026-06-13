@@ -166,7 +166,7 @@ class TestUsageMath(unittest.TestCase):
         self.assertGreater(n, 0)
 
     def test_usage_block_savings_math(self):
-        large_input = {"data": "x " * 2000}  # large raw payload
+        large_input = {"findings": [{"id": "f1", "mocked_secret": "x" * 8000}]}
         small_output = {"summary": "2 findings"}
         use = usage_block(large_input, small_output)
         # tokens_saved == tokens_in - tokens_out (by construction)
@@ -176,7 +176,8 @@ class TestUsageMath(unittest.TestCase):
         )
 
     def test_usage_block_tokens_in_ge_tokens_out_for_large_input(self):
-        use = usage_block({"data": "x " * 5000}, {"summary": "ok"})
+        large_input = {"findings": [{"id": "f1", "mocked_secret": "x " * 5000}]}
+        use = usage_block(large_input, {"summary": "ok"})
         self.assertGreaterEqual(use.tokens_in_estimate, use.tokens_out_actual)
 
     def test_usage_block_savings_pct_consistent(self):
