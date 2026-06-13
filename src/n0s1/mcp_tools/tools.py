@@ -60,11 +60,11 @@ def _dispatch_scan(target: str, scanner_kwargs: dict, ctx: ToolContext):
     AWS Lambda dispatch will be wired in Phase A4.
 
     Returns:
-        (report_json, sensitive_json) tuple.
+        (report_json, sensitive_json, raw_chars_scanned) tuple.
     """
     s = _scanner.SecretScanner(target=target, **scanner_kwargs)
     report_json = s.scan()
-    return report_json, s.report_sensitive_json
+    return report_json, s.report_sensitive_json, s.raw_chars_scanned
 
 
 def _build_findings(report_json: dict, sensitive_json: Optional[dict]) -> List[Finding]:
@@ -145,13 +145,13 @@ def _run_platform_scan(
     error_msg: Optional[str] = None
 
     try:
-        report_json, sensitive_json = _dispatch_scan(target, scanner_kwargs, ctx)
+        report_json, sensitive_json, raw_chars = _dispatch_scan(target, scanner_kwargs, ctx)
         backend_uuid = report_json.get("uuid") if report_json else None
         if backend_uuid:
             report_uuid = backend_uuid
         findings = _build_findings(report_json, sensitive_json)
         summary = _build_summary(findings)
-        use = usage_block(input_repr, report_json)
+        use = usage_block(raw_chars, report_json)
         result = ScanResult(
             report_uuid=report_uuid,
             status="complete",

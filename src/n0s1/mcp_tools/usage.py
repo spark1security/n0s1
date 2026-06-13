@@ -19,6 +19,10 @@ except Exception:  # pragma: no cover
 
 from n0s1.mcp_tools.schemas import Usage
 
+# Typical ratio of characters to tokens for mixed prose + code content.
+# cl100k_base averages ~4 chars/token for English text.
+_CHARS_PER_TOKEN = 4
+
 
 def estimate_tokens(text: str) -> int:
     """Return the estimated token count for *text*.
@@ -32,35 +36,59 @@ def estimate_tokens(text: str) -> int:
     return max(1, int(len(text.split()) * 1.3))
 
 
-def naive_baseline_tokens(input_data: Union[str, dict, list]) -> int:
+def _mocked_secret_chars(input_data: Union[dict, list]) -> int:
+    """Sum of len(mocked_secret) across all findings in a report or findings collection."""
+    if isinstance(input_data, dict):
+        raw = input_data.get("findings", {})
+        findings = list(raw.values()) if isinstance(raw, dict) else raw
+    else:
+        findings = input_data
+    return sum(
+        len(f.get("mocked_secret") or "")
+        for f in findings
+        if isinstance(f, dict)
+    )
+
+
+def naive_baseline_tokens(input_data: Union[int, str, dict, list]) -> int:
     """Tokens an agent would spend reading raw SaaS content directly.
 
-    Serialises *input_data* to JSON (or uses it as-is if already a str)
-    and tokenises the result — representing the cost of reading the raw
-    payload without the MCP filtering layer.
+    Accepts either:
+    - An ``int`` — the raw character count accumulated by the scanner during
+      the scan (preferred: avoids storing all content in memory).
+    - A ``str``, ``dict``, or ``list`` — serialised and tokenised directly.
     """
+    if isinstance(input_data, int):
+        return max(1, input_data // _CHARS_PER_TOKEN)
     text = input_data if isinstance(input_data, str) else json.dumps(input_data)
     return estimate_tokens(text)
 
 
 def usage_block(
-    input_data: Union[str, dict, list],
-    output_payload: Union[str, dict],
+    input_data: Union[int, str, dict, list],
+    output_payload: Union[str, dict, list],
 ) -> Usage:
     """Build a :class:`Usage` instance from raw input and MCP output.
 
     Args:
-        input_data:     The raw SaaS content (or a representative proxy) that
-                        the scanner consumed.  Used to estimate the baseline
-                        token cost an agent would have paid.
+        input_data:     Either the total character count of raw SaaS content
+                        the scanner processed (``int``), or the raw content
+                        itself as a str/dict/list.  Used to estimate the
+                        baseline token cost an agent would have paid without
+                        the MCP filtering layer.
         output_payload: The structured MCP response the agent actually receives.
+                        When a ``dict`` or ``list``, token count is derived from
+                        the sum of all ``mocked_secret`` field lengths across
+                        findings (the content the agent actually sees).
 
     Returns:
         A :class:`Usage` with accurate savings figures.
     """
     tokens_in = naive_baseline_tokens(input_data)
-    out_text = output_payload if isinstance(output_payload, str) else json.dumps(output_payload)
-    tokens_out = estimate_tokens(out_text)
+    if isinstance(output_payload, (dict, list)):
+        tokens_out = max(1, _mocked_secret_chars(output_payload) // _CHARS_PER_TOKEN)
+    else:
+        tokens_out = estimate_tokens(output_payload)
     saved = max(0, tokens_in - tokens_out)
     pct = round(saved / tokens_in * 100, 1) if tokens_in > 0 else 0.0
     return Usage(

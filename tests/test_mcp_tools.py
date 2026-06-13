@@ -80,11 +80,12 @@ _MOCK_REPORT_WITH_BACKEND_UUID = dict(_MOCK_REPORT_JSON)
 _MOCK_REPORT_WITH_BACKEND_UUID = {**_MOCK_REPORT_JSON, "uuid": _BACKEND_UUID}
 
 
-def _make_mock_scanner(report_json=None, sensitive_json=None):
+def _make_mock_scanner(report_json=None, sensitive_json=None, raw_chars_scanned=0):
     """Return a mock SecretScanner instance."""
     instance = MagicMock()
     instance.scan.return_value = report_json if report_json is not None else _MOCK_REPORT_JSON
     instance.report_sensitive_json = sensitive_json if sensitive_json is not None else _MOCK_SENSITIVE_JSON
+    instance.raw_chars_scanned = raw_chars_scanned
     return instance
 
 
@@ -165,7 +166,7 @@ class TestUsageMath(unittest.TestCase):
         self.assertGreater(n, 0)
 
     def test_usage_block_savings_math(self):
-        large_input = {"data": "x " * 2000}  # large raw payload
+        large_input = {"findings": [{"id": "f1", "mocked_secret": "x" * 8000}]}
         small_output = {"summary": "2 findings"}
         use = usage_block(large_input, small_output)
         # tokens_saved == tokens_in - tokens_out (by construction)
@@ -175,7 +176,8 @@ class TestUsageMath(unittest.TestCase):
         )
 
     def test_usage_block_tokens_in_ge_tokens_out_for_large_input(self):
-        use = usage_block({"data": "x " * 5000}, {"summary": "ok"})
+        large_input = {"findings": [{"id": "f1", "mocked_secret": "x " * 5000}]}
+        use = usage_block(large_input, {"summary": "ok"})
         self.assertGreaterEqual(use.tokens_in_estimate, use.tokens_out_actual)
 
     def test_usage_block_savings_pct_consistent(self):
@@ -790,18 +792,18 @@ class TestAnalyzeReport(unittest.TestCase):
             analyze_report("test-uuid", ctx=ctx)
         self.assertEqual(len(events), 0)
 
-    def test_wait_seconds_calls_analyze_blocking(self):
+    def test_wait_minutes_calls_analyze_blocking(self):
         from n0s1.mcp_tools.tools import analyze_report
         ctx = _patched_ctx()
         with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
             mock_analyzer = _make_mock_analyzer("complete")
             MockScanner.return_value = mock_analyzer
-            result = analyze_report("test-uuid", wait_seconds=120, ctx=ctx)
-        mock_analyzer.analyze_blocking.assert_called_once_with(120)
+            result = analyze_report("test-uuid", wait_minutes=2, ctx=ctx)
+        mock_analyzer.analyze_blocking.assert_called_once_with(2)
         mock_analyzer.analyze.assert_not_called()
         self.assertEqual(result.ai_analysis_status, "complete")
 
-    def test_no_wait_seconds_calls_analyze(self):
+    def test_no_wait_minutes_calls_analyze(self):
         from n0s1.mcp_tools.tools import analyze_report
         ctx = _patched_ctx()
         with patch("n0s1.mcp_tools.tools._scanner.SecretScanner") as MockScanner:
