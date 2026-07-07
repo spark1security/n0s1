@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/spark1security-n0s1-badge.png)](https://mseep.ai/app/spark1security-n0s1)
+
 <div align="center">
 <img src="https://raw.githubusercontent.com/spark1security/n0s1/main/docs/imgs/logo.png" width="200">
 
