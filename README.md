@@ -1,5 +1,3 @@
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/spark1security-n0s1-badge.png)](https://mseep.ai/app/spark1security-n0s1)
-
 <div align="center">
 <img src="https://raw.githubusercontent.com/spark1security/n0s1/main/docs/imgs/logo.png" width="200">
 
@@ -155,6 +153,13 @@ n0s1 is a [Spark 1](https://spark1.us) open source project.
 Learn about our open source work and portfolio [here](https://spark1.us/n0s1).  
 Contact us about any matter by opening a GitHub Discussion [here](https://github.com/spark1security/n0s1/issues)
 
+<div align="center">
+
+[<img src="https://mseep.net/pr/spark1security-n0s1-badge.png" alt="MseeP.ai Security Assessment Badge" height="20">][mseep]
+[![Verified on MseeP][mseep-verified-img]][mseep-verified]
+
+</div>
+
 
 
 [docker-pulls]: https://img.shields.io/docker/pulls/spark1security/n0s1?logo=docker&label=docker%20pulls%20%2F%20n0s1
@@ -165,6 +170,9 @@ Contact us about any matter by opening a GitHub Discussion [here](https://github
 [license-img]: https://img.shields.io/badge/license-GPLv3-blue
 [homepage]: https://spark1.us/n0s1
 [docs]: https://spark1.us/n0s1doc
+[mseep]: https://mseep.ai/app/spark1security-n0s1
+[mseep-verified]: https://mseep.ai/app/1da2f410-2f9f-4395-8ae2-23d8af2b4b7e
+[mseep-verified-img]: https://mseep.ai/badge.svg
 
 
 
